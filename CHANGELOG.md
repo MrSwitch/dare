@@ -1,3 +1,10 @@
+## [0.98.1](https://github.com/5app/dare/compare/v0.98.0...v0.98.1) (2025-08-08)
+
+
+### Bug Fixes
+
+* **datetime:** always allow a range ([#415](https://github.com/5app/dare/issues/415)) ([63072c8](https://github.com/5app/dare/commit/63072c86530a2d0ebae65ba7e9a95f5bb5ac45f2))
+
 # [0.98.0](https://github.com/5app/dare/compare/v0.97.2...v0.98.0) (2025-07-18)
 
 
