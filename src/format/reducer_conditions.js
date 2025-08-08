@@ -118,17 +118,17 @@ function prepCondition({
 	value,
 	sql_alias,
 	table_schema,
-	operators,
+	operators = '',
 	conditional_operators_in_value,
 	dareInstance,
 }) {
 	const {engine} = dareInstance;
 
 	// Does it have a negative comparison operator?
-	const negate = operators?.includes('-');
+	const negate = operators.includes('-');
 
 	// Does it have a FullText comparison operator
-	const isFullText = operators?.includes('*');
+	const isFullText = operators.includes('*');
 
 	// Set a handly NOT value
 	const NOT = negate ? raw('NOT ') : empty;
@@ -171,7 +171,7 @@ function prepCondition({
 					value,
 					sql_alias,
 					table_schema,
-					operators: operators?.replace('-', ''),
+					operators: operators.replace('-', ''),
 					conditional_operators_in_value,
 					dareInstance,
 				})
@@ -190,6 +190,11 @@ function prepCondition({
 	// Format date time values
 	if (type === 'datetime') {
 		value = formatDateTime(value);
+
+		// NOTE: Could we just return SQL from formatDateTime instead of ensuring an implicit range?
+		if (!operators.includes('~')) {
+			operators += '~'; // Add range operator
+		}
 	}
 	// @ts-ignore
 	else if (type === 'date' && value instanceof Date) {
@@ -255,16 +260,16 @@ function sqlCondition({
 	const IS_POSTGRES = engine.startsWith('postgres');
 
 	// Does it have a negative comparison operator?
-	const negate = operators?.includes('-');
+	const negate = operators.includes('-');
 
 	// Set a handly NOT value
 	const NOT = negate ? raw('NOT ') : empty;
 
 	// Does it have a Likey comparison operator
-	const isLikey = operators?.includes('%');
+	const isLikey = operators.includes('%');
 
 	// Does it have a Range comparison operator
-	const isRange = operators?.includes('~');
+	const isRange = operators.includes('~');
 
 	// Allow conditional likey operator in value
 	const allow_conditional_likey_operator_in_value =
