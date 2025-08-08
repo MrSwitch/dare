@@ -449,6 +449,13 @@ describe('format_request', () => {
 						'(NOT a.datetime > ? OR a.datetime IS NULL)',
 						['1981-12-05T00:00:00'],
 					],
+					[
+						// Should always expand datetime fields
+						{'datetime': '1981-12-05..1981-12-06'},
+						'a.datetime BETWEEN ? AND ?',
+						['1981-12-05T00:00:00', '1981-12-06T23:59:59'],
+						noCondOperators,
+					],
 					[{prop: '1981-12-05..'}, 'a.prop > ?', ['1981-12-05']],
 					[
 						{prop: '1970-01-01..1981-12-05'},
