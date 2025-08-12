@@ -184,7 +184,7 @@ Dare.prototype.execute = async requestQuery => {
  * Engine, database engine
  * @type {Engine}
  */
-Dare.prototype.engine = 'mysql:5.7.40';
+Dare.prototype.engine = 'mysql:8.0.40';
 
 // Rowid, name of primary key field used in grouping operation: MySQL uses _rowid
 /** @type {string} */
@@ -490,7 +490,8 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 	if (
 		!this.engine.startsWith('mysql:5') &&
 		query.has_sub_queries &&
-		query.limit
+		query.limit &&
+		!opts.groupby
 	) {
 		// Create a new formatted query, with just the fields
 		opts.fields = [{id: dareInstance.rowid}];
@@ -501,7 +502,7 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 		const cteQuery = buildQuery(cteRequest, cteInstance);
 		const sql_query = generateSQLSelect(cteQuery);
 		query.sql_joins.unshift(
-			SQL`JOIN cte ON cte.id = ${raw(query.sql_alias)}.${raw(dareInstance.rowid)}`
+			SQL`JOIN cte ON (cte.id = ${raw(query.sql_alias)}.${raw(dareInstance.rowid)})`
 		);
 		query.sql_cte = SQL`cte AS (${sql_query})`;
 	}
