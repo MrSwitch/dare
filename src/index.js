@@ -494,7 +494,7 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 		!opts.groupby
 	) {
 		// Create a new formatted query, with just the fields
-		opts.fields = [{id: dareInstance.rowid}];
+		opts.fields = ['id'];
 		const cteInstance = this.use(opts);
 		const cteRequest = await cteInstance.format_request(
 			cteInstance.options

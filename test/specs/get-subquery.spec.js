@@ -39,7 +39,7 @@ describe('get - subquery', () => {
 	it('should write one to many requests with a subquery', async () => {
 		dare.sql = ({sql}) => {
 			const expected = `
-				WITH cte AS (SELECT a._rowid AS "id" FROM assets a LIMIT 1)
+				WITH cte AS (SELECT a.id FROM assets a LIMIT 1)
 				SELECT a.name AS "asset_name",
 				(
 					SELECT COUNT(c.id)
@@ -79,7 +79,7 @@ describe('get - subquery', () => {
 	it('should export the response in the format given', async () => {
 		dare.sql = ({sql}) => {
 			const expected = `
-				WITH cte AS (SELECT a._rowid AS "id" FROM assets a LIMIT 1)
+				WITH cte AS (SELECT a.id FROM assets a LIMIT 1)
 				SELECT a.name AS "asset_name",
 				(
 					SELECT COUNT(c.id)
@@ -122,7 +122,7 @@ describe('get - subquery', () => {
 	it('should concatinate many expressions into an array using JSON_ARRAYAGG', async () => {
 		dare.sql = ({sql}) => {
 			const expected = `
-				WITH cte AS (SELECT a._rowid AS "id" FROM assets a LIMIT 1)
+				WITH cte AS (SELECT a.id FROM assets a LIMIT 1)
 				SELECT a.name AS "name",
 				(
 					SELECT JSON_ARRAYAGG(CASE WHEN(c._rowid IS NOT NULL) THEN (JSON_ARRAY(c.id, c.name)) ELSE NULL END)
@@ -163,7 +163,7 @@ describe('get - subquery', () => {
 	it('should concatinate many expressions into an array using JSON_ARRAYAGG', async () => {
 		dare.sql = ({sql}) => {
 			const expected = `
-				WITH cte AS (SELECT a._rowid AS "id" FROM assets a LIMIT 1)
+				WITH cte AS (SELECT a.id FROM assets a LIMIT 1)
 				SELECT a.name AS "name",
 				(
 					SELECT JSON_ARRAYAGG(CASE WHEN (b._rowid IS NOT NULL) THEN (JSON_ARRAY(b.id, b.color)) ELSE NULL END)
