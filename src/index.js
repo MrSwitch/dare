@@ -487,14 +487,22 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 	const query = buildQuery(req, dareInstance);
 
 	// Where the query has_sub_queries=true property, we should generate a CTE query
-	if (query.has_sub_queries && query.limit) {
+	if (
+		!this.engine.startsWith('mysql:5') &&
+		query.has_sub_queries &&
+		query.limit
+	) {
 		// Create a new formatted query, with just the fields
 		opts.fields = [{id: dareInstance.rowid}];
 		const cteInstance = this.use(opts);
-		const cteRequest = await cteInstance.format_request(cteInstance.options);
+		const cteRequest = await cteInstance.format_request(
+			cteInstance.options
+		);
 		const cteQuery = buildQuery(cteRequest, cteInstance);
 		const sql_query = generateSQLSelect(cteQuery);
-		query.sql_joins.unshift(SQL`JOIN cte ON cte.id = ${raw(query.sql_alias)}.${raw(dareInstance.rowid)}`);
+		query.sql_joins.unshift(
+			SQL`JOIN cte ON cte.id = ${raw(query.sql_alias)}.${raw(dareInstance.rowid)}`
+		);
 		query.sql_cte = SQL`cte AS (${sql_query})`;
 	}
 
@@ -1006,9 +1014,7 @@ function prepareSQLSet({
 		});
 
 		// Replace value with a question using any mapped fieldName
-		assignments.push(
-			SQL`${raw(sql_field)} = ${value}`
-		);
+		assignments.push(SQL`${raw(sql_field)} = ${value}`);
 	}
 
 	return join(assignments, ', ');
@@ -1158,7 +1164,9 @@ function formatInputValue({
 	}
 
 	// Format the field
-	const sql_field = (sql_alias ? `${sql_alias}.` : '') + dareInstance.identifierWrapper(field);
+	const sql_field =
+		(sql_alias ? `${sql_alias}.` : '') +
+		dareInstance.identifierWrapper(field);
 
 	/**
 	 * Format the set value

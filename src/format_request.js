@@ -8,7 +8,7 @@ import limitClause from './format/limit_clause.js';
 import joinHandler from './format/join_handler.js';
 import getFieldAttributes from './utils/field_attributes.js';
 import extend from './utils/extend.js';
-import buildQuery, { generateSQLSelect } from './get.js';
+import buildQuery, {generateSQLSelect} from './get.js';
 
 /**
  * @import {Sql} from 'sql-template-tag'
@@ -515,10 +515,12 @@ async function format_request(options, dareInstance) {
 
 			// Create sub_query
 			const sub_query = buildQuery(options, dareInstance);
-			// Create the SQL 
+			// Create the SQL
 			const sql_sub_query = generateSQLSelect(sub_query);
 
-			sql_where_conditions = [SQL`${sql_negate} EXISTS (${sql_sub_query})`];
+			sql_where_conditions = [
+				SQL`${sql_negate} EXISTS (${sql_sub_query})`,
+			];
 		} else {
 			/*
 			 * Whilst patch and delete will throw an ER_UPDATE_TABLE_USED error

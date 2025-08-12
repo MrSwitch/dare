@@ -51,7 +51,7 @@ export default function reduceConditions(
 		if (
 			value &&
 			typeof value === 'object' &&
-			!(value instanceof Date) && 
+			!(value instanceof Date) &&
 			!Array.isArray(value) &&
 			key_definition?.type !== 'json' &&
 			!Buffer.isBuffer(value)

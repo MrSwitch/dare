@@ -19,8 +19,15 @@ export default function buildQuery(opts, dareInstance) {
 	const {is_subquery} = opts;
 
 	// Traverse the Request Object
-	const {fields, has_many_join, has_sub_queries, sql_joins, sql_filter, groupby, orderby} =
-		traverse(opts, is_subquery, dareInstance);
+	const {
+		fields,
+		has_many_join,
+		has_sub_queries,
+		sql_joins,
+		sql_filter,
+		groupby,
+		orderby,
+	} = traverse(opts, is_subquery, dareInstance);
 
 	// Get the root tableID
 	const {sql_table, sql_alias} = opts;
@@ -165,10 +172,9 @@ export default function buildQuery(opts, dareInstance) {
 		limit: opts.limit,
 		start: opts.start,
 		alias,
-		has_sub_queries
-	}
+		has_sub_queries,
+	};
 }
-
 
 /**
  * Generate a SQL SELECT statement
@@ -185,7 +191,18 @@ export default function buildQuery(opts, dareInstance) {
  * @param {number} [opts.start] - Offset for the results
  * @returns {Sql} - The SQL statement
  */
-export function generateSQLSelect({sql_cte, sql_fields, sql_table, sql_alias, sql_joins, sql_filter, sql_groupby, sql_orderby, limit, start}) {
+export function generateSQLSelect({
+	sql_cte,
+	sql_fields,
+	sql_table,
+	sql_alias,
+	sql_joins,
+	sql_filter,
+	sql_groupby,
+	sql_orderby,
+	limit,
+	start,
+}) {
 	return SQL`
 		${sql_cte ? SQL`WITH ${sql_cte}` : empty}
 		SELECT ${join(sql_fields)}
@@ -198,7 +215,6 @@ export function generateSQLSelect({sql_cte, sql_fields, sql_table, sql_alias, sq
 		${start ? SQL`OFFSET ${raw(String(start))}` : empty}
 	`;
 }
-
 
 function traverse(item, is_subquery, dareInstance) {
 	// Filters populate the filter and values (prepared statements)
