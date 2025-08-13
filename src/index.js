@@ -505,6 +505,9 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 			SQL`JOIN cte ON (cte.id = ${raw(query.sql_alias)}.${raw(dareInstance.rowid)})`
 		);
 		query.sql_cte = SQL`cte AS (${sql_query})`;
+
+		// Disable repeating the offset
+		query.offset = undefined;
 	}
 
 	// If the query is empty, return an empty array
