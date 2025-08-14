@@ -25,7 +25,7 @@ cd "$INTEGRATION_TEST_DIR" || exit 1
 
 DB_ROOT_USER="root"
 DB_ROOT_PASSWORD="test_pass"
-DB_ENGINE=${DB_ENGINE:-mysql:5.7.40}
+DB_ENGINE=${DB_ENGINE:-mysql:8.0.23}
 
 DB_ENGINE_NAME=$(echo $DB_ENGINE | cut -d: -f1)
 

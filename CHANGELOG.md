@@ -1,3 +1,24 @@
+## [0.98.1](https://github.com/5app/dare/compare/v0.98.0...v0.98.1) (2025-08-08)
+
+
+### Bug Fixes
+
+* **datetime:** always allow a range ([#415](https://github.com/5app/dare/issues/415)) ([63072c8](https://github.com/5app/dare/commit/63072c86530a2d0ebae65ba7e9a95f5bb5ac45f2))
+
+# [0.98.0](https://github.com/5app/dare/compare/v0.97.2...v0.98.0) (2025-07-18)
+
+
+### Features
+
+* **field.setFunction:** enable JSON_MERGE_PATCH definition ([#412](https://github.com/5app/dare/issues/412)) ([2e5d363](https://github.com/5app/dare/commit/2e5d363f79cebc043bb6f4e044e5ac77975c5604))
+
+## [0.97.2](https://github.com/5app/dare/compare/v0.97.1...v0.97.2) (2025-07-17)
+
+
+### Bug Fixes
+
+* **field_expression:** support [FUNCNAME](field AS [UPPERCASE|String|Number]) ([#385](https://github.com/5app/dare/issues/385)) ([93dd70e](https://github.com/5app/dare/commit/93dd70e2507a8ad8ca5879b221ff898539c82009))
+
 ## [0.97.1](https://github.com/5app/dare/compare/v0.97.0...v0.97.1) (2025-07-03)
 
 

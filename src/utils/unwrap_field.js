@@ -46,7 +46,7 @@ export default function unwrap_field(expression, allowValue = true) {
 			// Split out comma variables
 			while (
 				(int_m = str.match(
-					/^(.*)((,|AS)\s*(?<suffix>(?<quote>["'])?[\s\w%./-]*\k<quote>))$/
+					/^(.*)((,|\sAS)\s*(?<suffix>(?<quote>["'])?[\s\w%./-]*\k<quote>))$/
 				))
 			) {
 				/*

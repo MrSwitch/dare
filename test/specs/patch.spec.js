@@ -5,6 +5,7 @@ import Dare from '../../src/index.js';
 import sqlEqual from '../lib/sql-equal.js';
 
 import DareError from '../../src/utils/error.js';
+import SQL, {raw} from 'sql-template-tag';
 
 const id = 1;
 const name = 'name';
@@ -168,6 +169,40 @@ describe('patch', () => {
 						body: {meta: input},
 					});
 				});
+			});
+		});
+
+		it('should apply schema.field.setFunction', () => {
+
+			dare.options.models = {
+				test: {
+					schema: {
+						meta: {
+							type: 'json',
+							setFunction({sql_field, value}) {
+								return SQL`JSON_MERGE_PATCH(${raw(sql_field)}, ${value})`;
+							},
+						},
+					},
+				},
+			};
+
+			const meta = {key: 'value'};
+
+			dare.execute = async ({sql, values}) => {
+				// Limit: 1
+				sqlEqual(
+					sql,
+					'UPDATE test a SET a.`meta` = JSON_MERGE_PATCH(a.`meta`, ?) WHERE a.id = ? LIMIT ?'
+				);
+				expect(values).to.deep.equal([JSON.stringify(meta), id, 1]);
+				return {success: true};
+			};
+
+			return dare.patch({
+				table: 'test',
+				filter: {id},
+				body: {meta},
 			});
 		});
 	});

@@ -60,6 +60,7 @@ import response_handler, {responseRowHandler} from './response_handler.js';
  * @property {boolean} [writeable=true] - Whether this field is writeable
  * @property {boolean} [required=false] - Whether this field is required
  * @property {Handler} [handler] - Handler to generate the field value
+ * @property {(arg: {sql_field: string, field: string, value: any}) => * | SQL} [setFunction] - String defining a SQL function to wrap the value in when setting it
  * @property {FieldAttributes} [get] - The get definition of this field
  * @property {FieldAttributes} [post] - The post definition of this field
  * @property {FieldAttributes} [patch] - The patch definition of this field
@@ -977,7 +978,8 @@ function prepareSQLSet({
 		 * Get the real field in the db,
 		 * And formatted value...
 		 */
-		const {field, value} = formatInputValue({
+		const {sql_field, value} = formatInputValue({
+			sql_alias,
 			tableSchema,
 			field: label,
 			value: body[label],
@@ -987,7 +989,7 @@ function prepareSQLSet({
 
 		// Replace value with a question using any mapped fieldName
 		assignments.push(
-			SQL`${raw((sql_alias ? `${sql_alias}.` : '') + dareInstance.identifierWrapper(field))} = ${value}`
+			SQL`${raw(sql_field)} = ${value}`
 		);
 	}
 
@@ -1043,15 +1045,17 @@ Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
  * For a given field definition, return the db key (alias) and format the input it required
  * @param {object} obj - Object
  * @param {Schema} [obj.tableSchema={}] - An object containing the table schema
+ * @param {string} [obj.sql_alias=null] - SQL Alias for the table
  * @param {string} obj.field - field identifier
  * @param {*} obj.value - Given value
  * @param {Function} [obj.validateInput] - Custom validation function
  * @param {Dare} obj.dareInstance - Dare Instance
  * @throws Will throw an error if the field is not writable
- * @returns {{field: string, value: *}} A singular value which can be inserted
+ * @returns {{field: string, sql_field: string, value: *}} A singular value which can be inserted
  */
 function formatInputValue({
 	tableSchema = {},
+	sql_alias = null,
 	field,
 	value,
 	validateInput,
@@ -1073,7 +1077,7 @@ function formatInputValue({
 		fieldAttributes = null;
 	}
 
-	const {alias, writeable, type} = fieldAttributes || {};
+	const {alias, writeable, type, setFunction} = fieldAttributes || {};
 
 	// Execute custom field validation
 	validateInput?.(fieldAttributes, field, value);
@@ -1135,7 +1139,18 @@ function formatInputValue({
 		field = alias;
 	}
 
-	return {field, value};
+	// Format the field
+	const sql_field = (sql_alias ? `${sql_alias}.` : '') + dareInstance.identifierWrapper(field);
+
+	/**
+	 * Format the set value
+	 */
+	if (setFunction) {
+		// If the insertWrapper is defined, use it to format the value
+		value = setFunction({value, field, sql_field});
+	}
+
+	return {field, sql_field, value};
 }
 
 /**

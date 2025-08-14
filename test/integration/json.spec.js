@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import SQL from 'sql-template-tag';
+import SQL, {raw} from 'sql-template-tag';
 import defaultAPI from './helpers/api.js';
 
 // Connect to db
@@ -161,5 +161,42 @@ describe('Working with JSON DataType', () => {
 		});
 
 		assert.strictEqual(noMatch, null);
+	});
+
+	it('JSON fields should be patchable with a setFunction definition', async function () {
+
+		if (DB_ENGINE?.startsWith('postgres')) {
+			this.skip();
+			return;
+		}
+
+		// Update the user settings with a setFunction
+		dare.options.models.users.schema.settings.patch = {
+			setFunction({sql_field, value}) {
+				return SQL`JSON_MERGE_PATCH(${raw(sql_field)}, ${value})`;
+			}
+		};
+
+		// Insert intial settings
+		const settings = {a: 1, b: 0};
+
+		await dare.post('users', {username, settings});
+
+		// Patch the settings
+		const newSettings = {b: 2, c: 3};
+
+		await dare.patch({
+			table: 'users',
+			filter: {username},
+			body: {settings: newSettings},
+		});
+
+		const resp = await dare.get({
+			table: 'users',
+			fields: ['settings'],
+			filter: {username},
+		});
+
+		assert.deepStrictEqual(resp.settings, {...settings, ...newSettings});
 	});
 });

@@ -36,6 +36,12 @@ describe('utils/field_format', () => {
 			['nested.field', 'label'],
 		],
 
+		// Function: CAST
+		[
+			['CAST(field AS CHAR)', 'label', 'tbl'],
+			['CAST(tbl.field AS CHAR)', 'label'],
+		],
+
 		// If the expression defines a nested field, take that away from the prefix label address
 		[
 			['SUM(nested.field)', 'count', 'nested', 'nested.'],
