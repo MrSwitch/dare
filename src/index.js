@@ -506,8 +506,8 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 		);
 		query.sql_cte = SQL`cte AS (${sql_query})`;
 
-		// Disable repeating the offset
-		query.offset = undefined;
+		// Disable repeating the start (offset)
+		query.start = undefined;
 	}
 
 	// If the query is empty, return an empty array
