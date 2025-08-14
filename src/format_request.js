@@ -9,6 +9,7 @@ import joinHandler from './format/join_handler.js';
 import getFieldAttributes from './utils/field_attributes.js';
 import extend from './utils/extend.js';
 import buildQuery, {generateSQLSelect} from './get.js';
+import toArray from './utils/toArray.js';
 
 /**
  * @import {Sql} from 'sql-template-tag'
@@ -559,13 +560,4 @@ async function format_request(options, dareInstance) {
 	}
 
 	return options;
-}
-
-function toArray(a) {
-	if (typeof a === 'string') {
-		a = a.split(',').map(s => s.trim());
-	} else if (!Array.isArray(a)) {
-		a = [a];
-	}
-	return a;
 }

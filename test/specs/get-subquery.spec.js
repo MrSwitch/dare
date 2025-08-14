@@ -309,6 +309,7 @@ describe('get - subquery', () => {
 	it('should aggregate single field requests in a subquery, aka without group_concat', async () => {
 		dare.sql = ({sql}) => {
 			const expected = `
+				WITH cte AS (SELECT a.id FROM users a GROUP BY a.id ORDER BY a.name LIMIT 1)
 				SELECT a.id,a.name,a.created_time,
 				(
 					SELECT JSON_ARRAY(b.id, b.email)
@@ -318,10 +319,10 @@ describe('get - subquery', () => {
 					LIMIT 1
 				) AS "email_id,email"
 				FROM users a
+				JOIN cte ON (cte.id = a._rowid)
 				GROUP BY a.id
 				ORDER BY a.name
 				LIMIT 1`;
-
 			expectSQLEqual(sql, expected);
 
 			return Promise.resolve([{}]);

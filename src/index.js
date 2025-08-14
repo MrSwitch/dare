@@ -4,6 +4,8 @@ import buildQuery, {generateSQLSelect} from './get.js';
 
 import DareError from './utils/error.js';
 
+import toArray from './utils/toArray.js';
+
 import validateBody from './utils/validate_body.js';
 
 import getFieldAttributes from './utils/field_attributes.js';
@@ -491,7 +493,7 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 		!this.engine.startsWith('mysql:5') &&
 		query.has_sub_queries &&
 		query.limit &&
-		!opts.groupby
+		(!opts.groupby || toArray(opts.groupby).join('') === 'id')
 	) {
 		// Create a new formatted query, with just the fields
 		opts.fields = ['id'];
