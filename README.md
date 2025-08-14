@@ -1382,6 +1382,26 @@ The approach also supports multiple field definitions in the key, i.e.
 >  }
 > // SELECT name FROM users WHERE MATCH(name, email) AGAINST ('Andrew' IN BOOLEAN MODE)
 > ```
+## Performance with LIMIT'ed nested queries
+
+Nested subqueries generated via Dare do not take advantage of restricted datasets through SQL `LIMIT` - atleast this was the case with MySQL's InnoDB tables. 
+
+To address this in MySQL 8, and other databases which support Common Table Expressions (CTE), Dare will by default apply filtering and limiting via a CTE with an INNER JOIN to the rowid to the base table.
+
+By default, the rules defined in `applyCTELimitFiltering` enables this features for all databases (with the exception of MySQL 5.*), and for requests for less than 10k records.
+
+The rules around when to apply the CTE can be adjusted, e.g.
+
+```js
+const dare = new Dare(options);
+dare.applyCTELimitFiltering = (options) => {
+	return options.limit < 10_000;
+}
+```
+
+To enable/disable CTE, have the function return truthy/falsy value.
+
+
 
 ## Multiple joins/filters on the same table
 
