@@ -8,7 +8,8 @@ import limitClause from './format/limit_clause.js';
 import joinHandler from './format/join_handler.js';
 import getFieldAttributes from './utils/field_attributes.js';
 import extend from './utils/extend.js';
-import buildQuery from './get.js';
+import buildQuery, {generateSQLSelect} from './get.js';
+import toArray from './utils/toArray.js';
 
 /**
  * @import {Sql} from 'sql-template-tag'
@@ -515,8 +516,12 @@ async function format_request(options, dareInstance) {
 
 			// Create sub_query
 			const sub_query = buildQuery(options, dareInstance);
+			// Create the SQL
+			const sql_sub_query = generateSQLSelect(sub_query);
 
-			sql_where_conditions = [SQL`${sql_negate} EXISTS (${sub_query})`];
+			sql_where_conditions = [
+				SQL`${sql_negate} EXISTS (${sql_sub_query})`,
+			];
 		} else {
 			/*
 			 * Whilst patch and delete will throw an ER_UPDATE_TABLE_USED error
@@ -535,12 +540,13 @@ async function format_request(options, dareInstance) {
 			options.parent = null; // Do not add superfluous joins
 
 			const sub_query = buildQuery(options, dareInstance);
+			const sql_sub_query = generateSQLSelect(sub_query);
 
 			sql_where_conditions = [
 				SQL`${raw(parentReferences[0])}
 				${sql_negate} IN (
 					SELECT ${join(options.fields.map(field => raw(String(field))))} FROM (
-						${sub_query}
+						${sql_sub_query}
 					) AS ${raw(options.sql_alias)}_tmp
 				)
 			`,
@@ -554,13 +560,4 @@ async function format_request(options, dareInstance) {
 	}
 
 	return options;
-}
-
-function toArray(a) {
-	if (typeof a === 'string') {
-		a = a.split(',').map(s => s.trim());
-	} else if (!Array.isArray(a)) {
-		a = [a];
-	}
-	return a;
 }

@@ -173,7 +173,6 @@ describe('patch', () => {
 		});
 
 		it('should apply schema.field.setFunction', () => {
-
 			dare.options.models = {
 				test: {
 					schema: {

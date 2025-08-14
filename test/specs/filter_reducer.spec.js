@@ -134,7 +134,7 @@ describe('Filter Reducer', () => {
 					},
 				},
 				`(a.jsonSettings->? IN (?,?,?))`,
-				['$.key', '"a"', '"b"', 1],
+				['$.key', 'a', 'b', 1],
 			],
 		];
 
