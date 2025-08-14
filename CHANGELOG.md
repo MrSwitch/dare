@@ -1,3 +1,10 @@
+## [0.98.2](https://github.com/5app/dare/compare/v0.98.1...v0.98.2) (2025-08-14)
+
+
+### Performance Improvements
+
+* **cte:** subquery optimisation, fixes [#413](https://github.com/5app/dare/issues/413) ([#416](https://github.com/5app/dare/issues/416)) ([fd7822f](https://github.com/5app/dare/commit/fd7822f5bd5cacead549160bc152f8a52d3fd298))
+
 ## [0.98.1](https://github.com/5app/dare/compare/v0.98.0...v0.98.1) (2025-08-08)
 
 
