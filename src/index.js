@@ -365,6 +365,26 @@ Dare.prototype.after = function (resp) {
 };
 
 /**
+ * Determine whether to use CTE LIMIT Filtering
+ * @param {QueryOptions} options - Query options
+ * @returns {boolean} Whether to use CTE LIMIT Filtering
+ */
+Dare.prototype.applyCTELimitFiltering = function (options) {
+
+	// Cancel for old mysql
+	if (this.engine.startsWith('mysql:5')) {
+		return false;
+	}
+
+	// Cancel if limit is beyond a certain threshold
+	if (options.limit > 10_000) {
+		return false;
+	}
+
+	return true;
+};
+
+/**
  * Use
  * Creates a new instance of Dare and merges new options with the base options
  * @param {QueryOptions} options - set of instance options
@@ -490,10 +510,9 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 
 	// Where the query has_sub_queries=true property, we should generate a CTE query
 	if (
-		!this.engine.startsWith('mysql:5') &&
 		query.has_sub_queries &&
-		query.limit &&
-		(!opts.groupby || toArray(opts.groupby).join('') === 'id')
+		(!opts.groupby || toArray(opts.groupby).join('') === 'id') &&
+		this.applyCTELimitFiltering(req)
 	) {
 		// Create a new formatted query, with just the fields
 		opts.fields = ['id'];

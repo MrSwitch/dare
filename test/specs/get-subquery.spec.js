@@ -380,7 +380,50 @@ describe('get - subquery', () => {
 		});
 	});
 
-	describe(`Disparities`, () => {
+	describe('applyCTELimitFiltering', async () => {
+
+		it('should not add CTE on resultsets over 10k rows, by default', async () => {
+			dare.sql = ({sql}) => {
+				const expected = `
+					SELECT a.id,
+					(
+						SELECT b.email
+						FROM userEmails b
+						WHERE
+							b.user_id = a.id
+						LIMIT 1
+					) AS "email"
+					FROM users a
+					GROUP BY a._rowid
+					LIMIT 10001`;
+
+				expectSQLEqual(sql, expected);
+
+				return Promise.resolve([{}]);
+			};
+
+			dare.options = {
+				models: {
+					userEmails: {
+						schema: {user_id: ['users.id']},
+					},
+				},
+			};
+
+			return dare.get({
+				table: 'users',
+				fields: [
+					'id',
+					{
+						email: 'userEmails.email',
+					},
+				],
+				limit: 10_001
+			});
+		});
+	});
+
+	describe(`Engine Disparities`, () => {
 		it('MySQL 8 fails to correctly count the items in this scenario', async () => {
 			/*
 			 * See Bug report: https://bugs.mysql.com/bug.php?id=109585
@@ -402,6 +445,47 @@ describe('get - subquery', () => {
 				table: 'content',
 				fields: ['id', {count: 'COUNT(DISTINCT userContent.user_id)'}],
 				limit: 3,
+			});
+		});
+		it('MySQL 5.* does not support CTE', async () => {
+
+			const dareInst = dare.use({engine: 'mysql:5.7.0'});
+
+			dareInst.sql = ({sql}) => {
+				const expected = `
+					SELECT a.id,
+					(
+						SELECT b.email
+						FROM userEmails b
+						WHERE
+							b.user_id = a.id
+						LIMIT 1
+					) AS "email"
+					FROM users a
+					GROUP BY a._rowid
+					LIMIT 1`;
+
+				expectSQLEqual(sql, expected);
+
+				return Promise.resolve([{}]);
+			};
+
+			dareInst.options = {
+				models: {
+					userEmails: {
+						schema: {user_id: ['users.id']},
+					},
+				},
+			};
+
+			return dareInst.get({
+				table: 'users',
+				fields: [
+					'id',
+					{
+						email: 'userEmails.email',
+					},
+				],
 			});
 		});
 	});
