@@ -451,7 +451,7 @@ describe('format_request', () => {
 					],
 					[
 						// Should always expand datetime fields
-						{'datetime': '1981-12-05..1981-12-06'},
+						{datetime: '1981-12-05..1981-12-06'},
 						'a.datetime BETWEEN ? AND ?',
 						['1981-12-05T00:00:00', '1981-12-06T23:59:59'],
 						noCondOperators,

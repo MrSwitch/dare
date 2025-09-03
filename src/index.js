@@ -1,8 +1,10 @@
 import SQL, {raw, join, empty, bulk} from 'sql-template-tag';
 
-import getHandler from './get.js';
+import buildQuery, {generateSQLSelect} from './get.js';
 
 import DareError from './utils/error.js';
+
+import toArray from './utils/toArray.js';
 
 import validateBody from './utils/validate_body.js';
 
@@ -184,7 +186,7 @@ Dare.prototype.execute = async requestQuery => {
  * Engine, database engine
  * @type {Engine}
  */
-Dare.prototype.engine = 'mysql:5.7.40';
+Dare.prototype.engine = 'mysql:8.0.40';
 
 // Rowid, name of primary key field used in grouping operation: MySQL uses _rowid
 /** @type {string} */
@@ -363,6 +365,26 @@ Dare.prototype.after = function (resp) {
 };
 
 /**
+ * Determine whether to use CTE LIMIT Filtering
+ * @param {QueryOptions} options - Query options
+ * @returns {boolean} Whether to use CTE LIMIT Filtering
+ */
+Dare.prototype.applyCTELimitFiltering = function (options) {
+
+	// Cancel for old mysql
+	if (this.engine.startsWith('mysql:5')) {
+		return false;
+	}
+
+	// Cancel if limit is beyond a certain threshold
+	if (options.limit > 10_000) {
+		return false;
+	}
+
+	return true;
+};
+
+/**
  * Use
  * Creates a new instance of Dare and merges new options with the base options
  * @param {QueryOptions} options - set of instance options
@@ -483,10 +505,37 @@ Dare.prototype.get = async function get(table, fields, filter, options = {}) {
 
 	const req = await dareInstance.format_request(dareInstance.options);
 
-	const query = getHandler(req, dareInstance);
+	// Build the query
+	const query = buildQuery(req, dareInstance);
+
+	// Where the query has_sub_queries=true property, we should generate a CTE query
+	if (
+		query.has_sub_queries &&
+		(!opts.groupby || toArray(opts.groupby).join('') === 'id') &&
+		this.applyCTELimitFiltering(req)
+	) {
+		// Create a new formatted query, with just the fields
+		opts.fields = ['id'];
+		const cteInstance = this.use(opts);
+		const cteRequest = await cteInstance.format_request(
+			cteInstance.options
+		);
+		const cteQuery = buildQuery(cteRequest, cteInstance);
+		const sql_query = generateSQLSelect(cteQuery);
+		query.sql_joins.unshift(
+			SQL`JOIN cte ON (cte.id = ${raw(query.sql_alias)}.${raw(dareInstance.rowid)})`
+		);
+		query.sql_cte = SQL`cte AS (${sql_query})`;
+
+		// Disable repeating the start (offset)
+		query.start = undefined;
+	}
+
+	// If the query is empty, return an empty array
+	const sql_query = generateSQLSelect(query);
 
 	// Execute the query
-	const sql_response = await dareInstance.sql(query);
+	const sql_response = await dareInstance.sql(sql_query);
 
 	if (sql_response === undefined) {
 		return;
@@ -549,10 +598,11 @@ Dare.prototype.getCount = async function getCount(table, filter, options = {}) {
 
 	const req = await dareInstance.format_request(dareInstance.options);
 
-	const query = getHandler(req, dareInstance);
+	const query = buildQuery(req, dareInstance);
+	const sql_query = generateSQLSelect(query);
 
 	// Execute the query
-	const [resp] = await dareInstance.sql(query);
+	const [resp] = await dareInstance.sql(sql_query);
 
 	/*
 	 * Return the count
@@ -737,7 +787,8 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 		}
 
 		// Assign the query
-		sql_query = getHandler(getRequest, getInstance);
+		const query = buildQuery(getRequest, getInstance);
+		sql_query = generateSQLSelect(query);
 
 		fields.push(...walkRequestGetField(getRequest));
 	} else {
@@ -988,9 +1039,7 @@ function prepareSQLSet({
 		});
 
 		// Replace value with a question using any mapped fieldName
-		assignments.push(
-			SQL`${raw(sql_field)} = ${value}`
-		);
+		assignments.push(SQL`${raw(sql_field)} = ${value}`);
 	}
 
 	return join(assignments, ', ');
@@ -1140,7 +1189,9 @@ function formatInputValue({
 	}
 
 	// Format the field
-	const sql_field = (sql_alias ? `${sql_alias}.` : '') + dareInstance.identifierWrapper(field);
+	const sql_field =
+		(sql_alias ? `${sql_alias}.` : '') +
+		dareInstance.identifierWrapper(field);
 
 	/**
 	 * Format the set value

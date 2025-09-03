@@ -19,8 +19,15 @@ export default function buildQuery(opts, dareInstance) {
 	const {is_subquery} = opts;
 
 	// Traverse the Request Object
-	const {fields, has_many_join, sql_joins, sql_filter, groupby, orderby} =
-		traverse(opts, is_subquery, dareInstance);
+	const {
+		fields,
+		has_many_join,
+		has_sub_queries,
+		sql_joins,
+		sql_filter,
+		groupby,
+		orderby,
+	} = traverse(opts, is_subquery, dareInstance);
 
 	// Get the root tableID
 	const {sql_table, sql_alias} = opts;
@@ -154,22 +161,59 @@ export default function buildQuery(opts, dareInstance) {
 	}
 
 	// Put it all together
-	let sql = SQL`SELECT ${join(sql_fields)}
+	return {
+		sql_fields,
+		sql_table,
+		sql_alias,
+		sql_joins,
+		sql_filter,
+		sql_groupby,
+		sql_orderby,
+		limit: opts.limit,
+		start: opts.start,
+		alias,
+		has_sub_queries,
+	};
+}
+
+/**
+ * Generate a SQL SELECT statement
+ * @param {object} opts - Options for generating the SQL statement
+ * @param {Sql} [opts.sql_cte] - Common Table Expression (CTE) to use
+ * @param {Array} opts.sql_fields - Fields to select
+ * @param {string} opts.sql_table - The table to select from
+ * @param {string} opts.sql_alias - Alias for the table
+ * @param {Array} opts.sql_joins - Joins to include in the query
+ * @param {Array} opts.sql_filter - Filters to apply to the query
+ * @param {Array} opts.sql_groupby - Group by fields
+ * @param {Array} opts.sql_orderby - Order by fields
+ * @param {number} [opts.limit] - Limit the number of results
+ * @param {number} [opts.start] - Offset for the results
+ * @returns {Sql} - The SQL statement
+ */
+export function generateSQLSelect({
+	sql_cte,
+	sql_fields,
+	sql_table,
+	sql_alias,
+	sql_joins,
+	sql_filter,
+	sql_groupby,
+	sql_orderby,
+	limit,
+	start,
+}) {
+	return SQL`
+		${sql_cte ? SQL`WITH ${sql_cte}` : empty}
+		SELECT ${join(sql_fields)}
 		FROM ${raw(sql_table)} ${raw(sql_alias)}
 		${optionalJoin(sql_joins, '\n', '')}
 		${optionalJoin(sql_filter, ' AND ', 'WHERE ')}
 		${optionalJoin(sql_groupby, ',', 'GROUP BY ')}
 		${optionalJoin(sql_orderby, ',', 'ORDER BY ')}
-		${opts.limit ? SQL`LIMIT ${raw(opts.limit)}` : empty}
-		${opts.start ? SQL`OFFSET ${raw(opts.start)}` : empty}
+		${limit ? SQL`LIMIT ${raw(String(limit))}` : empty}
+		${start ? SQL`OFFSET ${raw(String(start))}` : empty}
 	`;
-
-	if (alias) {
-		// Wrap the whole thing in an alias
-		sql = SQL`(${sql}) AS "${raw(alias)}"`;
-	}
-
-	return sql;
 }
 
 function traverse(item, is_subquery, dareInstance) {
@@ -204,6 +248,7 @@ function traverse(item, is_subquery, dareInstance) {
 		fields,
 		list,
 		has_many_join: false,
+		has_sub_queries: false,
 	};
 
 	// Things to change if this isn't the root.
@@ -249,9 +294,13 @@ function traverse(item, is_subquery, dareInstance) {
 
 			// Make the sub-query
 			const sub_query = buildQuery(item, dareInstance);
+			const sql_sub_query = SQL`(${generateSQLSelect(sub_query)}) AS "${raw(sub_query.alias)}"`;
 
 			// Add the formatted field
-			fields.push(sub_query);
+			fields.push(sql_sub_query);
+
+			// Mark as having sub queries
+			resp.has_sub_queries = true;
 
 			// The rest has been handled in the sub-query
 			return resp;
