@@ -73,7 +73,7 @@
 		"is-ci": "^4.1.0",
 		"mocha": "^11.1.0",
 		"mocha-circleci-reporter": "0.0.3",
-		"mysql2": "3.14",
+		"mysql2": "3.15",
 		"pg": "^8.13.1",
 		"pg-query-stream": "^4.7.1",
 		"prettier": "^3.4.2",
