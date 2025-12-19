@@ -1,0 +1,76 @@
+name: Node CI
+
+on: [push]
+
+jobs:
+
+    test:
+        name: Run Tests
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@master
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+            - run: npm i
+            - name: run mocha tests
+              env:
+                MOCHA_FILE: /tmp/test-results/mocha.xml
+                COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+              run: |
+                mkdir /tmp/test-results
+                npm run test:ci
+
+    test-matrix:
+        name: Test node:${{ matrix.node_version }} on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                node_version: [20, 22, 24]
+                os: [ubuntu-latest, windows-latest, macOS-latest]
+
+        steps:
+            - uses: actions/checkout@master
+            - name: Use Node.js ${{ matrix.node_version }}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node_version }}.x
+            - run: npm i
+            - run: npm run build --if-present
+            - run: npm run spec
+
+    integrations:
+        name: Run Integration Tests
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                db_engine: [ 'mysql:5.6', 'mysql:5.7.40', 'mysql:8.0.23', 'mariadb:11.4', 'postgres:16.3' ]
+        steps:
+            - uses: actions/checkout@master
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+            - name: Run integration tests
+              run: |
+                  npm install
+                  DB_ENGINE=${{ matrix.db_engine }} npm run test:integration -- --exit --timeout=4000
+
+    release:
+        name: Release Package
+        needs: [test, test-matrix, integrations]
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write  # Required for OIDC
+            contents: write # to be able to publish a GitHub release
+            issues: write # to be able to comment on released issues
+            pull-requests: write # to be able to comment on released pull requests
+        steps:
+            - uses: actions/checkout@master
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+                  registry-url: 'https://registry.npmjs.org'
+            - run: npm i
+            - run: npx semantic-release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
