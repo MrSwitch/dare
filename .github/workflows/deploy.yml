@@ -61,7 +61,9 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             id-token: write  # Required for OIDC
-            contents: read
+            contents: write # to be able to publish a GitHub release
+            issues: write # to be able to comment on released issues
+            pull-requests: write # to be able to comment on released pull requests
         steps:
             - uses: actions/checkout@master
             - uses: actions/setup-node@v4
