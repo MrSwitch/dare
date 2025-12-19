@@ -1,3 +1,12 @@
+## [0.98.3](https://github.com/MrSwitch/dare/compare/v0.98.2...v0.98.3) (2025-12-19)
+
+
+### Bug Fixes
+
+* **ci:** publish to github repo permissions ([ffaf86e](https://github.com/MrSwitch/dare/commit/ffaf86ebe7f274d781cf6590236a50b8dd1a3b21))
+* **ci:** switch deploy to github actions ([#427](https://github.com/MrSwitch/dare/issues/427)) ([459ba00](https://github.com/MrSwitch/dare/commit/459ba0072006464449855dd716964bb03ffb7fd1))
+* deps and links ([#426](https://github.com/MrSwitch/dare/issues/426)) ([87888ce](https://github.com/MrSwitch/dare/commit/87888ce241f7dfe582a11e5dd70e1d4143b625df))
+
 ## [0.98.2](https://github.com/MrSwitch/dare/compare/v0.98.1...v0.98.2) (2025-08-14)
 
 
