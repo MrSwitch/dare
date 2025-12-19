@@ -16,6 +16,7 @@ jobs:
             - name: run mocha tests
               env:
                 MOCHA_FILE: /tmp/test-results/mocha.xml
+                COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
               run: |
                 mkdir /tmp/test-results
                 npm run test:ci
