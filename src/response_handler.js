@@ -72,7 +72,7 @@ function formatHandler(item, dareInstance) {
 			}
 		} else {
 			// This has multiple parts
-			// eslint-disable-next-line security/detect-unsafe-regex
+
 			const m = label.match(/^(?<label>[\s\w$.-]*)\[(?<keys>.*?)]$/i);
 
 			if (!m) {

@@ -13,7 +13,7 @@ export default function dareInstance() {
 	const dare = new Dare(options);
 
 	// Set a test instance
-	// eslint-disable-next-line arrow-body-style
+
 	dare.execute = async query => {
 		// DEBUG
 		debug(mysql.format(query.sql, query.values));

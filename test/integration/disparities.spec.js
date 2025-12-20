@@ -17,7 +17,7 @@ describe(`Disparities`, () => {
 		dare = new Dare(options);
 
 		// Set a test instance
-		// eslint-disable-next-line arrow-body-style
+
 		dare.execute = query => {
 			// DEBUG
 			debug(mysql.format(query.sql, query.values));
