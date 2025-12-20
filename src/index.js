@@ -75,7 +75,7 @@ import response_handler, {responseRowHandler} from './response_handler.js';
  * @typedef {object} Model
  * @property {Schema} [schema] - Model Schema
  * @property {string} [table] - Alias for the table
- * @property {Object<string, string>} [shortcut_map] - Shortcut map
+ * @property {Record<string, string>} [shortcut_map] - Shortcut map
  * @property {GetModelHandler} [get] - Get handler
  * @property {PostModelHandler} [post] - Post handler
  * @property {PatchModelHandler} [patch] - Patch handler
@@ -244,7 +244,6 @@ Dare.prototype.get_unique_alias = function () {
 	return this.identifierWrapper(`${prefix}${str}`);
 };
 
-// eslint-disable-next-line jsdoc/valid-types
 /** @type {(options: QueryOptions) => Promise<QueryOptions>} */
 Dare.prototype.format_request = format_request;
 
@@ -338,16 +337,13 @@ Dare.prototype.fulltextParser = function fulltextParser(input) {
 	return output.join(' ');
 };
 
-/* eslint-disable jsdoc/valid-types */
-/* eslint-disable jsdoc/check-tag-names */
 /**
  * Dare.after
  * Defines where the instance goes looking to apply post execution handlers and potentially mutate the response
  * @param {any} resp - Response object
  * @returns {any} response data formatted or not
  */
-/* eslint-enable jsdoc/valid-types */
-/* eslint-enable jsdoc/check-tag-names */
+
 Dare.prototype.after = function (resp) {
 	// Define the after handler
 	const handler = `after${this.options.method.replace(/^[a-z]/, m =>
@@ -370,7 +366,6 @@ Dare.prototype.after = function (resp) {
  * @returns {boolean} Whether to use CTE LIMIT Filtering
  */
 Dare.prototype.applyCTELimitFiltering = function (options) {
-
 	// Cancel for old mysql
 	if (this.engine.startsWith('mysql:5')) {
 		return false;

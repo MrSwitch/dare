@@ -1,8 +1,6 @@
-/* eslint-disable jsdoc/valid-types */
 /**
  * @import {RequestOptions, FieldAttributes, Engine} from '../../src/index.js'
  */
-/* eslint-enable jsdoc/valid-types */
 
 /**
  * @type {FieldAttributes}
