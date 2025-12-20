@@ -35,18 +35,9 @@ export default [
 			'no-param-reassign': 0,
 			'max-params': [2, {max: 4}],
 			'multiline-comment-style': [2, 'starred-block'],
-			'linebreak-style': 0,
-			'n/no-unsupported-features/es-syntax': [2, {ignores: ['modules']}],
-			'n/no-missing-import': [
-				'error',
-				{
-					allowModules: ['sql-template-tag'],
-				},
-			],
 			'prefer-promise-reject-errors': 2,
 			// "promise/prefer-await-to-then": 2,
 			'security/detect-unsafe-regex': 2,
-			'jsdoc/require-jsdoc': 0,
 		},
 	},
 
