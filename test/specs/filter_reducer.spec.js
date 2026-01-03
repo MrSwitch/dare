@@ -1,4 +1,4 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 
 /*
@@ -7,6 +7,7 @@ import Dare from '../../src/index.js';
  */
 
 import reduceConditions from '../../src/format/reducer_conditions.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('Filter Reducer', () => {
 	let dareInstance;
@@ -158,11 +159,11 @@ describe('Filter Reducer', () => {
 					dareInstance,
 				});
 
-				expect(query.sql).to.equal(sql);
-				expect(query.values).to.deep.equal(values);
+				assert.strictEqual(query.sql, sql);
+				assert.deepStrictEqual(query.values, values);
 
 				// Should not mutate the filters...
-				expect(filter).to.deep.eql(filter_cloned);
+				assert.deepStrictEqual(filter, filter_cloned);
 			});
 		});
 	});
@@ -195,8 +196,8 @@ describe('Filter Reducer', () => {
 					dareInstance: dareInst,
 				});
 
-				expect(query.sql).to.equal(sql);
-				expect(query.values).to.deep.equal(values);
+				assert.strictEqual(query.sql, sql);
+				assert.deepStrictEqual(query.values, values);
 			});
 		});
 	});
@@ -204,7 +205,7 @@ describe('Filter Reducer', () => {
 	describe('postgres engine version handling', () => {
 		const engine = 'postgres:16.3';
 
-		it('should search fulltext - with an index', () => {
+		it('should search fulltext - with an index', async () => {
 			const dareInst = dareInstance.use({engine});
 
 			const filter = {
@@ -222,11 +223,11 @@ describe('Filter Reducer', () => {
 				dareInstance: dareInst,
 			});
 
-			expect(query.sql).to.equal(sql);
-			expect(query.values).to.deep.equal(values);
+			assert.strictEqual(query.sql, sql);
+			assert.deepStrictEqual(query.values, values);
 		});
 
-		it('should search fulltext - and build an index', () => {
+		it('should search fulltext - and build an index', async () => {
 			const dareInst = dareInstance.use({engine});
 
 			const filter = {
@@ -244,11 +245,11 @@ describe('Filter Reducer', () => {
 				dareInstance: dareInst,
 			});
 
-			expect(query.sql).to.equal(sql);
-			expect(query.values).to.deep.equal(values);
+			assert.strictEqual(query.sql, sql);
+			assert.deepStrictEqual(query.values, values);
 		});
 
-		it(`quote json number and boolean values`, () => {
+		 it(`quote json number and boolean values`, () => {
 			const dareInst = dareInstance.use({engine});
 
 			const filter = {
@@ -269,8 +270,8 @@ describe('Filter Reducer', () => {
 			const sql = `(a.jsonSettings->>? = ? AND a.jsonSettings->>? ILIKE ?)`;
 			const values = ['key', '1', 'str', 'string%'];
 
-			expect(query.sql).to.equal(sql);
-			expect(query.values).to.deep.equal(values);
+			assert.strictEqual(query.sql, sql);
+			assert.deepStrictEqual(query.values, values);
 		});
 	});
 });

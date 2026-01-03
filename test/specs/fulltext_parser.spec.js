@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import Dare from '../../src/index.js';
+import {describe, it} from 'node:test';
 
 /**
  * @import {Engine} from '../../src/index.js'

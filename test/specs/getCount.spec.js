@@ -1,8 +1,9 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 
 // Test Generic DB functions
 import sqlEqual from '../lib/sql-equal.js';
+import {describe, it, beforeEach} from 'node:test';
 
 const id = 1;
 describe('getCount', () => {
@@ -16,8 +17,8 @@ describe('getCount', () => {
 		};
 	});
 
-	it('should contain the function dare.getCount', () => {
-		expect(dare.getCount).to.be.a('function');
+	it('should contain the function dare.getCount', async () => {
+		assert.strictEqual(typeof dare.getCount, 'function');
 	});
 
 	it('should generate a SELECT statement and execute dare.execute', async () => {
@@ -26,13 +27,13 @@ describe('getCount', () => {
 				sql,
 				'SELECT COUNT(DISTINCT a._rowid) AS "count" FROM test a WHERE a.id = ? LIMIT 1'
 			);
-			expect(values).to.deep.equal([id]);
+			assert.deepStrictEqual(values, [id]);
 			return [{count}];
 		};
 
 		const resp = await dare.getCount('test', {id});
 
-		expect(resp).to.eql(count);
+		assert.strictEqual(resp, count);
 	});
 
 	it('should remove the groupby to the fields section', async () => {
@@ -44,7 +45,7 @@ describe('getCount', () => {
 			`;
 
 			sqlEqual(sql, expected);
-			expect(values).to.deep.equal([]);
+			assert.deepStrictEqual(values, []);
 
 			return [{count}];
 		};
@@ -55,7 +56,7 @@ describe('getCount', () => {
 			groupby: 'DATE(created_time)',
 		});
 
-		expect(resp).to.eql(count);
+		assert.strictEqual(resp, count);
 	});
 
 	it('should apply multiple groupby', async () => {
@@ -67,7 +68,7 @@ describe('getCount', () => {
 			`;
 
 			sqlEqual(sql, expected);
-			expect(values).to.deep.equal([]);
+			assert.deepStrictEqual(values, []);
 
 			return [{count}];
 		};
@@ -80,7 +81,7 @@ describe('getCount', () => {
 			limit: 10,
 		});
 
-		expect(resp).to.eql(count);
+		assert.strictEqual(resp, count);
 	});
 
 	it('should not mutate the request object', async () => {
@@ -98,10 +99,10 @@ describe('getCount', () => {
 		await dare.getCount(request);
 
 		// Check shallow clone
-		expect(request).to.deep.equal(original);
+		assert.deepStrictEqual(request, original);
 
 		// Check deep clone
-		expect(request).to.have.deep.property('fields', ['id', 'name']);
-		expect(request).to.have.deep.property('orderby', ['name']);
+		assert.deepStrictEqual(request.fields,  ['id', 'name']);
+		assert.deepStrictEqual(request.orderby,  ['name']);
 	});
 });

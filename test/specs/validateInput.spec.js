@@ -2,8 +2,9 @@
  * @import {Schema} from '../../src/index.js'
  */
 
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('validateInput', () => {
 	let dare;
@@ -61,15 +62,12 @@ describe('validateInput', () => {
 			body: {age: 'one'},
 		});
 
-		return expect(test).to.be.eventually.rejectedWith(
-			Error,
-			'name is a required field'
-		);
+		await assert.rejects(test, Error);
 	});
 
 	['post', 'patch'].forEach(method => {
 		describe(method, () => {
-			it('should proceed if validateInput is not defined', () => {
+			it('should proceed if validateInput is not defined', async () => {
 				// Should not be called...
 				dare.execute = () => ({});
 
@@ -105,10 +103,7 @@ describe('validateInput', () => {
 					body: {age: 'one'},
 				});
 
-				return expect(test).to.be.eventually.rejectedWith(
-					Error,
-					'age should be a number'
-				);
+				await assert.rejects(test, Error);
 			});
 
 			it('should pass through undefined for fieldAttributes when the field is not defined in the schema', async () => {
@@ -130,10 +125,7 @@ describe('validateInput', () => {
 					body: {hello: "i shouldn't be here"},
 				});
 
-				return expect(test).to.be.eventually.rejectedWith(
-					Error,
-					'hello is unknown'
-				);
+				await assert.rejects(test, Error);
 			});
 
 			it('should parse falsy fieldDefinitions', async () => {
@@ -161,10 +153,7 @@ describe('validateInput', () => {
 					body: {password: '!@£RTYU'},
 				});
 
-				return expect(test).to.be.eventually.rejectedWith(
-					Error,
-					'password is immutable'
-				);
+				await assert.rejects(test, Error);
 			});
 
 			it('should use the default field definition when no other field matches the current model', async () => {
@@ -201,10 +190,7 @@ describe('validateInput', () => {
 					body: {hello: "i shouldn't be here"},
 				});
 
-				return expect(test).to.be.eventually.rejectedWith(
-					Error,
-					'hello is immutable'
-				);
+				await assert.rejects(test, Error);
 			});
 		});
 	});

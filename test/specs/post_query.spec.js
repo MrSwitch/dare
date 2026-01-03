@@ -1,4 +1,4 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 import DareError from '../../src/utils/error.js';
 // Create a schema
@@ -6,6 +6,7 @@ import options from '../data/options.js';
 
 // Test Generic DB functions
 import sqlEqual from '../lib/sql-equal.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('post from query', () => {
 	let dare;
@@ -33,7 +34,7 @@ describe('post from query', () => {
 				ON DUPLICATE KEY UPDATE comments._rowid=comments._rowid
 			`
 			);
-			expect(values).to.deep.equal(['Liz']);
+			assert.deepStrictEqual(values, ['Liz']);
 			return {id: 1};
 		};
 
@@ -66,7 +67,7 @@ describe('post from query', () => {
 			duplicate_keys: 'ignore',
 		});
 
-		expect(resp).to.have.property('id', 1);
+		assert.strictEqual(resp.id, 1);
 	});
 
 	it('should throw an error if query fields include a nested structures', async () => {
@@ -84,9 +85,11 @@ describe('post from query', () => {
 			duplicate_keys: 'ignore',
 		});
 
-		await expect(test)
-			.to.be.eventually.rejectedWith(DareError)
-			.and.have.property('code', DareError.INVALID_REQUEST);
+		await assert.rejects(test, (error) => {
+			assert(error instanceof DareError);
+			assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+			return true;
+		});
 	});
 
 	it('should throw an error if query includes a generated function', async () => {
@@ -99,8 +102,10 @@ describe('post from query', () => {
 			duplicate_keys: 'ignore',
 		});
 
-		return expect(test)
-			.to.be.eventually.rejectedWith(DareError)
-			.and.have.property('code', DareError.INVALID_REQUEST);
+		await assert.rejects(test, (error) => {
+			assert(error instanceof DareError);
+			assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+			return true;
+		});
 	});
 });

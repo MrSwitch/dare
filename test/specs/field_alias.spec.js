@@ -1,6 +1,7 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 import DareError from '../../src/utils/error.js';
+import {describe, it, beforeEach} from 'node:test';
 
 // Create a schema
 
@@ -31,7 +32,7 @@ describe('field alias', () => {
 
 	describe('get - SELECT', () => {
 		it('should map field aliases defined in the schema into SELECT requests Fields and Filters', async () => {
-			let _sql;
+			let _sql = '';
 
 			// Stub the execute function
 			dare.sql = ({sql}) => {
@@ -99,33 +100,33 @@ describe('field alias', () => {
 			});
 
 			// Field alias
-			expect(_sql).to.contain('email AS "emailAddress"');
-			expect(_sql).to.contain('email AS "field"');
-			expect(_sql).to.contain('LOWER(a.email) AS "emailaddress"');
+			assert.ok(_sql.includes('email AS "emailAddress"'));
+			assert.ok(_sql.includes('email AS "field"'));
+			assert.ok(_sql.includes('LOWER(a.email) AS "emailaddress"'));
 
 			// Field SQL Alias
-			expect(_sql).to.contain('!ISNULL(a.email) AS "hasEmail"');
-			expect(_sql).to.contain('!ISNULL(a.email) AS "alternateHasEmail"');
-			expect(_sql).to.contain(
+			assert.ok(_sql.includes('!ISNULL(a.email) AS "hasEmail"'));
+			assert.ok(_sql.includes('!ISNULL(a.email) AS "alternateHasEmail"'));
+			assert(_sql.includes(
 				'IF(!ISNULL(a.email), "YES", "NO") AS "yesNoEmail"'
-			);
+			));
 
 			// Standard
-			expect(_sql).to.contain(',a.country_id');
+			assert.ok(_sql.includes(',a.country_id'));
 
 			// Filter
-			expect(_sql).to.contain('email LIKE ?');
-			expect(_sql).to.contain('!ISNULL(a.email) = ?');
-			expect(_sql).to.contain('country_id = ?');
+			assert.ok(_sql.includes('email LIKE ?'));
+			assert.ok(_sql.includes('!ISNULL(a.email) = ?'));
+			assert.ok(_sql.includes('country_id = ?'));
 
 			// Join
-			expect(_sql).to.contain('email IS NOT NULL');
-			expect(_sql).to.contain('!ISNULL(a.email) != ?');
-			expect(_sql).to.contain('country_id IS NOT NULL');
+			assert.ok(_sql.includes('email IS NOT NULL'));
+			assert.ok(_sql.includes('!ISNULL(a.email) != ?'));
+			assert.ok(_sql.includes('country_id IS NOT NULL'));
 		});
 
 		it('cross table alias referencing', async () => {
-			let _sql;
+			let _sql = '';
 
 			// Stub the execute function
 			dare.sql = ({sql}) => {
@@ -181,26 +182,26 @@ describe('field alias', () => {
 				limit,
 			});
 
-			expect(_sql).to.contain('email AS "Email Field"');
-			expect(_sql).to.contain('email AS "Email Alias"');
-			expect(_sql).to.contain('LOWER(b.email) AS "email_field"');
-			expect(_sql).to.contain('LOWER(b.email) AS "email_alias"');
+			assert.ok(_sql.includes('email AS "Email Field"'));
+			assert.ok(_sql.includes('email AS "Email Alias"'));
+			assert.ok(_sql.includes('LOWER(b.email) AS "email_field"'));
+			assert.ok(_sql.includes('LOWER(b.email) AS "email_alias"'));
 
-			expect(_sql).to.contain(
+			assert(_sql.includes(
 				'IF(!ISNULL(b.email), "Yes", "No") AS "Has Email alias"'
-			);
+			));
 
-			expect(_sql).to.contain('email LIKE ?');
-			expect(_sql).to.contain('!ISNULL(b.email) = ?');
-			expect(_sql).to.contain('country_id = ?');
-			expect(_sql).to.contain('email IS NOT NULL');
-			expect(_sql).to.contain('country_id IS NOT NULL');
+			assert.ok(_sql.includes('email LIKE ?'));
+			assert.ok(_sql.includes('!ISNULL(b.email) = ?'));
+			assert.ok(_sql.includes('country_id = ?'));
+			assert.ok(_sql.includes('email IS NOT NULL'));
+			assert.ok(_sql.includes('country_id IS NOT NULL'));
 		});
 	});
 
 	describe('patch - UPDATE', () => {
 		it('should map field aliases defined in the schema into UPDATE filters', async () => {
-			let _sql;
+			let _sql = '';
 
 			// Stub the execute function
 			dare.sql = ({sql}) => {
@@ -226,10 +227,10 @@ describe('field alias', () => {
 				},
 			});
 
-			expect(_sql).to.contain('`email` = ?');
-			expect(_sql).to.contain('`country_id` = ?');
-			expect(_sql).to.contain('email LIKE ?');
-			expect(_sql).to.contain('!ISNULL(a.email) = ?');
+			assert.ok(_sql.includes('`email` = ?'));
+			assert.ok(_sql.includes('`country_id` = ?'));
+			assert.ok(_sql.includes('email LIKE ?'));
+			assert.ok(_sql.includes('!ISNULL(a.email) = ?'));
 		});
 
 		it('should throw an error trying to patch a SQL Alias', async () => {
@@ -244,15 +245,17 @@ describe('field alias', () => {
 				},
 			});
 
-			await expect(patch)
-				.to.be.eventually.rejectedWith(DareError)
-				.and.have.property('code', DareError.INVALID_REQUEST);
+			await assert.rejects(patch, (error) => {
+				assert(error instanceof DareError);
+				assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+				return true;
+			});
 		});
 	});
 
 	describe('del - DELETE', () => {
 		it('should map field aliases defined in the schema into DELETE filters', async () => {
-			let _sql;
+			let _sql = '';
 
 			// Stub the execute function
 			dare.sql = ({sql}) => {
@@ -274,15 +277,15 @@ describe('field alias', () => {
 				},
 			});
 
-			expect(_sql).to.contain('users.email LIKE ?');
-			expect(_sql).to.contain('!ISNULL(users.email) = ?');
-			expect(_sql).to.contain('users.country_id = ?');
+			assert.ok(_sql.includes('users.email LIKE ?'));
+			assert.ok(_sql.includes('!ISNULL(users.email) = ?'));
+			assert.ok(_sql.includes('users.country_id = ?'));
 		});
 	});
 
 	describe('post - INSERT', () => {
 		it('should map field aliases defined in the schema into INSERT body', async () => {
-			let _sql;
+			let _sql = '';
 
 			// Stub the execute function
 			dare.sql = ({sql}) => {
@@ -304,11 +307,11 @@ describe('field alias', () => {
 				duplicate_keys_update: ['emailAddress', 'country_id'],
 			});
 
-			expect(_sql).to.contain('(`email`,`country_id`)');
+			assert.ok(_sql.includes('(`email`,`country_id`)'));
 
 			// ON DUPLICATE KEY UPDATE
-			expect(_sql).to.contain('`email`=VALUES(`email`)');
-			expect(_sql).to.contain('`country_id`=VALUES(`country_id`)');
+			assert.ok(_sql.includes('`email`=VALUES(`email`)'));
+			assert.ok(_sql.includes('`country_id`=VALUES(`country_id`)'));
 		});
 
 		it('should throw an error trying to post to a SQL Alias field', async () => {
@@ -320,9 +323,11 @@ describe('field alias', () => {
 				},
 			});
 
-			await expect(post)
-				.to.be.eventually.rejectedWith(DareError)
-				.and.have.property('code', DareError.INVALID_REQUEST);
+			await assert.rejects(post, (error) => {
+				assert(error instanceof DareError);
+				assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+				return true;
+			});
 		});
 	});
 });

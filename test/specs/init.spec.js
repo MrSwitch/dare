@@ -2,14 +2,15 @@
  * @import {QueryOptions} from '../../src/index.js'
  */
 
-import {expect} from 'chai';
+import assert from 'node:assert';
+import {describe, it, beforeEach} from 'node:test';
 import Dare, {DareError} from '../../src/index.js';
 import clone from 'tricks/object/clone.js';
 
 describe('Dare', () => {
 	it('should be a constructor', () => {
 		const dare = new Dare();
-		expect(dare.constructor).to.eql(Dare);
+		assert.strictEqual(dare.constructor, Dare);
 	});
 
 	it('should define default options', () => {
@@ -19,19 +20,20 @@ describe('Dare', () => {
 		const dare = new Dare({
 			models,
 		});
-		expect(dare.options).to.have.property('models', models);
+		assert.strictEqual(dare.options.models, models);
 	});
 
 	it('should export the DareError object', () => {
-		expect(Dare.DareError).to.eql(DareError);
+		assert.strictEqual(Dare.DareError, DareError);
 	});
 
-	it('should throw errors if dare.execute is not defined', () => {
+	it('should throw errors if dare.execute is not defined', async () => {
 		const dare = new Dare();
 
 		const test = dare.sql('SELECT 1=1');
 
-		return expect(test).to.be.eventually.rejectedWith(
+		await assert.rejects(
+			test,
 			DareError,
 			'Define dare.execute to continue'
 		);
@@ -49,7 +51,7 @@ describe('Dare', () => {
 			fields: ['name'],
 		});
 
-		expect(resp).to.have.property('name', 'Jupiter');
+		assert.strictEqual(resp.name, 'Jupiter');
 	});
 
 	describe('dare.use to extend the instance', () => {
@@ -84,14 +86,14 @@ describe('Dare', () => {
 			});
 
 			// Check the child assigned new values
-			expect(dareChild.options).to.have.property('limit', 100);
+			assert.strictEqual(dareChild.options.limit, 100);
 
 			// Check the child retains parent properties
-			expect(dareChild.options).to.have.property('models');
-			expect(dareChild.execute).to.equal(dare.execute);
+			assert.ok('models' in dareChild.options);
+			assert.strictEqual(dareChild.execute, dare.execute);
 
 			// Check the parent was not affected by the child configuration
-			expect(dare.options).to.not.have.property('limit');
+			assert.ok(!('limit' in dare.options));
 		});
 
 		it('should inherit but not leak when extending schema', () => {
@@ -117,20 +119,16 @@ describe('Dare', () => {
 			const dare2 = dare.use(options2);
 
 			// Should not share same objects as instance it extended
-			expect(dare.options.models.users).to.not.equal(
-				dare2.options.models.users
-			);
+			assert.notStrictEqual(dare.options.models.users, dare2.options.models.users);
 
 			// Should not mutate instance it extended
-			// eslint-disable-next-line no-unused-expressions
-			expect(dare.options.models.different).to.be.undefined;
+			 
+			assert.strictEqual(dare.options.models.different, undefined);
 
-			expect(dare.options.models.users.schema.name.writable).to.not.equal(
-				dare2.options.models.users.schema.name.writable
-			);
+			assert.notStrictEqual(dare.options.models.users.schema.name.writable, dare2.options.models.users.schema.name.writable);
 
 			// Should merge settings for field definitiions... e.g.
-			expect(dare2.options.models.users.schema).to.deep.equal({
+			assert.deepStrictEqual(dare2.options.models.users.schema, {
 				name: {
 					type: 'string',
 					writable: false,
@@ -138,10 +136,10 @@ describe('Dare', () => {
 			});
 
 			// Should not mutate the inheritted options
-			expect(options).to.deep.equal(options_cloned);
+			assert.deepStrictEqual(options, options_cloned);
 
 			// Should not mutate the new options input
-			expect(options2).to.deep.equal(options2_cloned);
+			assert.deepStrictEqual(options2, options2_cloned);
 		});
 	});
 });

@@ -1,6 +1,7 @@
 import Dare from '../../src/index.js';
 import Debug from 'debug';
-import {expect} from 'chai';
+import assert from 'node:assert/strict';
+
 import mysql from 'mysql2/promise';
 import db from './helpers/db.js';
 import {options} from './helpers/api.js';
@@ -64,7 +65,7 @@ describe(`getFieldKey`, () => {
 				{orderby: 'firstName'}
 			);
 
-			expect(resp).to.have.property('firstName', firstName);
+			assert.equal(resp.firstName, firstName);
 		}
 
 		// Post using camelCase
@@ -80,7 +81,7 @@ describe(`getFieldKey`, () => {
 				{orderby: 'firstName'}
 			);
 
-			expect(resp).to.have.property('firstName', firstName);
+			assert.equal(resp.firstName, firstName);
 		}
 	});
 });

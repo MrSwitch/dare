@@ -1,8 +1,9 @@
 /* eslint quotes: ["error", "single", { "avoidEscape": true, "allowTemplateLiterals": true }]*/
-import {expect} from 'chai';
+import assert from 'node:assert';
 
 // Test Generic DB functions
 import group_concat from '../../src/utils/group_concat.js';
+import {describe, it} from 'node:test';
 
 const rowid = '_rowid';
 
@@ -12,11 +13,11 @@ const MYSQL_57 = 'mysql:5.7.40';
 
 [MYSQL_57, MYSQL_56, POSTGRES].forEach(DB_ENGINE => {
 	describe(`utils/group_concat: (mysql ${DB_ENGINE})`, () => {
-		it('should return a function', () => {
-			expect(group_concat).to.be.a('function');
+		it('should return a function', async () => {
+			assert.strictEqual(typeof group_concat, 'function');
 		});
 
-		it('should reduce an array of fields to a GROUP_CONCAT statement', () => {
+		it('should reduce an array of fields to a GROUP_CONCAT statement', async () => {
 			const gc = group_concat({
 				fields: [
 					{
@@ -40,11 +41,11 @@ const MYSQL_57 = 'mysql:5.7.40';
 				[MYSQL_56]: `CONCAT('[', GROUP_CONCAT(IF(a._rowid IS NOT NULL, CONCAT_WS('', '[', '"', REPLACE(REPLACE(table.a, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"', ',', '"', REPLACE(REPLACE(table.b, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"', ']'), NULL)), ']')`,
 			}[DB_ENGINE || 'default'];
 
-			expect(gc.expression).to.eql(expectSQLEqual);
-			expect(gc.label).to.eql('collection[a,b]');
+			assert.strictEqual(gc.expression, expectSQLEqual);
+			assert.deepStrictEqual(gc.label, 'collection[a,b]');
 		});
 
-		it('should not wrap fields which are marked as aggregating the row', () => {
+		it('should not wrap fields which are marked as aggregating the row', async () => {
 			const gc = group_concat({
 				fields: [
 					{
@@ -66,11 +67,11 @@ const MYSQL_57 = 'mysql:5.7.40';
 				[MYSQL_56]: `CONCAT_WS('', '[', '"', REPLACE(REPLACE(table.a, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"', ',', '"', REPLACE(REPLACE(table.b, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"', ']')`,
 			}[DB_ENGINE || 'default'];
 
-			expect(gc.expression).to.eql(expectSQLEqual);
-			expect(gc.label).to.eql('a,b');
+			assert.strictEqual(gc.expression, expectSQLEqual);
+			assert.strictEqual(gc.label, 'a,b');
 		});
 
-		it('should return a single value if one is given and is an aggregate', () => {
+		it('should return a single value if one is given and is an aggregate', async () => {
 			const gc = group_concat({
 				fields: [
 					{
@@ -82,11 +83,11 @@ const MYSQL_57 = 'mysql:5.7.40';
 				engine: DB_ENGINE,
 			});
 
-			expect(gc.expression).to.eql('table.a');
-			expect(gc.label).to.eql('a');
+			assert.strictEqual(gc.expression, 'table.a');
+			assert.strictEqual(gc.label, 'a');
 		});
 
-		it('should return an array of values for many results', () => {
+		it('should return an array of values for many results', async () => {
 			const gc = group_concat({
 				fields: [
 					{
@@ -106,12 +107,12 @@ const MYSQL_57 = 'mysql:5.7.40';
 				[MYSQL_56]: `CONCAT('[', GROUP_CONCAT(IF(a._rowid IS NOT NULL, CONCAT_WS('', '[', '"', REPLACE(REPLACE(table.a, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"', ']'), NULL)), ']')`,
 			}[DB_ENGINE || 'default'];
 
-			expect(gc.expression).to.eql(expectSQLEqual);
+			assert.strictEqual(gc.expression, expectSQLEqual);
 
-			expect(gc.label).to.eql('collection[a]');
+			assert.deepStrictEqual(gc.label, 'collection[a]');
 		});
 
-		it('should infer from the label whether results are implicitly aggregated', () => {
+		it('should infer from the label whether results are implicitly aggregated', async () => {
 			const gc = group_concat({
 				fields: [
 					{
@@ -123,8 +124,8 @@ const MYSQL_57 = 'mysql:5.7.40';
 				engine: DB_ENGINE,
 			});
 
-			expect(gc.expression).to.eql('table.a');
-			expect(gc.label).to.eql('a');
+			assert.strictEqual(gc.expression, 'table.a');
+			assert.strictEqual(gc.label, 'a');
 
 			const gc_many = group_concat({
 				fields: [
@@ -147,8 +148,8 @@ const MYSQL_57 = 'mysql:5.7.40';
 				[MYSQL_56]: `CONCAT_WS('', '[', '"', REPLACE(REPLACE(table.a, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"', ',', '"', REPLACE(REPLACE(table.b, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"', ']')`,
 			}[DB_ENGINE || 'default'];
 
-			expect(gc_many.expression).to.eql(expectSQLEqual);
-			expect(gc_many.label).to.eql('a,b');
+			assert.strictEqual(gc_many.expression, expectSQLEqual);
+			assert.strictEqual(gc_many.label, 'a,b');
 		});
 	});
 });

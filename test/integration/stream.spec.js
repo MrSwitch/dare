@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+
 import Dare from '../../src/index.js';
 import Debug from 'debug';
 import mysql from 'mysql2/promise';

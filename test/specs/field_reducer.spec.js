@@ -1,10 +1,11 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 /*
  * Field Reducer
  * Extract the fields from the current dataset
  */
 
 import field_reducer from '../../src/format/field_reducer.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('Field Reducer', () => {
 	let dareInstance;
@@ -202,21 +203,21 @@ describe('Field Reducer', () => {
 				const f = input.reduce(fr, []);
 
 				// Expect the formatted list of fields to be identical to the inputted value
-				expect(f).to.eql(expected);
+				assert.deepStrictEqual(f, expected);
 
 				if (expect_join_fields) {
-					expect(joined.b_table.fields).to.eql(expect_join_fields);
+					assert.deepStrictEqual(joined.b_table.fields, expect_join_fields);
 				} else {
-					expect(joined).to.not.have.property('b_table');
+					assert.ok(!('b_table' in joined));
 				}
 			});
 		});
 	});
 
-	it('should return generated fields', () => {
+	it('should return generated fields', async () => {
 		const table_schema = {
 			generated_field() {
-				expect(this).to.be.equal(dareInstance);
+				assert.strictEqual(this, dareInstance);
 				return 'another_field';
 			},
 		};
@@ -237,10 +238,10 @@ describe('Field Reducer', () => {
 		const f = ['generated_field'].reduce(fr, []);
 
 		// Expect the formatted list of fields to be identical to the inputted value
-		expect(f[0]).to.have.property('generated_field', 'another_field');
+		assert.strictEqual(f[0].generated_field, 'another_field');
 	});
 
-	it('should format datetime fields', () => {
+	it('should format datetime fields', async () => {
 		const table_schema = {
 			created: {
 				type: 'datetime',
@@ -263,13 +264,11 @@ describe('Field Reducer', () => {
 		const f = ['created'].reduce(fr, []);
 
 		// Expect the formatted list of fields to be identical to the inputted value
-		expect(f[0]).to.have.property(
-			'created',
-			"DATE_FORMAT(created,'%Y-%m-%dT%TZ')"
-		);
+		assert('created' in f[0]);
+		assert.strictEqual(f[0].created, "DATE_FORMAT(created,'%Y-%m-%dT%TZ')");
 	});
 
-	it('should format type=json fields', () => {
+	it('should format type=json fields', async () => {
 		const table_schema = {
 			meta: {
 				type: 'json',
@@ -292,21 +291,19 @@ describe('Field Reducer', () => {
 		const f = ['meta'].reduce(fr, []);
 
 		// Expect the formatted list of fields to be identical to the inputted value
-		expect(f[0]).to.equal('meta');
+		assert.strictEqual(f[0], 'meta');
 
 		const [postProcessing] = dareInstance.generated_fields;
 
-		expect(postProcessing).to.be.a('object');
+		assert.strictEqual(typeof postProcessing, "object");
 
-		expect(postProcessing).to.have.property('label', 'meta');
-		expect(postProcessing).to.have.property(
-			'field_alias_path',
-			field_alias_path
-		);
-		expect(postProcessing).to.have.property('handler');
+		assert.strictEqual(postProcessing.label, 'meta');
+		assert('field_alias_path' in postProcessing);
+		assert.strictEqual(postProcessing.field_alias_path, field_alias_path);
+		assert.ok('handler' in postProcessing);
 	});
 
-	it('should format aliased fields', () => {
+	it('should format aliased fields', async () => {
 		const table_schema = {
 			fieldAlias: 'field',
 		};
@@ -331,6 +328,6 @@ describe('Field Reducer', () => {
 		].reduce(fr, []);
 
 		// Expect the formatted list of fields to be identical to the inputted value
-		expect(f[0]).to.have.property('Label Alias', 'joinTable.field');
+		assert.strictEqual(f[0]['Label Alias'], 'joinTable.field');
 	});
 });
