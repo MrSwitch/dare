@@ -1,10 +1,11 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 /*
  * Field Reducer
  * Extract the fields from the current dataset
  */
 
 import orderby_reducer from '../../src/format/orderby_reducer.js';
+import {describe, it} from 'node:test';
 
 describe('Orderby Reducer', () => {
 	describe('should split the current fields belonging to the current and joined tables', () => {
@@ -57,12 +58,12 @@ describe('Orderby Reducer', () => {
 				const f = input.reduce(reducer, []);
 
 				// Expect the formatted list of fields to be identical to the inputted value
-				expect(f).to.eql(expected);
+				assert.deepStrictEqual(f, expected);
 
 				if (expect_join_fields) {
-					expect(joined.b_table.orderby).to.eql(expect_join_fields);
+					assert.deepStrictEqual(joined.b_table.orderby, expect_join_fields);
 				} else {
-					expect(joined).to.not.have.property('b_table');
+					assert.ok(!('b_table' in joined));
 				}
 			});
 		});

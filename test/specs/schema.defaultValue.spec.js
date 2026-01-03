@@ -1,7 +1,8 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 
 import getFieldAttributes from '../../src/utils/field_attributes.js';
+import {describe, it, beforeEach} from 'node:test';
 
 function spy(obj, func, callback) {
 	const history = [];
@@ -41,13 +42,13 @@ describe('schema.defaultValue', () => {
 	describe('getFieldAttributes', () => {
 		const field = 'field';
 
-		it('defaultValue should not occur by default', () => {
+		it('defaultValue should not occur by default', async () => {
 			const attr = getFieldAttributes(field, {}, dareInstance);
-			expect(attr).to.not.have.property('defaultValue');
+			assert.ok(!('defaultValue' in attr));
 		});
 
 		[undefined, 1, null, 'string'].forEach(defaultValue => {
-			it(`should expand defaultValue, ${defaultValue}`, () => {
+			 it(`should expand defaultValue, ${defaultValue}`, () => {
 				const attr = getFieldAttributes(
 					field,
 					{
@@ -60,7 +61,7 @@ describe('schema.defaultValue', () => {
 					},
 					dareInstance
 				);
-				expect(attr).to.have.property('defaultValue', defaultValue);
+				assert.strictEqual(attr.defaultValue, defaultValue);
 			});
 		});
 	});
@@ -83,7 +84,7 @@ describe('schema.defaultValue', () => {
 					fields: ['id', 'name'],
 				});
 
-				expect(resp.join).to.have.property('status', defaultValue);
+				assert.strictEqual(resp.join.status, defaultValue);
 			});
 		});
 	});
@@ -97,8 +98,8 @@ describe('schema.defaultValue', () => {
 			});
 
 			const [{sql, values}] = history.at(0);
-			expect(sql).to.include('`status`');
-			expect(values).to.include('active');
+			assert(typeof sql === "string" ? sql.includes('`status`') : sql.indexOf('`status`') !== -1);
+			assert(typeof values === "string" ? values.includes('active') : values.indexOf('active') !== -1);
 		});
 
 		it('should be overrideable', async () => {
@@ -110,8 +111,8 @@ describe('schema.defaultValue', () => {
 			});
 
 			const [{sql, values}] = history.at(0);
-			expect(sql).to.include('`status`');
-			expect(values).to.include('overridden');
+			assert(typeof sql === "string" ? sql.includes('`status`') : sql.indexOf('`status`') !== -1);
+			assert(typeof values === "string" ? values.includes('overridden') : values.indexOf('overridden') !== -1);
 		});
 
 		it('should be overrideable, even with different formatting', async () => {
@@ -128,10 +129,10 @@ describe('schema.defaultValue', () => {
 			});
 
 			const [{sql, values}] = history.at(0);
-			expect(sql).to.include('`status`');
-			expect(sql).to.not.include('Status');
-			expect(values).to.include('overridden');
-			expect(values).to.not.include('active');
+			assert(typeof sql === "string" ? sql.includes('`status`') : sql.indexOf('`status`') !== -1);
+			assert(typeof sql === "string" ? !sql.includes('Status') : sql.indexOf('Status') === -1);
+			assert(typeof values === "string" ? values.includes('overridden') : values.indexOf('overridden') !== -1);
+			assert(typeof values === "string" ? !values.includes('active') : values.indexOf('active') === -1);
 		});
 
 		it('should be removed', async () => {
@@ -147,9 +148,9 @@ describe('schema.defaultValue', () => {
 			 * This should be akin to removing the defaultValue too
 			 */
 			const [{sql, values}] = history.at(0);
-			expect(sql).to.include('`status`');
-			expect(sql).to.include('DEFAULT');
-			expect(values).to.not.include(undefined);
+			assert(typeof sql === "string" ? sql.includes('`status`') : sql.indexOf('`status`') !== -1);
+			assert(typeof sql === "string" ? sql.includes('DEFAULT') : sql.indexOf('DEFAULT') !== -1);
+			assert(typeof values === "string" ? !values.includes(undefined) : values.indexOf(undefined) === -1);
 		});
 
 		it('should pass through just the defaultValue.post to validateInput handler', async () => {
@@ -171,7 +172,7 @@ describe('schema.defaultValue', () => {
 				([, propName]) => propName === 'status'
 			);
 
-			expect(attr).to.have.property('defaultValue', 'active');
+			assert.strictEqual(attr.defaultValue, 'active');
 		});
 	});
 
@@ -196,8 +197,8 @@ describe('schema.defaultValue', () => {
 
 				const [{sql, values}] = history.at(0);
 
-				expect(sql).to.include('status = ');
-				expect(values).to.include(defaultValue);
+				assert(typeof sql === "string" ? sql.includes('status = ') : sql.indexOf('status = ') !== -1);
+				assert(typeof values === "string" ? values.includes(defaultValue) : values.indexOf(defaultValue) !== -1);
 			});
 
 			['filter', 'join'].forEach(condition => {
@@ -221,9 +222,9 @@ describe('schema.defaultValue', () => {
 
 					const [{sql, values}] = history.at(0);
 
-					expect(sql).to.include('status = ');
-					expect(values).to.not.include(defaultValue);
-					expect(values).to.include('boom');
+					assert(typeof sql === "string" ? sql.includes('status = ') : sql.indexOf('status = ') !== -1);
+					assert(typeof values === "string" ? !values.includes(defaultValue) : values.indexOf(defaultValue) === -1);
+					assert(typeof values === "string" ? values.includes('boom') : values.indexOf('boom') !== -1);
 				});
 
 				it(`should be overideable within a dare.${method}() call '${condition}' using an alias`, async () => {
@@ -251,9 +252,9 @@ describe('schema.defaultValue', () => {
 
 					const [{sql, values}] = history.at(0);
 
-					expect(sql).to.include('status = ');
-					expect(values).to.not.include(defaultValue);
-					expect(values).to.include('boom');
+					assert(typeof sql === "string" ? sql.includes('status = ') : sql.indexOf('status = ') !== -1);
+					assert(typeof values === "string" ? !values.includes(defaultValue) : values.indexOf(defaultValue) === -1);
+					assert(typeof values === "string" ? values.includes('boom') : values.indexOf('boom') !== -1);
 				});
 
 				it(`should be undefinedable within a dare.${method}() call '${condition}'`, async () => {
@@ -280,9 +281,9 @@ describe('schema.defaultValue', () => {
 					 * TODO: Should not include filters where the values are undefined
 					 * This should be akin to removing the defaultValue too
 					 */
-					expect(sql).to.include('status = ');
-					expect(values).to.not.include(defaultValue);
-					expect(values).to.include(undefined);
+					assert(typeof sql === "string" ? sql.includes('status = ') : sql.indexOf('status = ') !== -1);
+					assert(typeof values === "string" ? !values.includes(defaultValue) : values.indexOf(defaultValue) === -1);
+					assert(typeof values === "string" ? values.includes(undefined) : values.indexOf(undefined) !== -1);
 				});
 			});
 		});

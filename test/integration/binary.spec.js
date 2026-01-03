@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+
 import {dare} from './helpers/api.js';
 
 describe(`Binary handling`, () => {

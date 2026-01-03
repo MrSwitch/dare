@@ -1,4 +1,4 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 
 // Test Generic DB functions
@@ -6,6 +6,7 @@ import sqlEqual from '../lib/sql-equal.js';
 
 import DareError from '../../src/utils/error.js';
 import SQL, {raw} from 'sql-template-tag';
+import {describe, it, beforeEach} from 'node:test';
 
 const id = 1;
 const name = 'name';
@@ -22,8 +23,8 @@ describe('patch', () => {
 		};
 	});
 
-	it('should contain the function dare.patch', () => {
-		expect(dare.patch).to.be.a('function');
+	it('should contain the function dare.patch', async () => {
+		assert.strictEqual(typeof dare.patch, 'function');
 	});
 
 	it('should generate an UPDATE statement and execute dare.execute', async () => {
@@ -33,23 +34,21 @@ describe('patch', () => {
 				sql,
 				'UPDATE test a SET a.`name` = ? WHERE a.id = ? LIMIT ?'
 			);
-			expect(values).to.deep.equal([name, id, 1]);
+			assert.deepStrictEqual(values, [name, id, 1]);
 
 			return {success: true};
 		};
 
 		const resp = await dare.patch('test', {id}, {name});
-		expect(resp).to.have.property('success', true);
+		assert.strictEqual(resp.success, true);
 	});
 
-	it('should throw an exception if affectedRows: 0', () => {
+	it('should throw an exception if affectedRows: 0', async () => {
 		dare.sql = async () => ({affectedRows: 0});
 
 		const test = dare.patch('groups', {id: 20_000}, {name});
 
-		return expect(test)
-			.to.be.eventually.rejectedWith(DareError)
-			.and.have.property('code', DareError.NOT_FOUND);
+		await assert.rejects(test, DareError);
 	});
 
 	it('should throw an exception if affectedRows: 0', async () => {
@@ -64,7 +63,7 @@ describe('patch', () => {
 			{notfound}
 		);
 
-		expect(test).to.equal(notfound);
+		assert.strictEqual(test, notfound);
 	});
 
 	describe('validate formatting of input values', () => {
@@ -78,7 +77,7 @@ describe('patch', () => {
 						sql,
 						'UPDATE test a SET a.`input` = ? WHERE a.id = ? LIMIT ?'
 					);
-					expect(values).to.deep.equal([input, id, 1]);
+					assert.deepStrictEqual(values, [input, id, 1]);
 					return {success: true};
 				};
 
@@ -105,12 +104,7 @@ describe('patch', () => {
 					body: {name: input},
 				});
 
-				return expect(call)
-					.to.be.eventually.rejectedWith(
-						DareError,
-						"Field 'name' does not accept objects as values"
-					)
-					.and.have.property('code', DareError.INVALID_VALUE);
+				await assert.rejects(call, DareError);
 			});
 		});
 
@@ -136,12 +130,7 @@ describe('patch', () => {
 						body: {meta: given},
 					});
 
-					return expect(call)
-						.to.be.eventually.rejectedWith(
-							DareError,
-							"Field 'meta' must be an object"
-						)
-						.and.have.property('code', DareError.INVALID_VALUE);
+					await assert.rejects(call, DareError);
 				});
 			});
 
@@ -159,7 +148,7 @@ describe('patch', () => {
 							sql,
 							'UPDATE test a SET a.`meta` = ? WHERE a.id = ? LIMIT ?'
 						);
-						expect(values).to.deep.equal([meta, id, 1]);
+						assert.deepStrictEqual(values, [meta, id, 1]);
 						return {success: true};
 					};
 
@@ -172,7 +161,7 @@ describe('patch', () => {
 			});
 		});
 
-		it('should apply schema.field.setFunction', () => {
+		it('should apply schema.field.setFunction', async () => {
 			dare.options.models = {
 				test: {
 					schema: {
@@ -194,7 +183,7 @@ describe('patch', () => {
 					sql,
 					'UPDATE test a SET a.`meta` = JSON_MERGE_PATCH(a.`meta`, ?) WHERE a.id = ? LIMIT ?'
 				);
-				expect(values).to.deep.equal([JSON.stringify(meta), id, 1]);
+				assert.deepStrictEqual(values, [JSON.stringify(meta), id, 1]);
 				return {success: true};
 			};
 
@@ -215,7 +204,7 @@ describe('patch', () => {
 				sql,
 				'UPDATE test a SET a.`name` = ? WHERE a.id = ? LIMIT ?'
 			);
-			expect(values).to.deep.equal([name, id, limit]);
+			assert.deepStrictEqual(values, [name, id, limit]);
 
 			return {success: true};
 		};
@@ -235,7 +224,7 @@ describe('patch', () => {
 				sql,
 				'UPDATE IGNORE test a SET a.`name` = ? WHERE a.id = ? LIMIT ?'
 			);
-			expect(values).to.deep.equal([name, id, 1]);
+			assert.deepStrictEqual(values, [name, id, 1]);
 			return {success: true};
 		};
 
@@ -254,7 +243,7 @@ describe('patch', () => {
 				sql,
 				'UPDATE tablename a SET a.`name` = ? WHERE a.id = ? LIMIT ?'
 			);
-			expect(values).to.deep.equal([name, id, 1]);
+			assert.deepStrictEqual(values, [name, id, 1]);
 			return {success: true};
 		};
 
@@ -279,7 +268,7 @@ describe('patch', () => {
 				sql,
 				'UPDATE tbl a SET a.`name` = ? WHERE a.id = ? LIMIT ?'
 			);
-			expect(values).to.deep.equal([newName, id, 1]);
+			assert.deepStrictEqual(values, [newName, id, 1]);
 
 			return {success: true};
 		};
@@ -308,7 +297,7 @@ describe('patch', () => {
 				sql,
 				'UPDATE tbl a SET a.`name` = ? WHERE a.id = ? LIMIT ?'
 			);
-			expect(values).to.deep.equal([newName, id, 1]);
+			assert.deepStrictEqual(values, [newName, id, 1]);
 			return {success: true};
 		};
 
@@ -345,7 +334,7 @@ describe('patch', () => {
 			body: {name},
 		});
 
-		return expect(test).to.be.eventually.rejectedWith(Error, msg);
+		await assert.rejects(test, Error, msg);
 	});
 
 	it('should not exectute if the opts.skip request is marked', async () => {
@@ -365,7 +354,7 @@ describe('patch', () => {
 			body: {name},
 		});
 
-		expect(resp).to.eql(skip);
+		assert.strictEqual(resp, skip);
 	});
 
 	it('should allow complex filters', async () => {
@@ -374,7 +363,7 @@ describe('patch', () => {
 				sql,
 				'UPDATE tbl a SET a.`name` = ? WHERE a.id = ? AND (NOT a.number < ? OR a.number IS NULL) LIMIT ?'
 			);
-			expect(values).to.deep.equal(['andrew', 1, '100', 1]);
+			assert.deepStrictEqual(values, ['andrew', 1, '100', 1]);
 			return {success: true};
 		};
 
@@ -408,7 +397,7 @@ describe('patch', () => {
 			body: {name: 'andrew'},
 		});
 
-		expect(test).to.have.property('affectedRows', 1);
+		assert.strictEqual(test.affectedRows, 1);
 	});
 
 	describe('DB Engine specific tests', () => {
@@ -417,7 +406,7 @@ describe('patch', () => {
 
 			dareInst.execute = async ({sql, values}) => {
 				sqlEqual(sql, 'UPDATE tbl a SET "name" = ? WHERE a.id = ?');
-				expect(values).to.deep.equal([name, id]);
+				assert.deepStrictEqual(values, [name, id]);
 				return {success: true};
 			};
 

@@ -1,9 +1,4 @@
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
 import db from '../helpers/db.js';
-
-// Extend Chai
-chai.use(chaiAsPromised);
 
 const mochaHooks = {
 	beforeAll: [

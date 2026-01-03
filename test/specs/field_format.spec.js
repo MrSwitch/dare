@@ -1,10 +1,11 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 /*
  * Field Reducer
  * Extract the fields from the current dataset
  */
 
 import field_format from '../../src/utils/field_format.js';
+import {describe, it} from 'node:test';
 
 describe('utils/field_format', () => {
 	// Should unwrap SQL Formating to underlying column name
@@ -62,12 +63,12 @@ describe('utils/field_format', () => {
 		// Expect
 		const expected = test[1];
 
-		it(`where ${input} => ${expected}`, () => {
+		it(`where ${input} => ${expected}`, async () => {
 			// Call the field with the
 			const actual = field_format(...input);
 
 			// Expect the formatted list of fields to be identical to the inputted value
-			expect(actual).to.eql({
+			assert.deepStrictEqual(actual, {
 				expression: expected[0],
 				label: expected[1] || undefined,
 				agg: expected[2] || false,

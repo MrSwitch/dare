@@ -1,9 +1,9 @@
-import {expect} from 'chai';
 import assert from 'node:assert/strict';
 import Dare from '../../src/index.js';
 // Test whether fields can be declared as immutable and unreadable
 import DareError from '../../src/utils/error.js';
 import sqlEqual from '../lib/sql-equal.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('field access', () => {
 	let dare;
@@ -54,7 +54,7 @@ describe('field access', () => {
 		].forEach(field => {
 			it(`should prevent access to non-readable field: ${JSON.stringify(
 				field
-			)}`, () => {
+			)}`, async () => {
 				const fieldName =
 					field === 'unknown_field' ? field : 'password';
 
@@ -66,12 +66,13 @@ describe('field access', () => {
 					],
 				});
 
-				return expect(call)
-					.to.be.eventually.rejectedWith(
-						DareError,
-						`Field '${fieldName}' is not readable`
-					)
-					.and.have.property('code', DareError.INVALID_REFERENCE);
+				await assert.rejects(
+					call,
+					(err) => 
+						err instanceof DareError &&
+						err.message.includes(`Field '${fieldName}' is not readable`) &&
+						err.code === DareError.INVALID_REFERENCE
+				);
 			});
 		});
 
@@ -81,7 +82,7 @@ describe('field access', () => {
 					sql,
 					`SELECT a.email_address AS "email" FROM users a LIMIT 1`
 				);
-				expect(values).to.deep.equal([]);
+				assert.deepEqual(values, []);
 				return [];
 			};
 
@@ -99,7 +100,7 @@ describe('field access', () => {
 	});
 
 	describe('patch - UPDATE', () => {
-		it('should prevent mutations on non-writable fields', () => {
+		it('should prevent mutations on non-writable fields', async () => {
 			const call = dare.patch({
 				table: 'users',
 				body: {
@@ -111,17 +112,18 @@ describe('field access', () => {
 				},
 			});
 
-			return expect(call)
-				.to.be.eventually.rejectedWith(
-					DareError,
-					"Field 'id' is not writeable"
-				)
-				.and.have.property('code', DareError.INVALID_REFERENCE);
+			await assert.rejects(
+				call,
+				(err) => 
+					err instanceof DareError &&
+					err.message.includes("Field 'id' is not writeable") &&
+					err.code === DareError.INVALID_REFERENCE
+			);
 		});
 	});
 
 	describe('post - INSERT', () => {
-		it('should prevent inserts on non-writable fields', () => {
+		it('should prevent inserts on non-writable fields', async () => {
 			const call = dare.post({
 				table: 'users',
 				body: {
@@ -130,17 +132,18 @@ describe('field access', () => {
 				},
 			});
 
-			return expect(call)
-				.to.be.eventually.rejectedWith(
-					DareError,
-					"Field 'id' is not writeable"
-				)
-				.and.have.property('code', DareError.INVALID_REFERENCE);
+			await assert.rejects(
+				call,
+				(err) => 
+					err instanceof DareError &&
+					err.message.includes("Field 'id' is not writeable") &&
+					err.code === DareError.INVALID_REFERENCE
+			);
 		});
 		it('should allow inserts, not patch on writeable:false {post: {writeable: true}}', async () => {
 			dare.execute = async ({sql, values}) => {
 				sqlEqual(sql, 'INSERT INTO users (`name`) VALUES (?)');
-				expect(values).to.deep.equal(['me']);
+				assert.deepEqual(values, ['me']);
 				return {insertId: 1};
 			};
 
@@ -152,7 +155,7 @@ describe('field access', () => {
 						name: 'me',
 					},
 				});
-				expect(call).to.deep.equal({insertId: 1});
+				assert.deepEqual(call, {insertId: 1});
 			}
 
 			const call = dare.patch({
@@ -166,12 +169,13 @@ describe('field access', () => {
 				},
 			});
 
-			return expect(call)
-				.to.be.eventually.rejectedWith(
-					DareError,
-					"Field 'name' is not writeable"
-				)
-				.and.have.property('code', DareError.INVALID_REFERENCE);
+			await assert.rejects(
+				call,
+				(err) => 
+					err instanceof DareError &&
+					err.message.includes("Field 'name' is not writeable") &&
+					err.code === DareError.INVALID_REFERENCE
+			);
 		});
 	});
 });

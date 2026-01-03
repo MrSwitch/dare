@@ -1,8 +1,9 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 
 // Test Generic DB functions
 import expectSQLEqual from '../lib/sql-equal.js';
+import {describe, it, beforeEach} from 'node:test';
 
 // Dare instance
 let dare;
@@ -72,8 +73,8 @@ describe('get - subquery', () => {
 			},
 		});
 
-		expect(resp).to.have.property('asset_name', 'name');
-		expect(resp).to.have.property('collection_count', 42);
+		assert.strictEqual(resp.asset_name, 'name');
+		assert.strictEqual(resp.collection_count, 42);
 	});
 
 	it('should export the response in the format given', async () => {
@@ -116,7 +117,7 @@ describe('get - subquery', () => {
 			},
 		});
 
-		expect(resp.collections).to.have.property('count', 42);
+		assert.strictEqual(resp.collections.count, 42);
 	});
 
 	it('should concatinate many expressions into an array using JSON_ARRAYAGG', async () => {
@@ -155,9 +156,9 @@ describe('get - subquery', () => {
 			},
 		});
 
-		expect(resp.collections).to.be.an('array');
-		expect(resp.collections[0]).to.have.property('id', '1');
-		expect(resp.collections[0]).to.have.property('name', 'a');
+		assert.ok(Array.isArray(resp.collections));
+		assert.strictEqual(resp.collections[0].id, '1');
+		assert.strictEqual(resp.collections[0].name, 'a');
 	});
 
 	it('should concatinate many expressions into an array using JSON_ARRAYAGG', async () => {
@@ -200,9 +201,9 @@ describe('get - subquery', () => {
 			},
 		});
 
-		expect(resp.assetCollections).to.be.an('array');
-		expect(resp.assetCollections[0]).to.have.property('id', '1');
-		expect(resp.assetCollections[0]).to.have.property('color', 'red');
+		assert.ok(Array.isArray(resp.assetCollections));
+		assert.strictEqual(resp.assetCollections[0].id, '1');
+		assert.strictEqual(resp.assetCollections[0].color, 'red');
 	});
 
 	it('should *not* subquery a nested object without fields', async () => {
@@ -235,7 +236,7 @@ describe('get - subquery', () => {
 			},
 		});
 
-		expect(resp).to.have.property('asset_name', 'name');
+		assert.strictEqual(resp.asset_name, 'name');
 	});
 
 	it('should *not* use a subquery when the many table is used in the filter', async () => {
@@ -357,7 +358,7 @@ describe('get - subquery', () => {
 	describe('with groupby', () => {
 		it('should allow multiple groupby on nested tables', async () => {
 			dare.sql = async ({sql}) => {
-				expect(sql).to.contain('GROUP BY c.id,a.id');
+				assert.ok(sql.includes('GROUP BY c.id,a.id'));
 
 				return [
 					{
@@ -436,7 +437,7 @@ describe('get - subquery', () => {
 			};
 
 			dareInst.sql = async ({sql}) => {
-				expect(sql).to.not.contain('LIMIT 1');
+				assert.ok(!sql.includes('LIMIT 1'));
 			};
 
 			// Construct a query which counts these

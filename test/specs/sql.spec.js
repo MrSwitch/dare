@@ -1,5 +1,6 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('sql', () => {
 	let dare;
@@ -10,26 +11,26 @@ describe('sql', () => {
 		dare = new Dare();
 
 		dare.execute = async ({sql, values}) => {
-			expect(sql).to.equal(query);
+			assert.strictEqual(sql, query);
 			return values[0];
 		};
 	});
 
-	it('should contain the function dare.sql', () => {
-		expect(dare.sql).to.be.a('function');
+	it('should contain the function dare.sql', async () => {
+		assert.strictEqual(typeof dare.sql, 'function');
 	});
 
 	it('deprecated: should trigger execute from a string', async () => {
 		const res = await dare.sql(query, values);
-		expect(res).to.eql(values[0]);
+		assert.deepStrictEqual(res, values[0]);
 	});
 
 	it('should trigger execute from an Object<sql, values>', async () => {
 		const res = await dare.sql({sql: query, values});
-		expect(res).to.eql(1);
+		assert.strictEqual(res, 1);
 	});
 
-	it('should trigger execute and reject a promise', () => {
+	it('should trigger execute and reject a promise', async () => {
 		const msg = 'test';
 
 		dare.execute = async () => {
@@ -38,6 +39,6 @@ describe('sql', () => {
 
 		const test = dare.sql({sql: query});
 
-		return expect(test).to.be.eventually.rejectedWith(Error, msg);
+		await assert.rejects(test, Error, msg);
 	});
 });

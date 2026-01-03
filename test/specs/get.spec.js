@@ -1,11 +1,11 @@
-import {expect} from 'chai';
-import assert from 'node:assert/strict';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 
 // Test Generic DB functions
 import sqlEqual from '../lib/sql-equal.js';
 
 import DareError from '../../src/utils/error.js';
+import {describe, it, beforeEach} from 'node:test';
 
 const id = 1;
 
@@ -19,8 +19,8 @@ describe('get', () => {
 		};
 	});
 
-	it('should contain the function dare.get', () => {
-		expect(dare.get).to.be.a('function');
+	it('should contain the function dare.get', async () => {
+		assert.strictEqual(typeof dare.get, 'function');
 	});
 
 	it('should not mutate the request object', async () => {
@@ -39,11 +39,11 @@ describe('get', () => {
 		await dare.get(request);
 
 		// Check shallow clone
-		expect(request).to.deep.equal(original);
+		assert.deepStrictEqual(request, original);
 
 		// Check deep clone
-		expect(request).to.have.deep.property('fields', ['id', 'name']);
-		expect(request).to.have.deep.property('orderby', ['name']);
+		assert.deepStrictEqual(request.fields,  ['id', 'name']);
+		assert.deepStrictEqual(request.orderby,  ['name']);
 	});
 
 	it('should throw an error if table is empty', async () => {
@@ -53,12 +53,11 @@ describe('get', () => {
 
 		const call = dare.get(request);
 
-		return expect(call)
-			.to.be.eventually.rejectedWith(
-				DareError,
-				'`table` option is undefined'
-			)
-			.and.have.property('code', DareError.INVALID_REQUEST);
+		await assert.rejects(call, (error) => {
+			assert(error instanceof DareError);
+			assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+			return true;
+		});
 	});
 
 	describe('Simple arguments', () => {
@@ -80,15 +79,15 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name FROM test a WHERE a.id = ? LIMIT 1'
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 
 				return [basic_record];
 			};
 
 			const resp = await dare.get('test', basic_fields, {id});
 
-			expect(resp).to.be.a('object');
-			expect(resp).to.eql(basic_record);
+			assert.strictEqual(typeof resp, "object");
+			assert.deepStrictEqual(resp, basic_record);
 		});
 
 		it('should create a query with fields', async () => {
@@ -97,14 +96,14 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name FROM test a WHERE a.id = ? LIMIT 1'
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 
 				return [basic_record];
 			};
 
 			const resp = await dare.get('test', basic_fields, {id});
 
-			expect(resp).to.eql(basic_record);
+			assert.deepStrictEqual(resp, basic_record);
 		});
 
 		it('should support array of value in the query condition', async () => {
@@ -127,9 +126,9 @@ describe('get', () => {
 				{limit: 2}
 			);
 
-			expect(resp).to.be.a('array');
-			expect(resp.length).to.eql(2);
-			expect(resp[0]).to.eql(basic_record);
+			assert(Array.isArray(resp));
+			assert.strictEqual(resp.length, 2);
+			assert.deepStrictEqual(resp[0], basic_record);
 		});
 
 		it('should support wildcard characters for pattern matching', async () => {
@@ -139,7 +138,7 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name FROM test a WHERE a.name LIKE ? LIMIT 5'
 				);
-				expect(values).to.deep.equal([name]);
+				assert.deepStrictEqual(values, [name]);
 
 				return [basic_record, basic_record];
 			};
@@ -151,7 +150,7 @@ describe('get', () => {
 				{limit: 5}
 			);
 
-			expect(resp).to.be.a('array');
+			assert(Array.isArray(resp));
 		});
 
 		it('should ignore $suffixing', async () => {
@@ -162,7 +161,7 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name, a.prop FROM test a WHERE a.name LIKE ? AND a.name LIKE ? LIMIT 5'
 				);
-				expect(values).to.deep.equal([name, name$and]);
+				assert.deepStrictEqual(values, [name, name$and]);
 
 				return [basic_record, basic_record];
 			};
@@ -174,7 +173,7 @@ describe('get', () => {
 				{limit: 5}
 			);
 
-			expect(resp).to.be.a('array');
+			assert(Array.isArray(resp));
 		});
 
 		it('should have an overidable limit', async () => {
@@ -183,14 +182,14 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name FROM test a WHERE a.id = ? LIMIT 5'
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 				return [basic_record];
 			};
 
 			const resp = await dare.get('test', basic_fields, {id}, {limit: 5});
 
-			expect(resp).to.be.a('array');
-			expect(resp).to.eql([basic_record]);
+			assert(Array.isArray(resp));
+			assert.deepStrictEqual(resp, [basic_record]);
 		});
 
 		it('should have an overidable limit and start', async () => {
@@ -199,7 +198,7 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name FROM test a WHERE a.id = ? LIMIT 5 OFFSET 4'
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 				return [basic_record];
 			};
 
@@ -209,34 +208,36 @@ describe('get', () => {
 				{id},
 				{limit: 5, start: 4}
 			);
-			expect(resp).to.be.a('array');
-			expect(resp).to.eql([basic_record]);
+			assert(Array.isArray(resp));
+			assert.deepStrictEqual(resp, [basic_record]);
 		});
 
-		it('should throw an error if limit is invalid', () => {
+		it('should throw an error if limit is invalid', async () => {
 			const test = dare.get('test', basic_fields, {id}, {limit: 0});
 
-			return expect(test)
-				.to.be.eventually.rejectedWith(DareError)
-				.and.have.property('code', DareError.INVALID_LIMIT);
+			await assert.rejects(test, (error) => {
+				assert(error instanceof DareError);
+				assert.strictEqual(error.code, DareError.INVALID_LIMIT); return true; });
 		});
 
-		it('should throw an error if limit is invalid', () => {
+		it('should throw an error if limit is invalid', async () => {
 			const test = dare.get('test', basic_fields, {id}, {limit: null});
 
-			return expect(test)
-				.to.be.eventually.rejectedWith(DareError)
-				.and.have.property('code', DareError.INVALID_LIMIT);
+			await assert.rejects(test, (error) => {
+				assert(error instanceof DareError);
+				assert.strictEqual(error.code, DareError.INVALID_LIMIT); return true; });
 		});
 
-		it('should throw an error where no limit was defined and an empty resultset was returned.', () => {
+		it('should throw an error where no limit was defined and an empty resultset was returned.', async () => {
 			dare.execute = async () => [];
 
 			const test = dare.get('test', basic_fields, {id});
 
-			return expect(test)
-				.to.be.eventually.rejectedWith(DareError)
-				.and.have.property('code', DareError.NOT_FOUND);
+			await assert.rejects(test, (error) => {
+				assert(error instanceof DareError);
+				assert.strictEqual(error.code, DareError.NOT_FOUND);
+				return true;
+			});
 		});
 
 		it('should return value of notfound where no limit was defined and an empty resultset was returned.', async () => {
@@ -251,7 +252,7 @@ describe('get', () => {
 				{notfound}
 			);
 
-			expect(value).to.equal(notfound);
+			assert.strictEqual(value, notfound);
 		});
 
 		it('should passthrough an orderby', async () => {
@@ -260,7 +261,7 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name FROM test a WHERE a.id = ? ORDER BY a.id LIMIT 1'
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 
 				return [basic_record];
 			};
@@ -274,7 +275,7 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name FROM test a WHERE a.id = ? ORDER BY a.id LIMIT 1'
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 
 				return [basic_record];
 			};
@@ -288,7 +289,7 @@ describe('get', () => {
 					sql,
 					'SELECT a.id, a.name FROM test a WHERE a.id = ? ORDER BY a.id DESC LIMIT 1'
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 				return [basic_record];
 			};
 
@@ -305,7 +306,7 @@ describe('get', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{_count: 10}];
 			};
@@ -317,7 +318,7 @@ describe('get', () => {
 				{orderby: 'date'}
 			);
 
-			expect(resp).to.eql({_count: 10});
+			assert.deepStrictEqual(resp, {_count: 10});
 		});
 
 		it('should use functions in the orderby', async () => {
@@ -330,7 +331,7 @@ describe('get', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{_count: 10}];
 			};
@@ -342,23 +343,25 @@ describe('get', () => {
 				{orderby: 'DATE(created)'}
 			);
 
-			expect(resp).to.eql({_count: 10});
+			assert.deepStrictEqual(resp, {_count: 10});
 		});
 
-		it('should throw an error if fields is an empty array', () => {
+		it('should throw an error if fields is an empty array', async () => {
 			const test = dare.get('test', [], {id}, {groupby: 'id'});
 
-			return expect(test)
-				.to.be.eventually.rejectedWith(DareError)
-				.and.have.property('code', DareError.INVALID_REQUEST);
+			await assert.rejects(test, (error) => {
+				assert(error instanceof DareError);
+				assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+				return true;
+			});
 		});
 
-		it('should throw an error if fields are a scalar value', () => {
+		it('should throw an error if fields are a scalar value', async () => {
 			const test = dare.get('test', true, {id}, {groupby: 'id'});
 
-			return expect(test)
-				.to.be.eventually.rejectedWith(DareError)
-				.and.have.property('code', DareError.INVALID_REQUEST);
+			await assert.rejects(test, (error) => {
+				assert(error instanceof DareError);
+				assert.strictEqual(error.code, DareError.INVALID_REQUEST); return true; });
 		});
 
 		it('should let us pass through SQL Functions', async () => {
@@ -367,7 +370,7 @@ describe('get', () => {
 					sql,
 					'SELECT count(a.*) AS "_count" FROM test a WHERE a.id = ? GROUP BY a.name LIMIT 1'
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 				return [{id}];
 			};
 
@@ -378,7 +381,7 @@ describe('get', () => {
 				{groupby: 'name'}
 			);
 
-			expect(resp).to.eql({id});
+			assert.deepStrictEqual(resp, {id});
 		});
 
 		it('should interpret _count as COUNT(*)', async () => {
@@ -390,14 +393,14 @@ describe('get', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{_count: 10}];
 			};
 
 			const resp = await dare.get('test', ['_count']);
 
-			expect(resp).to.eql({_count: 10});
+			assert.deepStrictEqual(resp, {_count: 10});
 		});
 
 		it('should use the special field _count as a label for orderby reference', async () => {
@@ -410,7 +413,7 @@ describe('get', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{_count: 10}];
 			};
@@ -419,7 +422,7 @@ describe('get', () => {
 				orderby: '_count',
 			});
 
-			expect(resp).to.eql({_count: 10});
+			assert.deepStrictEqual(resp, {_count: 10});
 		});
 
 		it('should interpret _group as a shortcut to the groupby', async () => {
@@ -432,7 +435,7 @@ describe('get', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{_count: 10}];
 			};
@@ -443,7 +446,7 @@ describe('get', () => {
 				groupby: 'DATE(created_time)',
 			});
 
-			expect(resp).to.eql({_count: 10});
+			assert.deepStrictEqual(resp, {_count: 10});
 		});
 	});
 
@@ -475,15 +478,15 @@ describe('get', () => {
 					SELECT 100 AS "show_100", null AS "show_null", "Text string 123" AS "show_text", CONCAT("Hello", "World") AS "show_function_text", a.name AS "name" FROM test a WHERE a.id = ? LIMIT 1
 				`
 				);
-				expect(values).to.deep.equal([id]);
+				assert.deepStrictEqual(values, [id]);
 
 				return [basic_record];
 			};
 
 			const resp = await dare.get('test', basic_fields, {id});
 
-			expect(resp).to.be.a('object');
-			expect(resp).to.eql(basic_record);
+			assert.strictEqual(typeof resp, "object");
+			assert.strictEqual(resp, basic_record);
 		});
 	});
 
@@ -500,8 +503,8 @@ describe('get', () => {
 				},
 			});
 
-			expect(resp).to.have.property('name', 'Jupiter');
-			expect(resp).to.have.property('age', 4);
+			assert.strictEqual(resp.name, 'Jupiter');
+			assert.strictEqual(resp.age, 4);
 		});
 
 		it('execute should be able to call addRow instead of returning an array', async () => {
@@ -524,10 +527,10 @@ describe('get', () => {
 				},
 			});
 
-			expect(resp).to.equal(undefined);
+			assert.strictEqual(resp, undefined);
 
-			expect(data[0]).to.have.property('name', 'Jupiter');
-			expect(data[0]).to.have.property('age', 4);
+			assert.strictEqual(data[0].name, 'Jupiter');
+			assert.strictEqual(data[0].age, 4);
 		});
 	});
 

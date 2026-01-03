@@ -4,6 +4,7 @@ import options from '../data/options.js';
 
 // Test Generic DB functions
 import expectSQLEqual from '../lib/sql-equal.js';
+import {describe, it, beforeEach} from 'node:test';
 
 const limit = 5;
 

@@ -1,6 +1,7 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 import joinHandler from '../../src/format/join_handler.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('join_handler', () => {
 	let dare;
@@ -13,11 +14,11 @@ describe('join_handler', () => {
 		dare = dare.use();
 	});
 
-	it('join handler should be defined in instances of Dare', () => {
-		expect(joinHandler).to.be.a('function');
+	it('join handler should be defined in instances of Dare', async () => {
+		assert.strictEqual(typeof joinHandler, 'function');
 	});
 
-	it('should return an array of objects which describe the join between the two tables', () => {
+	it('should return an array of objects which describe the join between the two tables', async () => {
 		// Given a relationship between
 		dare.options = {
 			models: {
@@ -40,9 +41,9 @@ describe('join_handler', () => {
 
 		const join = joinHandler(child_object, parent_object, dare);
 
-		expect(child_object).to.eql(join);
+		assert.strictEqual(child_object, join);
 
-		expect(child_object).to.deep.equal({
+		assert.deepStrictEqual(child_object, {
 			alias: 'child',
 			table: 'child',
 			join_conditions: {
@@ -52,7 +53,7 @@ describe('join_handler', () => {
 		});
 	});
 
-	it('should return many=false when the table to be joined contains the key for the other', () => {
+	it('should return many=false when the table to be joined contains the key for the other', async () => {
 		// Given a relationship between
 		dare.options = {
 			models: {
@@ -75,9 +76,9 @@ describe('join_handler', () => {
 
 		const join = joinHandler(parent_object, child_object, dare);
 
-		expect(parent_object).to.eql(join);
+		assert.strictEqual(parent_object, join);
 
-		expect(parent_object).to.deep.equal({
+		assert.deepStrictEqual(parent_object, {
 			alias: 'parent',
 			table: 'parent',
 			join_conditions: {
@@ -87,7 +88,7 @@ describe('join_handler', () => {
 		});
 	});
 
-	it('should deduce any extra join to complete the relationship `infer_intermediate_models=true`', () => {
+	it('should deduce any extra join to complete the relationship `infer_intermediate_models=true`', async () => {
 		// Given a relationship between
 		dare.options = {
 			models: {
@@ -118,7 +119,7 @@ describe('join_handler', () => {
 
 		const join = joinHandler(child_object, grandparent_object, dare);
 
-		expect(join).to.deep.equal({
+		assert.deepStrictEqual(join, {
 			table: 'parent',
 			join_conditions: {
 				grand_id: 'gid',
@@ -140,7 +141,7 @@ describe('join_handler', () => {
 				dareInst
 			);
 
-			expect(null_join).to.deep.equal(null);
+			assert.deepStrictEqual(null_join, null);
 		}
 
 		// But this is limited to only one intermediary table, not two
@@ -156,10 +157,10 @@ describe('join_handler', () => {
 			dare
 		);
 
-		expect(no_join).to.deep.equal(null);
+		assert.deepStrictEqual(no_join, null);
 	});
 
-	it('should not infer_intermediate_join using a common key (defined on named models)', () => {
+	it('should not infer_intermediate_join using a common key (defined on named models)', async () => {
 		// Given a relationship between
 		dare.options = {
 			models: {
@@ -191,10 +192,10 @@ describe('join_handler', () => {
 
 		const no_join = joinHandler(person, comment, dare);
 
-		expect(no_join).to.deep.equal(null);
+		assert.deepStrictEqual(no_join, null);
 	});
 
-	it('should not infer_intermediate_join using a common key (defined on link models)', () => {
+	it('should not infer_intermediate_join using a common key (defined on link models)', async () => {
 		// Given a relationship between
 		dare.options = {
 			models: {
@@ -220,10 +221,10 @@ describe('join_handler', () => {
 
 		const no_join = joinHandler(person, comment, dare);
 
-		expect(no_join).to.deep.equal(null);
+		assert.deepStrictEqual(no_join, null);
 	});
 
-	it('should use the shortcuts to infer the connecting model', () => {
+	it('should use the shortcuts to infer the connecting model', async () => {
 		const dareInst = dare.use({
 			infer_intermediate_models: false,
 			models: {
@@ -254,7 +255,7 @@ describe('join_handler', () => {
 
 		const join = joinHandler(grandparent_object, child_object, dareInst);
 
-		expect(join).to.deep.equal({
+		assert.deepStrictEqual(join, {
 			table: 'parent',
 			join_conditions: {
 				id: 'parent_id',
@@ -293,7 +294,7 @@ describe('join_handler', () => {
 			};
 		});
 
-		it('message.recipient, message.author: using referenced aliases', () => {
+		it('message.recipient, message.author: using referenced aliases', async () => {
 			const recipient = {
 				table: 'recipient',
 			};
@@ -305,7 +306,7 @@ describe('join_handler', () => {
 			// Join the recipient table based upon the
 			const recipient_join = joinHandler(recipient, message, dare);
 
-			expect(recipient_join).to.deep.equal({
+			assert.deepStrictEqual(recipient_join, {
 				table: 'recipient',
 				join_conditions: {
 					id: 'to_id',
@@ -320,7 +321,7 @@ describe('join_handler', () => {
 			// Join the recipient table based upon the
 			const author_join = joinHandler(author, message, dare);
 
-			expect(author_join).to.deep.equal({
+			assert.deepStrictEqual(author_join, {
 				table: 'author',
 				join_conditions: {
 					id: 'from_id',
@@ -329,7 +330,7 @@ describe('join_handler', () => {
 			});
 		});
 
-		it('author.message.recipient: using referenced aliases', () => {
+		it('author.message.recipient: using referenced aliases', async () => {
 			/*
 			 * In this example we have a many to many relationship
 			 * Where author and recipient are both aliases of person
@@ -349,7 +350,7 @@ describe('join_handler', () => {
 			// Join the recipient table based upon the
 			const author_join = joinHandler(message, author, dare);
 
-			expect(author_join).to.deep.equal({
+			assert.deepStrictEqual(author_join, {
 				table: 'message',
 				join_conditions: {
 					from_id: 'id',
@@ -360,7 +361,7 @@ describe('join_handler', () => {
 			// Join the recipient table based upon the
 			const recipient_join = joinHandler(message, recipient, dare);
 
-			expect(recipient_join).to.deep.equal({
+			assert.deepStrictEqual(recipient_join, {
 				table: 'message',
 				join_conditions: {
 					to_id: 'id',
@@ -369,7 +370,7 @@ describe('join_handler', () => {
 			});
 		});
 
-		it('messageB.recipient: using unreferenced aliases', () => {
+		it('messageB.recipient: using unreferenced aliases', async () => {
 			dare.options.models.messageB = {
 				schema: {
 					to_id: ['recipient.id'],
@@ -388,7 +389,7 @@ describe('join_handler', () => {
 			// Join the recipient table based upon the
 			const recipient_join = joinHandler(recipient, messageB, dare);
 
-			expect(recipient_join).to.deep.equal({
+			assert.deepStrictEqual(recipient_join, {
 				table: 'recipient',
 				join_conditions: {
 					id: 'to_id',
@@ -397,7 +398,7 @@ describe('join_handler', () => {
 			});
 		});
 
-		it('recipient.messageB: using unreferenced aliases', () => {
+		it('recipient.messageB: using unreferenced aliases', async () => {
 			dare.options.models.message = {
 				schema: {
 					from_id: ['author.id'],
@@ -416,7 +417,7 @@ describe('join_handler', () => {
 			// Join the recipient table based upon the
 			const recipient_join = joinHandler(join_object, root_object, dare);
 
-			expect(recipient_join).to.deep.equal({
+			assert.deepStrictEqual(recipient_join, {
 				table: 'message',
 				join_conditions: {
 					to_id: 'id',
@@ -425,7 +426,7 @@ describe('join_handler', () => {
 			});
 		});
 
-		it('should return null if there is no way to join the models', () => {
+		it('should return null if there is no way to join the models', async () => {
 			/*
 			 * We already know from options.table_alias this is the same as a person
 			 * Redefine
@@ -443,7 +444,7 @@ describe('join_handler', () => {
 			// Join the recipient table based upon the
 			const recipient_join = joinHandler(recipient, message, dare);
 
-			expect(recipient_join).to.equal(null);
+			assert.strictEqual(recipient_join, null);
 		});
 	});
 });

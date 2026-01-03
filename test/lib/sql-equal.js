@@ -1,4 +1,4 @@
-import {expect} from 'chai';
+import assert from 'node:assert/strict';
 /*
  * SQL Match
  * Convert a SQL string into a regular expression to compare with a generated SQL string
@@ -6,7 +6,7 @@ import {expect} from 'chai';
 
 export default (a, b) => {
 	// Reformat both sql statements and compare
-	expect(reformat(a)).to.equal(reformat(b));
+	assert.deepStrictEqual(reformat(a), reformat(b));
 };
 
 function reformat(sql) {

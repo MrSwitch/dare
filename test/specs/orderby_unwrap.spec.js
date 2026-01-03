@@ -1,10 +1,11 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 /*
  * Field Reducer
  * Extract the fields from the current dataset
  */
 
 import orderby_unwrap from '../../src/utils/orderby_unwrap.js';
+import {describe, it} from 'node:test';
 
 describe('utils/orderby_unwrap', () => {
 	// Should unwrap SQL Formating to underlying column name
@@ -30,7 +31,7 @@ describe('utils/orderby_unwrap', () => {
 			const unwrapped = orderby_unwrap(input);
 
 			// Expect the formatted list of fields to be identical to the inputted value
-			expect(unwrapped).to.eql(output);
+			assert.deepStrictEqual(unwrapped, output);
 		});
 	});
 });

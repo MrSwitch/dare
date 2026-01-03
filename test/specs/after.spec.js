@@ -1,5 +1,6 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('after Handler', () => {
 	let dare;
@@ -24,8 +25,8 @@ describe('after Handler', () => {
 		});
 	});
 
-	it('after handler should be defined in instances of Dare', () => {
-		expect(dare).to.have.property('after');
+	it('after handler should be defined in instances of Dare', async () => {
+		assert.ok('after' in dare);
 	});
 
 	describe('should be called after success on api methods', () => {
@@ -44,7 +45,7 @@ describe('after Handler', () => {
 		for (const method in env) {
 			it(method, async () => {
 				const resp = await env[method]();
-				expect(resp).to.eql('called');
+				assert.strictEqual(resp, 'called');
 			});
 		}
 	});
@@ -57,7 +58,7 @@ describe('after Handler', () => {
 					return 'done';
 				},
 				expected(err, resp) {
-					expect(resp).to.eql('done');
+					assert.strictEqual(resp, 'done');
 				},
 			},
 			{
@@ -66,7 +67,7 @@ describe('after Handler', () => {
 					return resp.map(item => item.id);
 				},
 				expected(err, resp) {
-					expect(resp).to.eql([1]);
+					assert.deepStrictEqual(resp, [1]);
 				},
 			},
 			{
@@ -75,7 +76,7 @@ describe('after Handler', () => {
 					return Promise.resolve(100);
 				},
 				expected(err, resp) {
-					expect(resp).to.eql(100);
+					assert.strictEqual(resp, 100);
 				},
 			},
 			{
@@ -84,17 +85,17 @@ describe('after Handler', () => {
 					// Do something but dont return...
 				},
 				expected(err, resp) {
-					expect(resp).to.eql([{id: 1}]);
+					assert.deepStrictEqual(resp, [{id: 1}]);
 				},
 			},
 			{
 				label: 'called with the this.options',
 				handler() {
-					expect(this.options).to.have.property('method', 'get');
-					expect(this.options).to.have.property('table', 'users');
+					assert.strictEqual(this.options.method, 'get');
+					assert.strictEqual(this.options.table, 'users');
 				},
 				expected(err, resp) {
-					expect(resp).to.eql([{id: 1}]);
+					assert.deepStrictEqual(resp, [{id: 1}]);
 				},
 			},
 			{
@@ -103,7 +104,7 @@ describe('after Handler', () => {
 					throw Error('whoops');
 				},
 				expected(err) {
-					expect(err).to.have.property('message', 'whoops');
+					assert.strictEqual(err.message, 'whoops');
 				},
 			},
 		].forEach(({label, handler: users, expected}) => {
@@ -170,8 +171,8 @@ describe('after Handler', () => {
 		for (const method in env) {
 			it(method, async () => {
 				const resp = await env[method]();
-				expect(resp).to.eql('overriden');
-				expect(dare.after).to.not.eql(new_after_handler);
+				assert.strictEqual(resp, 'overriden');
+				assert.notDeepStrictEqual(dare.after, new_after_handler);
 			});
 		}
 	});

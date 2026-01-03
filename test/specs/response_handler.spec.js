@@ -1,6 +1,7 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 import {getTargetPath} from '../../src/format/field_reducer.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('response_handler', () => {
 	let dare;
@@ -13,11 +14,11 @@ describe('response_handler', () => {
 		dare = dare.use();
 	});
 
-	it('response handler should be defined in instances of Dare', () => {
-		expect(dare).to.have.property('response_handler');
+	it('response handler should be defined in instances of Dare', async () => {
+		assert.ok('response_handler' in dare);
 	});
 
-	it('should expand dot delimited field into a nested object', () => {
+	it('should expand dot delimited field into a nested object', async () => {
 		const data = dare.response_handler([
 			{
 				field: 'value',
@@ -26,8 +27,8 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			field: 'value',
 			assoc: {
 				id: 1,
@@ -36,7 +37,7 @@ describe('response_handler', () => {
 		});
 	});
 
-	it('should given a field with an array of fields in the title split the values', () => {
+	it('should given a field with an array of fields in the title split the values', async () => {
 		const data = dare.response_handler([
 			{
 				field: 'value',
@@ -46,8 +47,8 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			field: 'value',
 			assoc: {
 				id: '1',
@@ -58,7 +59,7 @@ describe('response_handler', () => {
 		});
 	});
 
-	it('should given a nested dataset', () => {
+	it('should given a nested dataset', async () => {
 		const data = dare.response_handler([
 			{
 				field: 'value',
@@ -67,8 +68,8 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			field: 'value',
 			collection: [
 				{
@@ -91,7 +92,7 @@ describe('response_handler', () => {
 		});
 	});
 
-	it('should transform a deep linked nested', () => {
+	it('should transform a deep linked nested', async () => {
 		const data = dare.response_handler([
 			{
 				field: 'value',
@@ -103,8 +104,8 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			field: 'value',
 			asset: {
 				id: 1,
@@ -143,7 +144,7 @@ describe('response_handler', () => {
 		});
 	});
 
-	it('should transform a deep linked nested array with generated fields', () => {
+	it('should transform a deep linked nested array with generated fields', async () => {
 		function handler(row) {
 			return row.id + 2;
 		}
@@ -204,8 +205,8 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			generated: 3,
 			field: 'value',
 			asset: {
@@ -235,7 +236,7 @@ describe('response_handler', () => {
 		});
 	});
 
-	it('should transform a nested arrays to single root level', () => {
+	it('should transform a nested arrays to single root level', async () => {
 		const empty = 'empty';
 		function handler(row) {
 			return row.id ? row.id + 2 : empty;
@@ -295,8 +296,8 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			// @todo remove this b prop.
 			b: [
 				{
@@ -312,7 +313,7 @@ describe('response_handler', () => {
 		});
 	});
 
-	it('should return empty value if it cannot be interpretted', () => {
+	it('should return empty value if it cannot be interpretted', async () => {
 		/*
 		 * Return a response field which is invalid
 		 * this could be because of GROUP_CONCAT_MAX_LENGTH or bad characters which have not been escaped by dare
@@ -325,14 +326,14 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			field: 'value',
 			collection: [],
 		});
 	});
 
-	it('should remove prop if value is empty', () => {
+	it('should remove prop if value is empty', async () => {
 		/*
 		 * Return a response field which is invalid
 		 * this could be because of GROUP_CONCAT_MAX_LENGTH or bad characters which have not been escaped by dare
@@ -344,13 +345,13 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			field: 'value',
 		});
 	});
 
-	it('should exclude a series of NULL fields, a side-effect of inline GROUP_CONCAT', () => {
+	it('should exclude a series of NULL fields, a side-effect of inline GROUP_CONCAT', async () => {
 		// Return a response field which is invalid
 		const data = dare.response_handler([
 			{
@@ -360,14 +361,14 @@ describe('response_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal({
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], {
 			collection: [],
 			field: 'value',
 		});
 	});
 
-	it('should return the field as is if the label is not consistant', () => {
+	it('should return the field as is if the label is not consistant', async () => {
 		const item = {
 			field: 'value',
 			'collection[id,name,assoc.id,assoc.name': '[["1","a","a1","aa"]]',
@@ -375,8 +376,8 @@ describe('response_handler', () => {
 
 		const data = dare.response_handler([item]);
 
-		expect(data).to.be.an('array');
-		expect(data[0]).to.deep.equal(item);
+		assert.ok(Array.isArray(data));
+		assert.deepStrictEqual(data[0], item);
 	});
 
 	describe('mysql 5.6', () => {
@@ -387,7 +388,7 @@ describe('response_handler', () => {
 			dareInst = dare.use({engine: 'mysql:5.6'});
 		});
 
-		it('should exclude a series of empty strings, a side-effect of inline GROUP_CONCAT', () => {
+		it('should exclude a series of empty strings, a side-effect of inline GROUP_CONCAT', async () => {
 			// Return a response field which is invalid
 			const data = dareInst.response_handler([
 				{
@@ -397,8 +398,8 @@ describe('response_handler', () => {
 				},
 			]);
 
-			expect(data).to.be.an('array');
-			expect(data[0]).to.deep.equal({
+			assert.ok(Array.isArray(data));
+			assert.deepStrictEqual(data[0], {
 				collection: [],
 				field: 'value',
 			});
@@ -417,11 +418,11 @@ describe('response_row_handler', () => {
 		dare = dare.use();
 	});
 
-	it('response handler should be defined in instances of Dare', () => {
-		expect(dare).to.not.have.property('response_row_handler');
+	it('response handler should be defined in instances of Dare', async () => {
+		assert.ok(!('response_row_handler' in dare));
 	});
 
-	it('should allow additional formatting with response_row_handler', () => {
+	it('should allow additional formatting with response_row_handler', async () => {
 		// Define a new response_row_handler
 		dare.response_row_handler = item => {
 			// Adds "prefix" to item.fiele
@@ -439,9 +440,10 @@ describe('response_row_handler', () => {
 			},
 		]);
 
-		expect(data).to.be.an('array').and.to.have.lengthOf(1);
+		assert.ok(Array.isArray(data))
+		assert.strictEqual(data.length, 1, 'Expected data to have length 1');
 
-		expect(data[0]).to.deep.equal({
+		assert.deepStrictEqual(data[0], {
 			field: 'prefixvalue',
 			assoc: {
 				id: 1,
@@ -450,7 +452,7 @@ describe('response_row_handler', () => {
 		});
 	});
 
-	it('should return empty array if response_row_handler returns undefined', () => {
+	it('should return empty array if response_row_handler returns undefined', async () => {
 		// Define a new response_row_handler to return nothing
 		dare.response_row_handler = () => {
 			// Does nothing...
@@ -464,7 +466,8 @@ describe('response_row_handler', () => {
 			},
 		]);
 
-		// eslint-disable-next-line no-unused-expressions
-		expect(data).to.be.an('array').that.is.empty;
+		 
+		assert.ok(Array.isArray(data));
+		assert.strictEqual(data.length, 0, 'Expected data to have length 0');
 	});
 });
