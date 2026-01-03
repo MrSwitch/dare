@@ -1,19 +1,27 @@
-import {before, beforeEach, after} from 'node:test';
 import db from '../helpers/db.js';
 
-// Setup global test hooks
-before(async () => {
-	/*
-	 * BeforeAll happens per-process/thread, so each subsequent test can reset the db without it interfering with other tests in that thread
-	 * Initiate the global database connection
-	 */
-	await db.init();
-});
+const mochaHooks = {
+	beforeAll: [
+		async function () {
+			// BeforeAll happens per-process/thread, so each subsequent test can reset the db without it interfering with other tests in that thread
+			this.timeout(5000);
 
-beforeEach(async () => {
-	await db.resetDbState();
-});
+			// Initiate the global database connection
+			await db.init();
+		},
+	],
+	beforeEach: [
+		async function () {
+			this.timeout(5000);
 
-after(async () => {
-	await db.end();
-});
+			await db.resetDbState();
+		},
+	],
+	afterAll: [
+		async function () {
+			await db.end();
+		},
+	],
+};
+
+export {mochaHooks};

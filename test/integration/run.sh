@@ -158,8 +158,8 @@ set +e
 (
   # `-x` so we echo the command itself for reference
   set -x
-  # $@ proxies all the args to this script to node test runner (e.g. for filtering tests etc)
-  node --test --require './mocha-hooks/index.js' './**/*.spec.js' "$@"
+  # $@ proxies all the args to this script to mocha (e.g. for filtering tests etc)
+  mocha './**/*.spec.js' "$@"
 )
 EXIT_CODE=$?
 set -e

@@ -1,7 +1,7 @@
 import Dare from '../../src/index.js';
 import Debug from 'debug';
 import assert from 'node:assert/strict';
-import {describe, it, beforeEach} from 'node:test';
+
 import mysql from 'mysql2/promise';
 import db from './helpers/db.js';
 import {options, castToStringIfNeeded} from './helpers/api.js';

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {describe, it, beforeEach} from 'node:test';
+
 import SQL, {raw} from 'sql-template-tag';
 import defaultAPI from './helpers/api.js';
 

@@ -1,6 +1,6 @@
 import {DareError} from '../../src/index.js';
 import assert from 'node:assert/strict';
-import {describe, it, beforeEach} from 'node:test';
+
 import defaultAPI, {options, castToStringIfNeeded} from './helpers/api.js';
 import db from './helpers/db.js';
 

@@ -76,7 +76,7 @@ export default class MySQL {
 		await this.conn.query(resetDataSql);
 	}
 
-	end() {
+	async end() {
 		// Close this connection
 		return this.conn.end();
 	}
