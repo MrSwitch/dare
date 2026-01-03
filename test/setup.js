@@ -1,5 +1,4 @@
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-
-// Extend Chai
-chai.use(chaiAsPromised);
+/*
+ * Native Node.js test framework setup
+ * No additional setup required for node:test and node:assert
+ */

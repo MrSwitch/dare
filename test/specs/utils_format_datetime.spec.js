@@ -1,7 +1,8 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 // Format Input Dates
 
 import format_datetime from '../../src/utils/format_datetime.js';
+import {describe, it} from 'node:test';
 
 describe('utils/format_datetime', () => {
 	// Should create date ranges from years/months/days...
@@ -26,7 +27,7 @@ describe('utils/format_datetime', () => {
 			const formatted = format_datetime(input);
 
 			// Expect the formatted list of fields to be identical to the inputted value
-			expect(formatted).to.eql(expected);
+			assert.strictEqual(formatted, expected);
 		});
 	});
 
@@ -36,7 +37,7 @@ describe('utils/format_datetime', () => {
 			const formatted = format_datetime(input);
 
 			// Expect the formatted list of fields to be identical to the inputted value
-			expect(formatted).to.eql(input);
+			assert.strictEqual(formatted, input);
 		});
 	});
 });

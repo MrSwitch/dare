@@ -1,6 +1,6 @@
 import {DareError} from '../../src/index.js';
-import {expect} from 'chai';
 import assert from 'node:assert/strict';
+import {describe, it, beforeEach} from 'node:test';
 import defaultAPI, {options, castToStringIfNeeded} from './helpers/api.js';
 import db from './helpers/db.js';
 
@@ -20,7 +20,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 
 		const resp = await dare.get('users', ['username']);
 
-		expect(resp).to.have.property('username', username);
+		assert.equal(resp.username, username);
 	});
 
 	it('can use pagination to get more results', async () => {
@@ -55,7 +55,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 
 		const resp = await dare.get('users', ['username']);
 
-		expect(resp).to.have.property('username', newName);
+		assert.equal(resp.username, newName);
 	});
 
 	it('can delete results', async () => {
@@ -64,9 +64,10 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 
 		await dare.del('users', {id: insertId});
 
-		await expect(dare.get('users', ['username'], {id: insertId}))
-			.to.be.eventually.rejectedWith(DareError)
-			.and.have.property('code', DareError.NOT_FOUND);
+		await assert.rejects(
+			dare.get('users', ['username'], {id: insertId}),
+			error => error instanceof DareError && error.code === DareError.NOT_FOUND
+		);
 	});
 
 	it('Can update results with INSERT...ON DUPLICATE KEYS UPDATE', async () => {
@@ -83,7 +84,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 
 		const resp = await dare.get('users', ['username']);
 
-		expect(resp).to.have.property('username', newName);
+		assert.equal(resp.username, newName);
 	});
 
 	it('should be able to return nested values', async () => {
@@ -206,7 +207,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 			const resp = await dare.get('users', ['username'], {
 				'*username,first_name,last_name': '+Fir* +Las*',
 			});
-			expect(resp).to.have.property('username', username);
+			assert.equal(resp.username, username);
 		}
 
 		// And use an alias of the fulltext field
@@ -217,7 +218,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 			const resp = await dare.get('users', ['username'], {
 				'*textsearch': 'Fir* Las*',
 			});
-			expect(resp).to.have.property('username', username);
+			assert.equal(resp.username, username);
 		}
 
 		// And format the search to be compatible with MySQL Fulltext syntax
@@ -227,7 +228,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 			const resp = await dare.get('users', ['username'], {
 				'*textsearch': username,
 			});
-			expect(resp).to.have.property('username', username);
+			assert.equal(resp.username, username);
 		}
 
 		// Hyphens
@@ -235,7 +236,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 			const resp = await dare.get('users', ['username'], {
 				'*textsearch': '+last-name',
 			});
-			expect(resp).to.have.property('username', username);
+			assert.equal(resp.username, username);
 		}
 
 		// Apostrophe's
@@ -243,7 +244,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 			const resp = await dare.get('users', ['username'], {
 				'*textsearch': "+Old'n'Name",
 			});
-			expect(resp).to.have.property('username', username);
+			assert.equal(resp.username, username);
 		}
 
 		// Full Text on Generated Fields
@@ -264,7 +265,7 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 				const resp = await dare.get('users', ['username'], {
 					'*ft_index': '+Old*n*',
 				});
-				expect(resp).to.have.property('username', username);
+				assert.equal(resp.username, username);
 			}
 		}
 	});

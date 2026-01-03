@@ -1,6 +1,5 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import SQL from 'sql-template-tag';
-import assert from 'node:assert/strict';
 import Dare from '../../src/index.js';
 /*
  * Format Request
@@ -8,6 +7,7 @@ import Dare from '../../src/index.js';
  */
 
 import DareError from '../../src/utils/error.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('format_request', () => {
 	let dare;
@@ -23,18 +23,20 @@ describe('format_request', () => {
 		});
 	});
 
-	it('should be defined in instances of Dare', () => {
-		expect(dare).to.have.property('format_request');
+	it('should be defined in instances of Dare', async () => {
+		assert.ok('format_request' in dare);
 	});
 
-	it('should require arguments and return a promise', () => {
+	it('should require arguments and return a promise', async () => {
 		const fn = dare.format_request();
 
-		expect(fn).to.have.property('then');
+		assert.ok('then' in fn);
 
-		return expect(fn)
-			.to.be.eventually.rejectedWith(DareError)
-			.and.have.property('code', DareError.INVALID_REQUEST);
+		await assert.rejects(fn, (error) => {
+			assert(error instanceof DareError);
+			assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+			return true;
+		});
 	});
 
 	it('should return a structure with default values', async () => {
@@ -114,12 +116,14 @@ describe('format_request', () => {
 				[{'tablename with spaces and -:*...': ['id']}],
 				[{asset: ['DATE(id)']}],
 			].forEach(fields => {
-				it(`invalid: ${JSON.stringify(fields)}`, () => {
+				it(`invalid: ${JSON.stringify(fields)}`, async () => {
 					const test = dare.format_request({...options, fields});
 
-					return expect(test)
-						.to.be.eventually.rejectedWith(DareError)
-						.and.have.property('code', DareError.INVALID_REFERENCE);
+					await assert.rejects(test, (error) => {
+						assert(error instanceof DareError);
+						assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+						return true;
+					});
 				});
 			});
 		});
@@ -141,7 +145,7 @@ describe('format_request', () => {
 				it(`where ${JSON.stringify(fields)}`, async () => {
 					const req = await dare.format_request({...options, fields});
 
-					expect(req._joins[0]).to.have.property('alias', 'asset');
+					assert.strictEqual(req._joins[0].alias, 'asset');
 				});
 			});
 		});
@@ -163,12 +167,14 @@ describe('format_request', () => {
 
 			describe('should throw an exception', () => {
 				['nonsense', 0, -1, NaN, {}, null].forEach(limit => {
-					it(`invalid: ${limit} (${typeof limit})`, () => {
+					it(`invalid: ${limit} (${typeof limit})`, async () => {
 						const test = dare.format_request({...options, limit});
 
-						return expect(test)
-							.to.be.eventually.rejectedWith(DareError)
-							.and.have.property('code', DareError.INVALID_LIMIT);
+						await assert.rejects(test, (error) => {
+							assert(error instanceof DareError);
+							assert.strictEqual(error.code, DareError.INVALID_LIMIT);
+							return true;
+						});
 					});
 				});
 			});
@@ -180,26 +186,28 @@ describe('format_request', () => {
 					// Create another instance
 					const _dare = dare.use();
 
-					expect(dare.MAX_LIMIT).to.eql(null);
-					expect(_dare.MAX_LIMIT).to.eql(null);
+					assert.strictEqual(dare.MAX_LIMIT, null);
+					assert.strictEqual(_dare.MAX_LIMIT, null);
 
 					// Update instance length
 					_dare.MAX_LIMIT = limit;
-					expect(dare.MAX_LIMIT).to.eql(null);
-					expect(_dare.MAX_LIMIT).to.eql(limit);
+					assert.strictEqual(dare.MAX_LIMIT, null);
+					assert.strictEqual(_dare.MAX_LIMIT, limit);
 
 					return _dare.format_request({...options, limit});
 				});
 
-				it('should throw an DareError if limit is above MAX_LIMIT', () => {
+				it('should throw an DareError if limit is above MAX_LIMIT', async () => {
 					// Update the length
 					dare.MAX_LIMIT = limit - 1;
 
 					const test = dare.format_request({...options, limit});
 
-					return expect(test)
-						.to.be.eventually.rejectedWith(DareError)
-						.and.have.property('code', DareError.INVALID_LIMIT);
+					await assert.rejects(test, (error) => {
+						assert(error instanceof DareError);
+						assert.strictEqual(error.code, DareError.INVALID_LIMIT);
+						return true;
+					});
 				});
 			});
 		});
@@ -214,12 +222,14 @@ describe('format_request', () => {
 
 			describe('should ignore', () => {
 				['nonsense', -1, NaN, {}].forEach(start => {
-					it(`invalid: ${start} (${typeof start})`, () => {
+					it(`invalid: ${start} (${typeof start})`, async () => {
 						const test = dare.format_request({...options, start});
 
-						return expect(test)
-							.to.be.eventually.rejectedWith(DareError)
-							.and.have.property('code', DareError.INVALID_START);
+						await assert.rejects(test, (error) => {
+							assert(error instanceof DareError);
+							assert.strictEqual(error.code, DareError.INVALID_START);
+							return true;
+						});
 					});
 				});
 			});
@@ -240,7 +250,7 @@ describe('format_request', () => {
 						groupby,
 					});
 
-					expect(resp.groupby).to.eql([groupby]);
+					assert.deepStrictEqual(resp.groupby, [groupby]);
 				});
 			});
 		});
@@ -248,19 +258,18 @@ describe('format_request', () => {
 		describe('should throw an DareError, when:', () => {
 			[-1, 101, {}, 'parenthisis(snap', '; ', 'SUM(SE-LECT 1)'].forEach(
 				groupby => {
-					it(`invalid: ${groupby} (${typeof groupby})`, () => {
+					it(`invalid: ${groupby} (${typeof groupby})`, async () => {
 						const test = dare.format_request({
 							table: 'table',
 							fields: ['id'],
 							groupby,
 						});
 
-						return expect(test)
-							.to.be.eventually.rejectedWith(DareError)
-							.and.have.property(
-								'code',
-								DareError.INVALID_REFERENCE
-							);
+						await assert.rejects(test, (error) => {
+							assert(error instanceof DareError);
+							assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+							return true;
+						});
 					});
 				}
 			);
@@ -310,16 +319,18 @@ describe('format_request', () => {
 				['name', 1],
 				['name ASC', 'id WEST'],
 			].forEach(orderby => {
-				it(`invalid: ${orderby} (${typeof orderby})`, () => {
+				it(`invalid: ${orderby} (${typeof orderby})`, async () => {
 					const test = dare.format_request({
 						table: 'table',
 						fields: ['id'],
 						orderby,
 					});
 
-					return expect(test)
-						.to.be.eventually.rejectedWith(DareError)
-						.and.have.property('code', DareError.INVALID_REFERENCE);
+					await assert.rejects(test, (error) => {
+						assert(error instanceof DareError);
+						assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+						return true;
+					});
 				});
 			});
 		});
@@ -503,11 +514,11 @@ describe('format_request', () => {
 
 						const query = resp.sql_where_conditions[0];
 
-						expect(query.sql).to.equal(sql);
-						expect(query.values).to.deep.equal(values);
+						assert.strictEqual(query.sql, sql);
+						assert.deepStrictEqual(query.values, values);
 
 						// Should not mutate the filters...
-						expect(filter).to.deep.eql(filter_cloned);
+						assert.deepStrictEqual(filter, filter_cloned);
 					});
 				});
 			});
@@ -529,19 +540,18 @@ describe('format_request', () => {
 						},
 					},
 				].forEach(filter => {
-					it(`invalid: ${JSON.stringify(filter)}`, () => {
+					it(`invalid: ${JSON.stringify(filter)}`, async () => {
 						const test = dare.format_request({
 							table: 'activityEvents',
 							fields: ['id'],
 							[condition_type]: filter,
 						});
 
-						return expect(test)
-							.to.be.eventually.rejectedWith(DareError)
-							.and.have.property(
-								'code',
-								DareError.INVALID_REFERENCE
-							);
+						await assert.rejects(test, (error) => {
+							assert(error instanceof DareError);
+							assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+							return true;
+						});
 					});
 				});
 			});
@@ -590,8 +600,8 @@ describe('format_request', () => {
 
 						const query = resp.sql_where_conditions[0];
 
-						expect(query.sql).to.equal(sql);
-						expect(query.values).to.deep.equal(values);
+						assert.strictEqual(query.sql, sql);
+						assert.deepStrictEqual(query.values, values);
 					});
 				}
 			});
@@ -613,8 +623,8 @@ describe('format_request', () => {
 
 						const query = resp.sql_where_conditions[0];
 
-						expect(query.sql).to.equal(sql);
-						expect(query.values).to.deep.equal(values);
+						assert.strictEqual(query.sql, sql);
+						assert.deepStrictEqual(query.values, values);
 					});
 				});
 			});
@@ -622,7 +632,7 @@ describe('format_request', () => {
 	});
 
 	describe('scheme', () => {
-		it('should throw an DareError when there are two tables with an undefined relationship', () => {
+		it('should throw an DareError when there are two tables with an undefined relationship', async () => {
 			// Redefine the structure
 			dare.options = {
 				models: {
@@ -646,12 +656,12 @@ describe('format_request', () => {
 				],
 			});
 
-			return expect(test)
-				.to.be.eventually.rejectedWith(
-					DareError,
-					"Could not understand field 'comments'"
-				)
-				.and.have.property('code', DareError.INVALID_REFERENCE);
+			await assert.rejects(test, (error) => {
+				assert(error instanceof DareError);
+				assert.strictEqual(error.message, "Could not understand field 'comments'");
+				assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+				return true;
+			});
 		});
 
 		it('should understand options.schema which defines table structure which reference other tables.', async () => {
@@ -772,7 +782,7 @@ describe('format_request', () => {
 				fields: ['name'],
 			});
 
-			return expect(test).to.be.eventually.rejectedWith(Error, msg);
+			await assert.rejects(test, Error, msg);
 		});
 
 		it('should pass through the table scoped request', async () => {
@@ -794,7 +804,7 @@ describe('format_request', () => {
 				fields: ['name'],
 			});
 
-			expect(options.filter).to.eql({is_deleted: false});
+			assert.deepStrictEqual(options.filter, {is_deleted: false});
 		});
 
 		it('should append parent and state through the table scoped request', async () => {
@@ -855,11 +865,11 @@ describe('format_request', () => {
 				fields: ['name'],
 			});
 
-			expect(comments.filter).to.eql({users: removed});
-			assert.strictEqual(comments.state, state);
+			assert.deepStrictEqual(comments.filter, {users: removed});
+			assert.deepStrictEqual(comments.state, state);
 
 			// Check the joins include the state too
-			assert.strictEqual(comments._joins.at(0).state, state);
+			assert.deepStrictEqual(comments._joins.at(0).state, state);
 
 			/*
 			 * Test 2
@@ -877,7 +887,7 @@ describe('format_request', () => {
 
 			const commentsJoin = users._joins[0];
 
-			expect(commentsJoin).to.not.have.property('filter');
+			assert.ok(!('filter' in commentsJoin));
 		});
 
 		it('should allow nested children to assign filters', async () => {
@@ -916,7 +926,7 @@ describe('format_request', () => {
 			assert.deepStrictEqual(comments._joins.at(0).filter, removed);
 		});
 
-		it('should await the response from a promise', () => {
+		it('should await the response from a promise', async () => {
 			const msg = 'snap';
 			dare.options.method = method;
 			dare.options.models = {
@@ -935,10 +945,10 @@ describe('format_request', () => {
 				fields: ['name'],
 			});
 
-			return expect(test).to.be.eventually.rejectedWith(Error, msg);
+			await assert.rejects(test, Error, msg);
 		});
 
-		it('should provide the instance of dare in the request', () => {
+		it('should provide the instance of dare in the request', async () => {
 			let dareInstance;
 			let that;
 
@@ -958,8 +968,8 @@ describe('format_request', () => {
 				fields: ['name'],
 			});
 
-			expect(dareInstance).to.equal(dare);
-			expect(that).to.equal(dare);
+			assert.strictEqual(dareInstance, dare);
+			assert.strictEqual(that, dare);
 		});
 	});
 });

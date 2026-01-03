@@ -1,4 +1,4 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 /*
  * Field Reducer
  * Extract the fields from the current dataset
@@ -6,6 +6,7 @@ import {expect} from 'chai';
 
 import unwrap_field from '../../src/utils/unwrap_field.js';
 import DareError from '../../src/utils/error.js';
+import {describe, it} from 'node:test';
 
 describe('utils/unwrap_field', () => {
 	/*
@@ -57,7 +58,7 @@ describe('utils/unwrap_field', () => {
 			const unwrapped = unwrap_field(test);
 
 			// Expect the formatted list of fields to be identical to the inputted value
-			expect(unwrapped.field).to.eql('field');
+			assert.strictEqual(unwrapped.field, 'field');
 		});
 	});
 
@@ -101,7 +102,7 @@ describe('utils/unwrap_field', () => {
 	].forEach(test => {
 		it(`errors: ${JSON.stringify(test)}`, () => {
 			// Expect the field expression unwrapping to throw a Dare Error
-			expect(unwrap_field.bind(null, test)).to.throw(DareError);
+			assert.throws(unwrap_field.bind(null, test), DareError);
 		});
 	});
 });

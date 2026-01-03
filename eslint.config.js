@@ -37,6 +37,7 @@ export default [
 			'multiline-comment-style': [2, 'starred-block'],
 			'prefer-promise-reject-errors': 2,
 			// "promise/prefer-await-to-then": 2,
+			'n/no-unsupported-features/node-builtins': 0,
 			'security/detect-unsafe-regex': 2,
 		},
 	},

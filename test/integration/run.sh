@@ -25,7 +25,7 @@ cd "$INTEGRATION_TEST_DIR" || exit 1
 
 DB_ROOT_USER="root"
 DB_ROOT_PASSWORD="test_pass"
-DB_ENGINE=${DB_ENGINE:-mysql:8.0.23}
+export DB_ENGINE=${DB_ENGINE:-mysql:8.0.23}
 
 DB_ENGINE_NAME=$(echo $DB_ENGINE | cut -d: -f1)
 
@@ -158,8 +158,8 @@ set +e
 (
   # `-x` so we echo the command itself for reference
   set -x
-  # $@ proxies all the args to this script to mocha (e.g. for filtering tests etc)
-  mocha './**/*.spec.js' "$@"
+  # $@ proxies all the args to this script to node test runner (e.g. for filtering tests etc)
+  node --test --require './mocha-hooks/index.js' './**/*.spec.js' "$@"
 )
 EXIT_CODE=$?
 set -e

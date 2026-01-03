@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import extend from '../../src/utils/extend.js';
+import {describe, it} from 'node:test';
 
 /*
  * Extend
@@ -7,7 +8,7 @@ import extend from '../../src/utils/extend.js';
  */
 
 describe('utils/extend', () => {
-	it('should recursively extend an object', () => {
+	it('should recursively extend an object', async () => {
 		const obj = {
 			a: {
 				b: {
@@ -39,14 +40,14 @@ describe('utils/extend', () => {
 		);
 	});
 
-	it('should not extend prototype', () => {
+	it('should not extend prototype', async () => {
 		// Should not extend the the default prototype object...
 		extend({}, JSON.parse('{"__proto__": {"devMode": true}}'));
 
 		assert.ok(!{}.devMode, 'Prototype should not be extended');
 	});
 
-	it('should extend properties with values including; scalars, arrays, functions to be replaced', () => {
+	it('should extend properties with values including; scalars, arrays, functions to be replaced', async () => {
 		const obj = {
 			propString: 'string',
 			propNumber: 0,

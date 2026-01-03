@@ -1,5 +1,6 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import validate_label from '../../src/utils/validate_label.js';
+import {describe, it} from 'node:test';
 
 describe('validate field label', () => {
 	['field', 'Field', 'AB_'].forEach(key => {
@@ -10,7 +11,7 @@ describe('validate field label', () => {
 
 	['"', "'", '`', '?'].forEach(key => {
 		it(`should not accept ${key} as a valid field label`, () => {
-			expect(() => validate_label(key)).to.throw(Error);
+			assert.throws(() => validate_label(key), Error);
 		});
 	});
 });

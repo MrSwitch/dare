@@ -1,4 +1,4 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 
 // Test Generic DB functions
@@ -6,6 +6,7 @@ import expectSQLEqual from '../lib/sql-equal.js';
 
 // Create a schema
 import options from '../data/options.js';
+import {describe, it, beforeEach} from 'node:test';
 
 // Walk
 function walk(obj, handler, key = null) {
@@ -26,8 +27,8 @@ describe('get - request object', () => {
 		dare = new Dare(options);
 	});
 
-	it('should contain the function dare.get', () => {
-		expect(dare.get).to.be.a('function');
+	it('should contain the function dare.get', async () => {
+		assert.strictEqual(typeof dare.get, 'function');
 	});
 
 	it('should generate a SELECT statement and execute dare.sql', async () => {
@@ -109,11 +110,11 @@ describe('get - request object', () => {
 				limit,
 			});
 
-			expect(resp).to.be.an('array');
-			expect(resp.length).to.eql(1);
+			assert.ok(Array.isArray(resp));
+			assert.strictEqual(resp.length, 1);
 			const item = resp[0];
-			expect(item).to.have.property('name');
-			expect(item.asset).to.have.property('name', 2001);
+			assert.ok('name' in item);
+			assert.strictEqual(item.asset.name, 2001);
 		});
 
 		it('should respond with the same structure as the request.fields', async () => {
@@ -143,14 +144,14 @@ describe('get - request object', () => {
 				limit,
 			});
 
-			expect(resp).to.be.an('array');
+			assert.ok(Array.isArray(resp));
 		});
 
 		it('should allow multiple definitions of the same thing', async () => {
 			dare.sql = async ({sql}) => {
 				const key = 'email1,users_email.email,users_email.emailnest';
 
-				expect(sql).to.contain(key);
+				assert.ok(sql.includes(key));
 
 				return [
 					{
@@ -179,9 +180,9 @@ describe('get - request object', () => {
 				],
 			});
 
-			expect(res).to.have.property('email1');
-			expect(res.users_email).to.have.property('email');
-			expect(res.users_email).to.have.property('emailnest');
+			assert.ok('email1' in res);
+			assert.ok('email' in res.users_email);
+			assert.ok('emailnest' in res.users_email);
 		});
 	});
 
@@ -200,8 +201,8 @@ describe('get - request object', () => {
 				it(`valid: ${JSON.stringify(value)}`, async () => {
 					dare.sql = ({sql, values}) => {
 						walk(value, (value, key) => {
-							expect(sql).to.contain(key);
-							expect(values).to.contain(value);
+							assert.ok(sql.includes(key));
+							assert.ok(values.includes(value));
 						});
 
 						return Promise.resolve([]);
@@ -218,10 +219,10 @@ describe('get - request object', () => {
 
 			it('valid: shorthand nested filter keys', async () => {
 				dare.sql = ({sql, values}) => {
-					expect(sql).to.contain('.type = ?');
-					expect(sql).to.contain('.name != ?');
-					expect(values).to.contain('mobile');
-					expect(values).to.contain('me');
+					assert.ok(sql.includes('.type = ?'));
+					assert.ok(sql.includes('.name != ?'));
+					assert.ok(values.includes('mobile'));
+					assert.ok(values.includes('me'));
 
 					return Promise.resolve([]);
 				};
@@ -254,7 +255,7 @@ describe('get - request object', () => {
 						LIMIT 5`
 					);
 
-					expect(values).to.deep.equal([1, 3, 2]);
+					assert.deepStrictEqual(values, [1, 3, 2]);
 
 					return Promise.resolve([]);
 				};
@@ -337,7 +338,7 @@ describe('get - request object', () => {
 
 				it(`valid: ${JSON.stringify(test.join)}`, async () => {
 					dare.sql = ({sql, values}) => {
-						expect(values).to.deep.equal([type]);
+						assert.deepStrictEqual(values, [type]);
 
 						expectSQLEqual(sql, expected);
 
@@ -568,7 +569,7 @@ describe('get - request object', () => {
 				},
 			});
 
-			expect(resp).to.deep.equal({
+			assert.deepStrictEqual(resp, {
 				name: 'Andrew',
 				thumbnail: '/asset/1/thumbnail',
 				url: '/asset/1/url',
@@ -604,7 +605,7 @@ describe('get - request object', () => {
 				},
 			});
 
-			expect(resp).to.deep.equal({
+			assert.deepStrictEqual(resp, {
 				name: 'Andrew',
 				thumbnail: '/asset/1/thumbnail',
 				pictureUrl: 'http://example.com/picture/100/image',

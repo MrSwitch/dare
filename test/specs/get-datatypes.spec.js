@@ -1,4 +1,4 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
 
 // Test Generic DB functions
@@ -6,6 +6,7 @@ import sqlEqual from '../lib/sql-equal.js';
 
 // Create a schema
 import options from '../data/options.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('get - datatypes', () => {
 	let dare;
@@ -28,7 +29,7 @@ describe('get - datatypes', () => {
 			`;
 
 			sqlEqual(sql, expected);
-			expect(values).to.deep.equal([]);
+			assert.deepStrictEqual(values, []);
 
 			return [{created_time}];
 		};
@@ -38,7 +39,7 @@ describe('get - datatypes', () => {
 			fields: ['created_time'],
 		});
 
-		expect(resp).to.have.property('created_time', created_time);
+		assert.strictEqual(resp.created_time, created_time);
 	});
 
 	describe('type=json', () => {
@@ -54,7 +55,7 @@ describe('get - datatypes', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{settings: metaString}];
 			};
@@ -64,7 +65,8 @@ describe('get - datatypes', () => {
 				fields: ['settings'],
 			});
 
-			expect(resp).to.have.property('settings').to.deep.equal(settings);
+			assert('settings' in resp);
+			assert.deepStrictEqual(resp.settings, settings);
 		});
 
 		it('should JSON parse a nested field with object if type=json', async () => {
@@ -80,7 +82,7 @@ describe('get - datatypes', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{users: {settings: metaString}}];
 			};
@@ -94,10 +96,9 @@ describe('get - datatypes', () => {
 				],
 			});
 
-			expect(resp)
-				.to.have.property('users')
-				.to.have.property('settings')
-				.to.deep.equal(settings);
+			assert('users' in resp);
+			assert('settings' in resp.users);
+			assert.deepStrictEqual(resp.users.settings, settings);
 		});
 
 		it('should return an empty object if response value is falsy', async () => {
@@ -109,7 +110,7 @@ describe('get - datatypes', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{meta: null}];
 			};
@@ -119,7 +120,8 @@ describe('get - datatypes', () => {
 				fields: ['settings'],
 			});
 
-			expect(resp).to.have.property('settings').to.deep.equal({});
+			assert('settings' in resp);
+			assert.deepStrictEqual(resp.settings, {});
 		});
 	});
 
@@ -136,7 +138,7 @@ describe('get - datatypes', () => {
 				`;
 
 				sqlEqual(sql, expected);
-				expect(values).to.deep.equal([]);
+				assert.deepStrictEqual(values, []);
 
 				return [{users: {id}}];
 			};
@@ -154,9 +156,8 @@ describe('get - datatypes', () => {
 				],
 			});
 
-			expect(resp)
-				.to.have.property('users')
-				.to.have.property('URL', `/user/${id}`);
+			assert('users' in resp);
+			assert.strictEqual(resp.users.URL, `/user/${id}`);
 		});
 	});
 });

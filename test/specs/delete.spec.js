@@ -1,10 +1,10 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
-import assert from 'node:assert/strict';
 
 // Test Generic DB functions
 import sqlEqual from '../lib/sql-equal.js';
 import DareError from '../../src/utils/error.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('del', () => {
 	let dare;
@@ -18,21 +18,21 @@ describe('del', () => {
 		};
 	});
 
-	it('should contain the function dare.del', () => {
-		expect(dare.del).to.be.a('function');
+	it('should contain the function dare.del', async () => {
+		assert.strictEqual(typeof dare.del, 'function');
 	});
 
 	it('should generate an DELETE statement and execute dare.execute', async () => {
 		dare.execute = async ({sql, values}) => {
 			// Limit: 1
 			sqlEqual(sql, 'DELETE FROM test WHERE test.id = ? LIMIT ?');
-			expect(values).to.deep.equal([1, 1]);
+			assert.deepStrictEqual(values, [1, 1]);
 			return {success: true};
 		};
 
 		const resp = await dare.del('test', {id: 1});
 
-		expect(resp).to.have.property('success', true);
+		assert.strictEqual(resp.success, true);
 	});
 
 	it('should throw an exception if affectedRows: 0', async () => {
@@ -40,9 +40,11 @@ describe('del', () => {
 
 		const test = dare.del('groups', {id: 20_000});
 
-		return expect(test)
-			.to.be.eventually.rejectedWith(DareError)
-			.and.have.property('code', DareError.NOT_FOUND);
+		await assert.rejects(test, (error) => {
+			assert(error instanceof DareError);
+			assert.strictEqual(error.code, DareError.NOT_FOUND);
+			return true;
+		});
 	});
 
 	it('should return opts.notfound if affectedRows: 0', async () => {
@@ -50,14 +52,14 @@ describe('del', () => {
 		dare.sql = async () => ({affectedRows: 0});
 
 		const test = await dare.del('groups', {id: 20_000}, {notfound});
-		return expect(test).to.equal(notfound);
+		return assert.strictEqual(test, notfound);
 	});
 
 	it('should use provided table name', async () => {
 		dare.execute = async ({sql, values}) => {
 			// Limit: 1
 			sqlEqual(sql, 'DELETE FROM test WHERE test.id = ? LIMIT ?');
-			expect(values).to.deep.equal([1, 1]);
+			assert.deepStrictEqual(values, [1, 1]);
 			return {success: true};
 		};
 
@@ -76,7 +78,7 @@ describe('del', () => {
 	it('should trigger pre handler, options.del.[table]', async () => {
 		dare.execute = async ({sql, values}) => {
 			sqlEqual(sql, 'DELETE FROM test WHERE test.id = ? LIMIT ?');
-			expect(values).to.deep.equal([1, 1]);
+			assert.deepStrictEqual(values, [1, 1]);
 			return {success: true};
 		};
 
@@ -98,7 +100,7 @@ describe('del', () => {
 	it('should trigger pre handler, options.del.default, and wait for Promise to resolve', async () => {
 		dare.execute = async ({sql, values}) => {
 			sqlEqual(sql, 'DELETE FROM test WHERE test.id = ? LIMIT ?');
-			expect(values).to.deep.equal([1, 1]);
+			assert.deepStrictEqual(values, [1, 1]);
 			return {success: true};
 		};
 
@@ -117,7 +119,7 @@ describe('del', () => {
 		});
 	});
 
-	it('should trigger pre handler, and handle errors being thrown', () => {
+	it('should trigger pre handler, and handle errors being thrown', async () => {
 		const msg = 'test';
 
 		dare.options.models = {
@@ -134,7 +136,7 @@ describe('del', () => {
 			filter: {id: 2},
 		});
 
-		return expect(test).to.be.eventually.rejectedWith(Error, msg);
+		await assert.rejects(test, Error, msg);
 	});
 
 	it('should return options.skip if set and not trigger further operations', async () => {
@@ -151,7 +153,7 @@ describe('del', () => {
 			filter: {id: 2},
 		});
 
-		expect(resp).to.eql(true);
+		assert.strictEqual(resp, true);
 	});
 
 	it('allow nested filters (integration-tested)', async () => {
@@ -176,7 +178,7 @@ describe('del', () => {
 			},
 		});
 
-		expect(test).to.have.property('affectedRows', 1);
+		assert.strictEqual(test.affectedRows, 1);
 	});
 
 	it('should allow nested filters with negation prefix (integration-tested)', async () => {
@@ -201,7 +203,7 @@ describe('del', () => {
 			},
 		});
 
-		expect(test).to.have.property('affectedRows', 1);
+		assert.strictEqual(test.affectedRows, 1);
 	});
 
 	describe('DB Engine specific tests', () => {

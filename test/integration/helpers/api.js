@@ -3,6 +3,7 @@ import Debug from 'debug';
 import mysql from 'mysql2/promise';
 import db from './db.js';
 import options from '../../data/options.js';
+import {beforeEach} from 'node:test';
 
 const debug = Debug('sql');
 

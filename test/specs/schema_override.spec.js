@@ -1,5 +1,6 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
 import Dare from '../../src/index.js';
+import {describe, it, beforeEach} from 'node:test';
 
 describe('schema override', () => {
 	let dare;
@@ -37,7 +38,7 @@ describe('schema override', () => {
 
 			const callBeforeOverride = dare.patch(patchOptions);
 
-			await expect(callBeforeOverride).to.be.eventually.rejected;
+			await assert.rejects(callBeforeOverride);
 
 			const callAfterOverride = dare.patch({
 				...patchOptions,
@@ -52,7 +53,7 @@ describe('schema override', () => {
 				},
 			});
 
-			await expect(callAfterOverride).to.be.eventually.fulfilled;
+			await assert.doesNotReject(callAfterOverride);
 		});
 	});
 
@@ -68,7 +69,7 @@ describe('schema override', () => {
 
 			const callBeforeOverride = dare.post(postOptions);
 
-			await expect(callBeforeOverride).to.be.eventually.rejected;
+			await assert.rejects(callBeforeOverride);
 
 			const callAfterOverride = dare.post({
 				...postOptions,
@@ -83,7 +84,7 @@ describe('schema override', () => {
 				},
 			});
 
-			await expect(callAfterOverride).to.be.eventually.fulfilled;
+			await assert.doesNotReject(callAfterOverride);
 		});
 	});
 });

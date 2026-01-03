@@ -1,4 +1,5 @@
-import {expect} from 'chai';
+import assert from 'node:assert';
+import {describe, it} from 'node:test';
 /*
  * Field Reducer
  * Extract the fields from the current dataset
@@ -12,8 +13,8 @@ describe('utils/error', () => {
 		const error = new DareError(DareError.INVALID_REFERENCE);
 
 		// Expect the formatted list of fields to be identical to the inputted value
-		expect(error).to.have.property('code', 'INVALID_REFERENCE');
-		expect(error).to.have.property('status', 400);
-		expect(error).to.have.property('message', 'Invalid request');
+		assert.strictEqual(error.code, 'INVALID_REFERENCE');
+		assert.strictEqual(error.status, 400);
+		assert.strictEqual(error.message, 'Invalid request');
 	});
 });
