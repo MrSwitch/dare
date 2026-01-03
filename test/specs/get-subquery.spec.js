@@ -381,7 +381,6 @@ describe('get - subquery', () => {
 	});
 
 	describe('applyCTELimitFiltering', async () => {
-
 		it('should not add CTE on resultsets over 10k rows, by default', async () => {
 			dare.sql = ({sql}) => {
 				const expected = `
@@ -418,7 +417,7 @@ describe('get - subquery', () => {
 						email: 'userEmails.email',
 					},
 				],
-				limit: 10_001
+				limit: 10_001,
 			});
 		});
 	});
@@ -448,7 +447,6 @@ describe('get - subquery', () => {
 			});
 		});
 		it('MySQL 5.* does not support CTE', async () => {
-
 			const dareInst = dare.use({engine: 'mysql:5.7.0'});
 
 			dareInst.sql = ({sql}) => {

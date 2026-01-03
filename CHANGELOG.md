@@ -1,3 +1,10 @@
+## [0.98.4](https://github.com/MrSwitch/dare/compare/v0.98.3...v0.98.4) (2025-12-19)
+
+
+### Bug Fixes
+
+* **ci:** trigger publish because issue in https://github.com/npm/cli/issues/8547 ([5fcdb01](https://github.com/MrSwitch/dare/commit/5fcdb0195528e0b4f40016b8b83658bec28c4faf))
+
 ## [0.98.3](https://github.com/MrSwitch/dare/compare/v0.98.2...v0.98.3) (2025-12-19)
 
 

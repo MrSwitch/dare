@@ -7,7 +7,7 @@ describe('get_unique_alias', () => {
 
 		for (let i = 0; i <= 26 * 26; i++) {
 			const alias = dare.get_unique_alias();
-			// eslint-disable-next-line security/detect-unsafe-regex
+
 			expect(alias).to.match(/^[a-z]|(?<tick>`)[a-z]{2,}\k<tick>$/);
 		}
 

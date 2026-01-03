@@ -4,7 +4,7 @@
  *
  * Given a field definition defined in the schema, extract it's attributes
  * @param {string} field - A field reference
- * @param {Object<string, FieldAttributesWithShorthand>} schema - A model schema definition
+ * @param {Record<string, FieldAttributesWithShorthand>} schema - A model schema definition
  * @param {object} dareInstance - A dare instance
  * @param {boolean} [useDefault=false] - Fallback to `default` schema field definition
  * @returns {FieldAttributes} An object containing the attributes of the field

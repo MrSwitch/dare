@@ -1,4 +1,3 @@
-/* eslint-disable security/detect-unsafe-regex */
 /* eslint-disable prefer-named-capture-group */
 import DareError from './error.js';
 

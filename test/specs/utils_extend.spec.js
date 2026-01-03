@@ -43,7 +43,6 @@ describe('utils/extend', () => {
 		// Should not extend the the default prototype object...
 		extend({}, JSON.parse('{"__proto__": {"devMode": true}}'));
 
-		// eslint-disable-next-line no-unused-expressions
 		assert.ok(!{}.devMode, 'Prototype should not be extended');
 	});
 

@@ -33,7 +33,7 @@ describe(`model.shortcut_map`, () => {
 		});
 
 		// Set a test instance
-		// eslint-disable-next-line arrow-body-style
+
 		dare.execute = query => {
 			// DEBUG
 			debug(mysql.format(query.sql, query.values));
