@@ -619,7 +619,7 @@ Dare.prototype.getCount = async function getCount(table, filter, options = {}) {
  * @returns {Promise<any>} Affected Rows statement
  */
 Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
+	const IS_POSTGRES = this.engine.startsWith('postgres') || this.engine.startsWith('sqlite');
 
 	/**
 	 * @type {QueryOptions} opts
@@ -949,6 +949,7 @@ Dare.prototype.post = async function post(table, body, options = {}) {
  */
 Dare.prototype.del = async function del(table, filter, options = {}) {
 	const IS_POSTGRES = this.engine.startsWith('postgres');
+	const IS_SQLITE = this.engine.startsWith('sqlite');
 
 	/**
 	 * @type {QueryOptions} opts
@@ -990,7 +991,7 @@ Dare.prototype.del = async function del(table, filter, options = {}) {
 					${req.sql_joins.length ? join(req.sql_joins, '\n') : empty}
 					WHERE
 					${join(req.sql_where_conditions, ' AND ')}
-					${!IS_POSTGRES && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}`;
+					${!IS_POSTGRES && !IS_SQLITE && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}`;
 
 	let resp = await this.sql(sql);
 
@@ -1056,8 +1057,9 @@ Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
 	sql_table = ''
 ) {
 	const IS_POSTGRES = this.engine.startsWith('postgres');
+	const IS_SQLITE = this.engine.startsWith('sqlite');
 
-	if (IS_POSTGRES) {
+	if (IS_POSTGRES || IS_SQLITE) {
 		if (!keys.length) {
 			return `ON CONFLICT DO NOTHING`;
 		}

@@ -12,6 +12,9 @@ export default function group_concat({
 	rowid = null,
 	engine = '',
 }) {
+
+	const version = engine.split(':').at(1) || "";
+
 	// Is this an aggregate list?
 	const agg = fields.reduce(
 		(prev, curr) => prev || curr.agg || curr.label.indexOf(address) !== 0,
@@ -30,7 +33,7 @@ export default function group_concat({
 	}
 
 	// Convert to JSON Array
-	if (semverCompare(engine.split(':').at(1), '5.7') < 0) {
+	if (version && semverCompare(version, '5.7') < 0) {
 		expression = fields.map(
 			field =>
 				`'"', REPLACE(REPLACE(${field.expression}, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"'`
@@ -54,7 +57,7 @@ export default function group_concat({
 	}
 
 	// Multiple
-	if (semverCompare(engine.split(':').at(1), '5.7.21') <= 0) {
+	if (version && semverCompare(version, '5.7.21') <= 0) {
 		expression = `CONCAT('[', GROUP_CONCAT(IF(${sql_alias}.${rowid} IS NOT NULL, ${expression}, NULL)), ']')`;
 	} else {
 		let condition = `CASE WHEN (${sql_alias}.${rowid} IS NOT NULL) THEN (${expression}) ELSE NULL END`;

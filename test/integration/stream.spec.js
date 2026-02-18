@@ -79,7 +79,7 @@ describe('Stream', () => {
 			'Intercept handler should contain 100 items'
 		);
 		assert.deepStrictEqual(
-			data[0],
+			{...data[0]}, // SQLLite returns [Object: null prototype] {...}, so spread here to a normal object
 			{
 				username: 'User0',
 				generatedUrl: `/user/${insertId}`,

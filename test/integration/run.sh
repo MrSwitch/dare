@@ -40,11 +40,20 @@ export DB_PORT=3308
 
 export TZ="UTC"
 
-docker rm -vf "dare_db"
+# SQLite doesn't need Docker, so only remove docker container for other databases
+if [ "$DB_ENGINE_NAME" != "sqlite" ]; then
+	docker rm -vf "dare_db"
+fi
 
 echo "Starting $DB_ENGINE"
 
-if [ "$DB_ENGINE_NAME" = "postgres" ]
+if [ "$DB_ENGINE_NAME" = "sqlite" ]
+then
+	echo "Using SQLite (native Node.js support)"
+	# No Docker container needed for SQLite
+	# Database will be created by the SQLite helper class
+
+elif [ "$DB_ENGINE_NAME" = "postgres" ]
 then
 
 	docker run \
@@ -110,30 +119,34 @@ else
 fi
 
 
-# Check that the DB is up...
+# Check that the DB is up (skip for SQLite as it doesn't use Docker)...
 
-for dep in db; do
-	echo "waiting for ${dep}..."
-	i=0
-	until [ "$(docker inspect --format='{{.State.Health.Status}}' "dare_${dep}")" == "healthy" ]; do
-		# LOL:
-		# using `((i++))` exits the program as it returns 1
-		# this only happens on Circle CI
-		# this *doesn't* occur when running bash on mac (GNU bash, version 3.2.57(1)-release)
-		# NOR when re-running a circle job with SSH (which is crazy!)
-		# maybe it's this? https://stackoverflow.com/questions/6877012/incrementing-a-variable-triggers-exit-in-bash-4-but-not-in-bash-3
-		# why is circle running two versions of bash!?!?
-		i=$((i + 1))
-	echo "pending $i";
-		sleep 2
-		if [[ "$i" -gt '20' ]]; then
-			echo "${dep} failed to start. Final status: $(docker inspect --format='{{.State.Health.Status}}' "dare_${dep}")"
-			docker rm -v -f "dare_${dep}"
-			exit 1
-		fi
+if [ "$DB_ENGINE_NAME" != "sqlite" ]; then
+	for dep in db; do
+		echo "waiting for ${dep}..."
+		i=0
+		until [ "$(docker inspect --format='{{.State.Health.Status}}' "dare_${dep}")" == "healthy" ]; do
+			# LOL:
+			# using `((i++))` exits the program as it returns 1
+			# this only happens on Circle CI
+			# this *doesn't* occur when running bash on mac (GNU bash, version 3.2.57(1)-release)
+			# NOR when re-running a circle job with SSH (which is crazy!)
+			# maybe it's this? https://stackoverflow.com/questions/6877012/incrementing-a-variable-triggers-exit-in-bash-4-but-not-in-bash-3
+			# why is circle running two versions of bash!?!?
+			i=$((i + 1))
+		echo "pending $i";
+			sleep 2
+			if [[ "$i" -gt '20' ]]; then
+				echo "${dep} failed to start. Final status: $(docker inspect --format='{{.State.Health.Status}}' "dare_${dep}")"
+				docker rm -v -f "dare_${dep}"
+				exit 1
+			fi
+		done
+		echo "${dep} up"
 	done
-	echo "${dep} up"
-done
+else
+	echo "SQLite database ready (no Docker container needed)"
+fi
 
 
 if ( [ "$DB_ENGINE_NAME" = "mysql" ] ); then
@@ -144,6 +157,9 @@ elif ( [ "$DB_ENGINE_NAME" = "mariadb" ] ); then
 	dbclient="docker exec dare_db mariadb -u${DB_ROOT_USER} -p${DB_ROOT_PASSWORD}"
 	$dbclient -e "GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'%' WITH GRANT OPTION;"
 	DB_VERSION=`$dbclient -e "SELECT VERSION()"`;
+elif ( [ "$DB_ENGINE_NAME" = "sqlite" ] ); then
+	# No client setup needed for SQLite - it's handled by the Node.js helper
+	DB_VERSION="SQLite (Node.js native)"
 fi
 
 echo "Connected to $DB_ENGINE_NAME:$DB_VERSION";
@@ -167,7 +183,7 @@ echo 'tests complete'
 
 if [[ -n "$KEEP_DOCKER" ]]; then
   echo "leaving docker running (detached)"
-  if [ "$TEST_STATE_CLEANUP_MODE" == "remove" ]; then
+  if [ "$TEST_STATE_CLEANUP_MODE" == "remove" ] && [ "$DB_ENGINE_NAME" != "sqlite" ]; then
     DBS="$($dbclient -e 'SHOW DATABASES')"
     for db in $DBS; do
       if [[ "$db" =~ ^${TEST_DB_PREFIX} ]]; then
@@ -178,9 +194,12 @@ if [[ -n "$KEEP_DOCKER" ]]; then
     done
   fi
 else
-  echo "shutting down docker..."
-  docker rm -v -f "dare_db"
-
+  if [ "$DB_ENGINE_NAME" != "sqlite" ]; then
+    echo "shutting down docker..."
+    docker rm -v -f "dare_db"
+  else
+    echo "SQLite cleanup handled by helper class"
+  fi
 fi
 echo "finished (tests exit code: $EXIT_CODE)"
 
