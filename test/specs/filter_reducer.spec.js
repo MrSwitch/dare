@@ -249,7 +249,7 @@ describe('Filter Reducer', () => {
 			assert.deepStrictEqual(query.values, values);
 		});
 
-		 it(`quote json number and boolean values`, () => {
+		it(`quote json number and boolean values`, () => {
 			const dareInst = dareInstance.use({engine});
 
 			const filter = {

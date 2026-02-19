@@ -4,10 +4,7 @@ import fs from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
-const {
-	TEST_DB_DATA_PATH,
-	TEST_DB_SCHEMA_PATH,
-} = process.env;
+const {TEST_DB_DATA_PATH, TEST_DB_SCHEMA_PATH} = process.env;
 
 const schemaSql = fs.readFileSync(TEST_DB_SCHEMA_PATH, 'utf8');
 const insertDataSql = fs.readFileSync(TEST_DB_DATA_PATH, 'utf8');
@@ -19,8 +16,11 @@ export default class SQLite {
 		// Create database file in temp directory with a unique name to avoid conflicts
 		const timestamp = Date.now();
 		const pid = process.pid;
-		this.dbPath = join(tmpdir(), `${credentials.database}_${timestamp}_${pid}.db`);
-		
+		this.dbPath = join(
+			tmpdir(),
+			`${credentials.database}_${timestamp}_${pid}.db`
+		);
+
 		// Clean up any existing file
 		try {
 			fs.unlinkSync(this.dbPath);
@@ -32,7 +32,7 @@ export default class SQLite {
 	async init() {
 		// Initialize SQLite database
 		this.conn = new DatabaseSync(this.dbPath);
-		
+
 		/*
 		 * Execute schema SQL - use exec for the entire schema at once
 		 * SQLite's exec can handle multiple statements separated by semicolons
@@ -46,16 +46,20 @@ export default class SQLite {
 		}
 
 		// Extract table names
-		const tables = this.conn.prepare(`
+		const tables = this.conn
+			.prepare(
+				`
 			SELECT name FROM sqlite_master 
 			WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '%_fts'
-		`).all();
-		
+		`
+			)
+			.all();
+
 		this.tables = tables.map(({name}) => name);
 
 		return this.conn;
 	}
-	
+
 	/**
 	 * Convert Uint8Array fields to Buffer for compatibility with existing tests
 	 * @param {object} row - Database row object
@@ -65,7 +69,7 @@ export default class SQLite {
 		if (!row || typeof row !== 'object') {
 			return row;
 		}
-		
+
 		const converted = {};
 		for (const [key, value] of Object.entries(row)) {
 			if (value instanceof Uint8Array) {
@@ -74,47 +78,50 @@ export default class SQLite {
 				converted[key] = value;
 			}
 		}
-		
+
 		return converted;
 	}
 
 	async query(query) {
 		// Ensure database connection is initialized
 		if (!this.conn) {
-			throw new Error('Database connection not initialized. Call init() first.');
+			throw new Error(
+				'Database connection not initialized. Call init() first.'
+			);
 		}
-		
+
 		// Handle different types of queries
-		const preparedQuery = typeof query === 'string' ? query : query.sql || query.text;
+		const preparedQuery =
+			typeof query === 'string' ? query : query.sql || query.text;
 
-        if (!preparedQuery) {
-    		throw new Error('Unsupported query format');
-        }
+		if (!preparedQuery) {
+			throw new Error('Unsupported query format');
+		}
 
-        // Simple string query
-        const trimmed = preparedQuery.trim().toUpperCase();
+		// Simple string query
+		const trimmed = preparedQuery.trim().toUpperCase();
 
-        const values = typeof query === 'string' ? [] : query.values || [];
+		const values = typeof query === 'string' ? [] : query.values || [];
 
-        const stmt = this.conn.prepare(preparedQuery);
-        
-        if (trimmed.startsWith('SELECT')) {
-            const results = stmt.all(...(values || []));
-            // Convert Uint8Array to Buffer for compatibility
-            return results.map(row => this.convertUint8ArrayToBuffer(row));
-        } else if (trimmed.startsWith('INSERT')) {
-            const result = stmt.run(...(values || []));
-            return {
-                insertId: Number(result.lastInsertRowid) - Number(result.changes) + 1,
-                affectedRows: result.changes,
-            };
-        } else {
-            const result = stmt.run(...(values || []));
-            return {
-                affectedRows: result.changes,
-            };
-        }
-		
+		const stmt = this.conn.prepare(preparedQuery);
+
+		if (trimmed.startsWith('SELECT')) {
+			const results = stmt.all(...(values || []));
+			// Convert Uint8Array to Buffer for compatibility
+			return results.map(row => this.convertUint8ArrayToBuffer(row));
+		} else if (trimmed.startsWith('INSERT')) {
+			const result = stmt.run(...(values || []));
+			return {
+				insertId:
+					Number(result.lastInsertRowid) - Number(result.changes) + 1,
+				affectedRows: result.changes,
+			};
+		} else {
+			const result = stmt.run(...(values || []));
+			return {
+				affectedRows: result.changes,
+			};
+		}
 	}
 
 	/**
@@ -134,7 +141,7 @@ export default class SQLite {
 		}
 
 		// Reset autoincrement sequences
-		this.conn.exec("DELETE FROM sqlite_sequence");
+		this.conn.exec('DELETE FROM sqlite_sequence');
 
 		// Insert test data
 		if (insertDataSql.trim()) {
@@ -156,7 +163,7 @@ export default class SQLite {
 		if (this.conn) {
 			this.conn.close();
 		}
-		
+
 		// Clean up database file
 		try {
 			fs.unlinkSync(this.dbPath);
@@ -168,13 +175,13 @@ export default class SQLite {
 	stream(query, streamOptions = {objectMode: true, highWaterMark: 5}) {
 		// Create a readable stream for query results
 		const resultStream = new PassThrough(streamOptions);
-		
+
 		// Execute query and stream results
 		setImmediate(() => {
 			try {
 				let queryStr;
-                let values;
-				
+				let values;
+
 				if (typeof query === 'string') {
 					queryStr = query;
 					values = [];
@@ -187,21 +194,21 @@ export default class SQLite {
 				} else {
 					throw new Error('Unsupported query format');
 				}
-				
+
 				const stmt = this.conn.prepare(queryStr);
 				const results = stmt.all(...values);
-				
+
 				// Push results to stream
 				for (const result of results) {
 					resultStream.push(result);
 				}
-				
+
 				resultStream.push(null); // End stream
 			} catch (error) {
 				resultStream.destroy(error);
 			}
 		});
-		
+
 		return resultStream;
 	}
 }

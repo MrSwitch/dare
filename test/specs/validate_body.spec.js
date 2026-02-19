@@ -27,13 +27,16 @@ describe('validate_body', () => {
 						body,
 					});
 
-					await assert.rejects(test, (error) => {
+					await assert.rejects(test, error => {
 						assert(error instanceof DareError);
 						assert.match(
 							error.message,
 							/^The body .*? is invalid$/
 						);
-						assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+						assert.strictEqual(
+							error.code,
+							DareError.INVALID_REQUEST
+						);
 						return true;
 					});
 				});

@@ -619,7 +619,8 @@ Dare.prototype.getCount = async function getCount(table, filter, options = {}) {
  * @returns {Promise<any>} Affected Rows statement
  */
 Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
-	const IS_POSTGRES = this.engine.startsWith('postgres') || this.engine.startsWith('sqlite');
+	const IS_POSTGRES =
+		this.engine.startsWith('postgres') || this.engine.startsWith('sqlite');
 
 	/**
 	 * @type {QueryOptions} opts

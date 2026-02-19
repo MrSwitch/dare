@@ -85,7 +85,7 @@ describe('post from query', () => {
 			duplicate_keys: 'ignore',
 		});
 
-		await assert.rejects(test, (error) => {
+		await assert.rejects(test, error => {
 			assert(error instanceof DareError);
 			assert.strictEqual(error.code, DareError.INVALID_REQUEST);
 			return true;
@@ -102,7 +102,7 @@ describe('post from query', () => {
 			duplicate_keys: 'ignore',
 		});
 
-		await assert.rejects(test, (error) => {
+		await assert.rejects(test, error => {
 			assert(error instanceof DareError);
 			assert.strictEqual(error.code, DareError.INVALID_REQUEST);
 			return true;

@@ -12,8 +12,7 @@ export default function group_concat({
 	rowid = null,
 	engine = '',
 }) {
-
-	const version = engine.split(':').at(1) || "";
+	const version = engine.split(':').at(1) || '';
 
 	// Is this an aggregate list?
 	const agg = fields.reduce(

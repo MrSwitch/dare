@@ -119,13 +119,19 @@ describe('Dare', () => {
 			const dare2 = dare.use(options2);
 
 			// Should not share same objects as instance it extended
-			assert.notStrictEqual(dare.options.models.users, dare2.options.models.users);
+			assert.notStrictEqual(
+				dare.options.models.users,
+				dare2.options.models.users
+			);
 
 			// Should not mutate instance it extended
-			 
+
 			assert.strictEqual(dare.options.models.different, undefined);
 
-			assert.notStrictEqual(dare.options.models.users.schema.name.writable, dare2.options.models.users.schema.name.writable);
+			assert.notStrictEqual(
+				dare.options.models.users.schema.name.writable,
+				dare2.options.models.users.schema.name.writable
+			);
 
 			// Should merge settings for field definitiions... e.g.
 			assert.deepStrictEqual(dare2.options.models.users.schema, {

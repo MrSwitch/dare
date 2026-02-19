@@ -68,9 +68,11 @@ describe('field access', () => {
 
 				await assert.rejects(
 					call,
-					(err) => 
+					err =>
 						err instanceof DareError &&
-						err.message.includes(`Field '${fieldName}' is not readable`) &&
+						err.message.includes(
+							`Field '${fieldName}' is not readable`
+						) &&
 						err.code === DareError.INVALID_REFERENCE
 				);
 			});
@@ -114,7 +116,7 @@ describe('field access', () => {
 
 			await assert.rejects(
 				call,
-				(err) => 
+				err =>
 					err instanceof DareError &&
 					err.message.includes("Field 'id' is not writeable") &&
 					err.code === DareError.INVALID_REFERENCE
@@ -134,7 +136,7 @@ describe('field access', () => {
 
 			await assert.rejects(
 				call,
-				(err) => 
+				err =>
 					err instanceof DareError &&
 					err.message.includes("Field 'id' is not writeable") &&
 					err.code === DareError.INVALID_REFERENCE
@@ -171,7 +173,7 @@ describe('field access', () => {
 
 			await assert.rejects(
 				call,
-				(err) => 
+				err =>
 					err instanceof DareError &&
 					err.message.includes("Field 'name' is not writeable") &&
 					err.code === DareError.INVALID_REFERENCE
