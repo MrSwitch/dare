@@ -1,3 +1,10 @@
+## [0.98.6](https://github.com/MrSwitch/dare/compare/v0.98.5...v0.98.6) (2026-05-10)
+
+
+### Bug Fixes
+
+* **release:** workaround see [#433](https://github.com/MrSwitch/dare/issues/433) ([df9def9](https://github.com/MrSwitch/dare/commit/df9def962b83e600986130df9361692733a42717))
+
 ## [0.98.5](https://github.com/MrSwitch/dare/compare/v0.98.4...v0.98.5) (2026-05-10)
 
 
