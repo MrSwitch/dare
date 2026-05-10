@@ -1,3 +1,10 @@
+## [0.98.5](https://github.com/MrSwitch/dare/compare/v0.98.4...v0.98.5) (2026-05-10)
+
+
+### Bug Fixes
+
+* **cve:** update dependencies ([c80beb5](https://github.com/MrSwitch/dare/commit/c80beb5b9d6bbdca2e3a1bae3c5e6880e4919afb))
+
 ## [0.98.4](https://github.com/MrSwitch/dare/compare/v0.98.3...v0.98.4) (2025-12-19)
 
 
