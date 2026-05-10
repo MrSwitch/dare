@@ -141,10 +141,46 @@ function prepCondition({
 	});
 
 	if (isFullText) {
-		// Join the fields
+		// Use engine plugin if available for SQL structure generation
+		if (dareInstance.enginePlugin?.generateFulltextSearch) {
+			// Extract field names for the engine plugin
+			const fieldNames = sql_fields.map(
+				({field}) => `${sql_alias}.${field}`
+			);
+
+			// Check the engine type to handle differently
+			if (dareInstance.engine.startsWith('sqlite')) {
+				// SQLite: Use LIKE-based search with proper parameterization
+				const NOT_PREFIX = negate ? 'NOT ' : '';
+				const conditions = fieldNames.map(
+					field =>
+						SQL`${raw(field)} LIKE ${`%${dareInstance.fulltextParser(value)}%`}`
+				);
+				return SQL`${raw(NOT_PREFIX)}(${join(conditions, ' OR ')})`;
+			} else if (dareInstance.engine.startsWith('postgres')) {
+				// PostgreSQL: Use engine plugin for structure but parameterize the search value
+				const field =
+					fieldNames.length === 1
+						? raw(fieldNames[0])
+						: SQL`TO_TSVECTOR(${join(
+								fieldNames.map(f => raw(f)),
+								" || ' ' || "
+							)})`;
+				return SQL`${NOT}${field} @@ to_tsquery('english', ${dareInstance.fulltextParser(value)})`;
+			} else {
+				// MySQL: Use engine plugin for structure but parameterize the search value
+				const fieldRefs = fieldNames.map(f => raw(f));
+				return SQL`${NOT}MATCH(${join(fieldRefs, ', ')}) AGAINST(${dareInstance.fulltextParser(value)} IN BOOLEAN MODE)`;
+			}
+		}
+
+		// Fallback to legacy logic for engines without plugin support
 		const sql_field_array = sql_fields.map(({sql}) => sql);
 
-		const IS_POSTGRES = dareInstance.engine.startsWith('postgres');
+		// Use engine plugin if available, otherwise fall back to engine string check
+		const IS_POSTGRES = dareInstance.enginePlugin
+			? dareInstance.enginePlugin.getLikeOperator() === 'ILIKE'
+			: dareInstance.engine.startsWith('postgres');
 
 		if (IS_POSTGRES) {
 			const field =
@@ -154,7 +190,7 @@ function prepCondition({
 			return SQL`${NOT}${field} @@ to_tsquery('english', ${dareInstance.fulltextParser(value)})`;
 		}
 
-		// Default: MySQL Full Text
+		// Default: MySQL Full Text	
 		return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${dareInstance.fulltextParser(value)} IN BOOLEAN MODE)`;
 	} else if (sql_fields.length > 1) {
 		/*
@@ -221,6 +257,7 @@ function prepCondition({
 					operators,
 					type,
 					engine,
+					dareInstance,
 				})
 			),
 			' AND '
@@ -235,6 +272,7 @@ function prepCondition({
 		// Treat json as text
 		type: type === 'json' ? 'text' : type,
 		engine,
+		dareInstance,
 	});
 }
 
@@ -247,6 +285,7 @@ function prepCondition({
  * @param {string|null} params.operators - Operators
  * @param {string|null} params.type - Type
  * @param {Engine} params.engine - DB Engine
+ * @param {object} params.dareInstance - Dare instance for engine plugin access
  * @returns {Sql} SQL condition
  */
 function sqlCondition({
@@ -256,8 +295,12 @@ function sqlCondition({
 	operators,
 	type,
 	engine,
+	dareInstance = null,
 }) {
-	const IS_POSTGRES = engine.startsWith('postgres');
+	// Use engine plugin if available, otherwise fall back to engine string check
+	const IS_POSTGRES = dareInstance?.enginePlugin
+		? dareInstance.enginePlugin.getLikeOperator() === 'ILIKE'
+		: engine.startsWith('postgres');
 
 	// Does it have a negative comparison operator?
 	const negate = operators.includes('-');
@@ -287,7 +330,13 @@ function sqlCondition({
 	const quote =
 		type === 'json' ? a => (typeof a === 'string' ? `"${a}"` : a) : a => a;
 
-	const LIKE = raw(IS_POSTGRES ? 'ILIKE' : 'LIKE');
+	const LIKE = raw(
+		dareInstance?.enginePlugin
+			? dareInstance.enginePlugin.getLikeOperator()
+			: IS_POSTGRES
+				? 'ILIKE'
+				: 'LIKE'
+	);
 
 	/*
 	 * Range
@@ -384,9 +433,11 @@ function sqlCondition({
 
 		// Use the `IN(...)` for items which can be grouped...
 		if (filteredValue.length) {
-			const items = engine.startsWith('mysql:5.7')
-				? filteredValue.map(quote)
-				: filteredValue;
+			const items = dareInstance.enginePlugin
+				? dareInstance.enginePlugin.quoteJsonValues(filteredValue)
+				: engine.startsWith('mysql:5.7')
+					? filteredValue.map(quote)
+					: filteredValue;
 
 			let condition = SQL`${sql_field} ${NOT}IN (${join(items)})`;
 
@@ -408,6 +459,7 @@ function sqlCondition({
 					conditional_operators_in_value,
 					type,
 					engine,
+					dareInstance,
 				})
 			)
 		);

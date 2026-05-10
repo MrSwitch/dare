@@ -100,6 +100,7 @@ export default function buildQuery(opts, dareInstance) {
 			sql_alias: gc_sql_alias,
 			rowid: dareInstance.rowid,
 			engine: dareInstance.engine,
+			enginePlugin: dareInstance.enginePlugin,
 		});
 		sql_fields = [raw(gc.expression)];
 		alias = gc.label;
@@ -154,7 +155,7 @@ export default function buildQuery(opts, dareInstance) {
 	 * -> And, this is a subquery
 	 * -> Then, remove the limit
 	 */
-	if (dareInstance.engine?.startsWith('mysql:8') && alias) {
+	if (dareInstance.enginePlugin?.needsAggregateQueryWorkaround?.() && alias) {
 		if (fields.every(item => item.agg)) {
 			opts.limit = null;
 		}
@@ -440,6 +441,7 @@ function traverse(item, is_subquery, dareInstance) {
 			sql_alias: gc_sql_alias,
 			rowid: dareInstance.rowid,
 			engine: dareInstance.engine,
+			enginePlugin: dareInstance.enginePlugin,
 		});
 
 		// Reset the fields array

@@ -18,11 +18,13 @@ import format_request from './format_request.js';
 
 import response_handler, {responseRowHandler} from './response_handler.js';
 
+import {EngineFactory} from './engines/index.js';
+
 /* eslint-disable jsdoc/valid-types */
 /**
  * @import {Sql} from 'sql-template-tag'
  *
- * @typedef {`${'mysql' | 'postgres' | 'mariadb'}:${number}.${number}${string?}`} Engine
+ * @typedef {`${'mysql' | 'postgres' | 'mariadb'}:${number}.${number}${string?}` | object} Engine
  *
  * @typedef {Pick<InternalProps, 'alias' | 'parent' | 'name' | 'skip'>} ModalHandlerExtraProps
  *
@@ -106,7 +108,7 @@ import response_handler, {responseRowHandler} from './response_handler.js';
  * @property {Function} [getFieldKey] - Override default Function to interpret the field key
  * @property {string} [conditional_operators_in_value] - Allowable conditional operators in value
  * @property {any} [state] - Arbitary data to carry through to the model/response handlers
- * @property {Engine} [engine] - DB Engine to use
+ * @property {Engine} [engine] - DB Engine to use (string like 'mysql:8.0' or engine instance)
  * @property {boolean} [ignore] - Aka INSERT IGNORE INTO...
  *
  * @typedef {object} InternalProps
@@ -156,8 +158,23 @@ function Dare({engine, ...options} = {}) {
 	this.options = extend(clone(this.options), options);
 
 	if (engine) {
-		this.engine = engine;
-		this.rowid = engine.startsWith('postgres') ? 'id' : '_rowid';
+		// Handle both engine string and engine instance
+		if (typeof engine === 'string') {
+			// Create engine plugin instance from string
+			this.enginePlugin = EngineFactory.createEngine(engine);
+			this.engine = engine;
+		} else if (typeof engine === 'object' && engine.constructor) {
+			// Use provided engine instance directly
+			this.enginePlugin = engine;
+			this.engine = engine.engine || 'unknown';
+		} else {
+			throw new DareError(
+				DareError.INVALID_REQUEST,
+				'Engine must be a string or engine instance'
+			);
+		}
+
+		this.rowid = this.enginePlugin.getRowIdField();
 	}
 
 	return this;
@@ -217,6 +234,11 @@ Dare.prototype.table_alias_handler = function (name) {
 Dare.prototype.unique_alias_index = 0;
 
 Dare.prototype.identifierWrapper = function identifierWrapper(field) {
+	if (this.enginePlugin?.identifierWrapper) {
+		return this.enginePlugin.identifierWrapper(field);
+	}
+
+	// Fallback to legacy logic
 	const identifier_delimiter = this.engine.startsWith('postgres') ? '"' : '`';
 	return [identifier_delimiter, field, identifier_delimiter].join('');
 };
@@ -366,12 +388,19 @@ Dare.prototype.after = function (resp) {
  * @returns {boolean} Whether to use CTE LIMIT Filtering
  */
 Dare.prototype.applyCTELimitFiltering = function (options) {
-	// Cancel for old mysql
+	if (this.enginePlugin?.shouldApplyCTELimitFiltering) {
+		return this.enginePlugin.shouldApplyCTELimitFiltering(options);
+	}
+
+	/*
+	 * Fallback to original logic
+	 * Cancel for old mysql
+	 */
 	if (this.engine.startsWith('mysql:5')) {
 		return false;
 	}
 
-	// Cancel if limit is beyond a certain threshold
+	/* Cancel if limit is beyond a certain threshold */
 	if (options.limit > 10_000) {
 		return false;
 	}
@@ -402,8 +431,15 @@ Dare.prototype.use = function ({engine, ...options} = {}) {
 		inst.getFieldKey = options.getFieldKey;
 	}
 	if (engine) {
+		// Create new engine plugin if engine changed
+		inst.enginePlugin = EngineFactory.createEngine(engine);
 		inst.engine = engine;
-		inst.rowid = engine.startsWith('postgres') ? 'id' : '_rowid';
+		inst.rowid = inst.enginePlugin.getRowIdField();
+	} else if (this.enginePlugin) {
+		// Inherit engine plugin from parent
+		inst.enginePlugin = this.enginePlugin;
+		inst.engine = this.engine;
+		inst.rowid = this.rowid;
 	}
 
 	// Set the generate_fields array
