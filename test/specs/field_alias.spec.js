@@ -285,6 +285,8 @@ describe('field alias', () => {
 
 	describe('post - INSERT', () => {
 		it('should map field aliases defined in the schema into INSERT body', async () => {
+
+			dare.engine = 'mysql:8.0.20';
 			let _sql = '';
 
 			// Stub the execute function
@@ -310,8 +312,8 @@ describe('field alias', () => {
 			assert.ok(_sql.includes('(`email`,`country_id`)'));
 
 			// ON DUPLICATE KEY UPDATE
-			assert.ok(_sql.includes('`email`=VALUES(`email`)'));
-			assert.ok(_sql.includes('`country_id`=VALUES(`country_id`)'));
+			assert.ok(_sql.includes('`email`=_new.`email`'));
+			assert.ok(_sql.includes('`country_id`=_new.`country_id`'));
 		});
 
 		it('should throw an error trying to post to a SQL Alias field', async () => {
