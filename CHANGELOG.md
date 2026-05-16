@@ -1,3 +1,10 @@
+# [0.99.0](https://github.com/MrSwitch/dare/compare/v0.98.5...v0.99.0) (2026-05-16)
+
+
+### Features
+
+* **alias-on-dup-update:** use mysql 8.0.20+ VALUES(...) AS _new ON D…  b635110 …UP KEY a=_new. ([#448](https://github.com/MrSwitch/dare/issues/448)) ([456c0a5](https://github.com/MrSwitch/dare/commit/456c0a51e89f1c78fb80a317995baa4fb2c34209))
+
 ## [0.98.5](https://github.com/MrSwitch/dare/compare/v0.98.4...v0.98.5) (2026-05-10)
 
 
