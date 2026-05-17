@@ -1,9 +1,16 @@
-## [0.98.6](https://github.com/MrSwitch/dare/compare/v0.98.5...v0.98.6) (2026-05-10)
+## [0.99.1](https://github.com/MrSwitch/dare/compare/v0.99.0...v0.99.1) (2026-05-17)
 
 
 ### Bug Fixes
 
 * **release:** workaround see [#433](https://github.com/MrSwitch/dare/issues/433) ([df9def9](https://github.com/MrSwitch/dare/commit/df9def962b83e600986130df9361692733a42717))
+
+# [0.99.0](https://github.com/MrSwitch/dare/compare/v0.98.5...v0.99.0) (2026-05-16)
+
+
+### Features
+
+* **alias-on-dup-update:** use mysql 8.0.20+ VALUES(...) AS _new ON D…  b635110 …UP KEY a=_new. ([#448](https://github.com/MrSwitch/dare/issues/448)) ([456c0a5](https://github.com/MrSwitch/dare/commit/456c0a51e89f1c78fb80a317995baa4fb2c34209))
 
 ## [0.98.5](https://github.com/MrSwitch/dare/compare/v0.98.4...v0.98.5) (2026-05-10)
 

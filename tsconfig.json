@@ -5,6 +5,7 @@
 		"moduleResolution": "nodenext",
 		"target": "ES2022",
 		"typeRoots": ["node_modules/@types"],
+		"types": ["mocha", "node"],
 		"module": "NodeNext",
 		"checkJs": true,
 		"strict": false, // true for making types mandatory

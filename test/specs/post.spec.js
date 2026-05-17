@@ -89,6 +89,8 @@ describe('post', () => {
 	it('should accept option.update=[field1, field2, ...fieldn]', async () => {
 		let called;
 
+		dare.engine = 'mysql:8.0.10';
+
 		dare.execute = async ({sql, values}) => {
 			called = 1;
 			sqlEqual(
