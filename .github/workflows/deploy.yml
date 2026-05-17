@@ -77,6 +77,10 @@ jobs:
                   node-version: lts/*
                   registry-url: 'https://registry.npmjs.org'
             - run: npm i
+            - name: Touch patch release
+              if: github.ref == 'refs/heads/main'
+              run: |
+                  git commit -m "fix(release-bump): blame npm/cli#8547" --allow-empty
             - run: npx semantic-release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
