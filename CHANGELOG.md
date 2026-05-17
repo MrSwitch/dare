@@ -1,3 +1,10 @@
+## [0.99.2](https://github.com/MrSwitch/dare/compare/v0.99.1...v0.99.2) (2026-05-17)
+
+
+### Bug Fixes
+
+* **release:** nudge [#433](https://github.com/MrSwitch/dare/issues/433) ([d6af8e9](https://github.com/MrSwitch/dare/commit/d6af8e9bc25a23d45ae579306e4a5199222d380f))
+
 ## [0.99.1](https://github.com/MrSwitch/dare/compare/v0.99.0...v0.99.1) (2026-05-17)
 
 
