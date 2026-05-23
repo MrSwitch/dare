@@ -1,4 +1,5 @@
 import Dare from '../../../src/index.js';
+import PostgresDare from '../../../src/postgres.js';
 import Debug from 'debug';
 import mysql from 'mysql2/promise';
 import db from './db.js';
@@ -9,12 +10,13 @@ const debug = Debug('sql');
 
 export {options};
 
+const DareConstructor = process.env.DB_ENGINE?.startsWith('postgres') ? PostgresDare : Dare;
+
 export default function dareInstance() {
 	// Initiate
-	const dare = new Dare(options);
+	const dare = new DareConstructor(options);
 
 	// Set a test instance
-
 	dare.execute = async query => {
 		// DEBUG
 		debug(mysql.format(query.sql, query.values));

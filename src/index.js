@@ -219,8 +219,7 @@ Dare.prototype.table_alias_handler = function (name) {
 Dare.prototype.unique_alias_index = 0;
 
 Dare.prototype.identifierWrapper = function identifierWrapper(field) {
-	const identifier_delimiter = this.engine.startsWith('postgres') ? '"' : '`';
-	return [identifier_delimiter, field, identifier_delimiter].join('');
+	return [`\``, field, `\``].join('');
 };
 
 Dare.prototype.get_unique_alias = function () {
@@ -260,6 +259,19 @@ Dare.prototype.response_handler = response_handler;
 // eslint-disable-next-line no-unused-vars
 Dare.prototype.getFieldKey = function getFieldKey(field, schema) {
 	// Do nothing, default is to set it to same as field
+};
+
+
+/**
+ * FulltextSearch
+ * @this {import('./index.js').default}
+ * @param {Sql[]} sql_field_array - Array of SQL fields to apply the fulltext search to
+ * @param {string} value - Fulltext search string
+ * @param {Sql} [NOT] - Whether to negate the fulltext search
+ * @returns {Sql} SQL condition for the fulltext search
+ */
+Dare.prototype.fulltextSearch = function fulltextSearch(sql_field_array, value, NOT) {
+	return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${this.fulltextParser(value)} IN BOOLEAN MODE)`;
 };
 
 /**
@@ -1054,23 +1066,9 @@ function mustAffectRows(result, notfound) {
 
 Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
 	keys = [],
-	existing = [],
+	_existing = [], // eslint-disable-line no-unused-vars
 	sql_table = ''
 ) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
-
-	if (IS_POSTGRES) {
-		if (!keys.length) {
-			return `ON CONFLICT DO NOTHING`;
-		}
-
-		return `
-			ON CONFLICT (${existing.filter(item => !keys.includes(item)).join(',')})
-				DO UPDATE
-					SET ${keys.map(name => `${this.identifierWrapper(name)}=EXCLUDED.${this.identifierWrapper(name)}`).join(',')}
-		`;
-	}
-
 	/*
 	 * MySQL 8.0.20+ deprecates VALUES() in ON DUPLICATE KEY UPDATE
 	 * Use row alias notation instead: AS _new ... _new.col

@@ -144,18 +144,8 @@ function prepCondition({
 		// Join the fields
 		const sql_field_array = sql_fields.map(({sql}) => sql);
 
-		const IS_POSTGRES = dareInstance.engine.startsWith('postgres');
+		return dareInstance.fulltextSearch(sql_field_array, value, NOT);
 
-		if (IS_POSTGRES) {
-			const field =
-				sql_field_array.length === 1
-					? sql_field_array.at(0)
-					: SQL`TO_TSVECTOR(${join(sql_field_array, " || ' ' || ")})`;
-			return SQL`${NOT}${field} @@ to_tsquery('english', ${dareInstance.fulltextParser(value)})`;
-		}
-
-		// Default: MySQL Full Text
-		return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${dareInstance.fulltextParser(value)} IN BOOLEAN MODE)`;
 	} else if (sql_fields.length > 1) {
 		/*
 		 * Is the field an array of field names?
