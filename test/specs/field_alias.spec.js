@@ -107,9 +107,11 @@ describe('field alias', () => {
 			// Field SQL Alias
 			assert.ok(_sql.includes('!ISNULL(a.email) AS "hasEmail"'));
 			assert.ok(_sql.includes('!ISNULL(a.email) AS "alternateHasEmail"'));
-			assert(_sql.includes(
-				'IF(!ISNULL(a.email), "YES", "NO") AS "yesNoEmail"'
-			));
+			assert(
+				_sql.includes(
+					'IF(!ISNULL(a.email), "YES", "NO") AS "yesNoEmail"'
+				)
+			);
 
 			// Standard
 			assert.ok(_sql.includes(',a.country_id'));
@@ -187,9 +189,11 @@ describe('field alias', () => {
 			assert.ok(_sql.includes('LOWER(b.email) AS "email_field"'));
 			assert.ok(_sql.includes('LOWER(b.email) AS "email_alias"'));
 
-			assert(_sql.includes(
-				'IF(!ISNULL(b.email), "Yes", "No") AS "Has Email alias"'
-			));
+			assert(
+				_sql.includes(
+					'IF(!ISNULL(b.email), "Yes", "No") AS "Has Email alias"'
+				)
+			);
 
 			assert.ok(_sql.includes('email LIKE ?'));
 			assert.ok(_sql.includes('!ISNULL(b.email) = ?'));
@@ -245,7 +249,7 @@ describe('field alias', () => {
 				},
 			});
 
-			await assert.rejects(patch, (error) => {
+			await assert.rejects(patch, error => {
 				assert(error instanceof DareError);
 				assert.strictEqual(error.code, DareError.INVALID_REQUEST);
 				return true;
@@ -285,7 +289,6 @@ describe('field alias', () => {
 
 	describe('post - INSERT', () => {
 		it('should map field aliases defined in the schema into INSERT body', async () => {
-
 			dare.engine = 'mysql:8.0.20';
 			let _sql = '';
 
@@ -325,7 +328,7 @@ describe('field alias', () => {
 				},
 			});
 
-			await assert.rejects(post, (error) => {
+			await assert.rejects(post, error => {
 				assert(error instanceof DareError);
 				assert.strictEqual(error.code, DareError.INVALID_REQUEST);
 				return true;

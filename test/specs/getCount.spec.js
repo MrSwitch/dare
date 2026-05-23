@@ -102,7 +102,7 @@ describe('getCount', () => {
 		assert.deepStrictEqual(request, original);
 
 		// Check deep clone
-		assert.deepStrictEqual(request.fields,  ['id', 'name']);
-		assert.deepStrictEqual(request.orderby,  ['name']);
+		assert.deepStrictEqual(request.fields, ['id', 'name']);
+		assert.deepStrictEqual(request.orderby, ['name']);
 	});
 });

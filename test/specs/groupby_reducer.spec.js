@@ -46,7 +46,10 @@ describe('Groupby Reducer', () => {
 				assert.deepStrictEqual(f, expected);
 
 				if (expect_join_fields) {
-					assert.deepStrictEqual(joined.b_table.groupby, expect_join_fields);
+					assert.deepStrictEqual(
+						joined.b_table.groupby,
+						expect_join_fields
+					);
 				} else {
 					assert.ok(!('b_table' in joined));
 				}

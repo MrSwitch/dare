@@ -9,7 +9,10 @@ import Dare from './index.js';
  * @returns {import('./index.js').default} instance of PostgresDare
  */
 function PostgresDare(options = {}) {
-	const instance = new Dare({...options, engine: options.engine || 'postgres:16'});
+	const instance = new Dare({
+		...options,
+		engine: options.engine || 'postgres:16',
+	});
 	Object.setPrototypeOf(instance, PostgresDare.prototype);
 	return instance;
 }
@@ -69,7 +72,11 @@ PostgresDare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
  * @param {import('sql-template-tag').Sql} [NOT] - Whether to negate the fulltext search
  * @returns {import('sql-template-tag').Sql} SQL condition for the fulltext search
  */
-PostgresDare.prototype.fulltextSearch = function fulltextSearch(sql_field_array, value, NOT) {
+PostgresDare.prototype.fulltextSearch = function fulltextSearch(
+	sql_field_array,
+	value,
+	NOT
+) {
 	const field =
 		sql_field_array.length === 1
 			? sql_field_array.at(0)

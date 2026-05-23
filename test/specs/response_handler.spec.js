@@ -440,7 +440,7 @@ describe('response_row_handler', () => {
 			},
 		]);
 
-		assert.ok(Array.isArray(data))
+		assert.ok(Array.isArray(data));
 		assert.strictEqual(data.length, 1, 'Expected data to have length 1');
 
 		assert.deepStrictEqual(data[0], {
@@ -466,7 +466,6 @@ describe('response_row_handler', () => {
 			},
 		]);
 
-		 
 		assert.ok(Array.isArray(data));
 		assert.strictEqual(data.length, 0, 'Expected data to have length 0');
 	});

@@ -40,7 +40,7 @@ describe('del', () => {
 
 		const test = dare.del('groups', {id: 20_000});
 
-		await assert.rejects(test, (error) => {
+		await assert.rejects(test, error => {
 			assert(error instanceof DareError);
 			assert.strictEqual(error.code, DareError.NOT_FOUND);
 			return true;

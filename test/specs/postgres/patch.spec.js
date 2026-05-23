@@ -10,32 +10,31 @@ const id = 1;
 const name = 'name';
 
 describe('patch', () => {
-    /** @type {any} */
-    let dare;
+	/** @type {any} */
+	let dare;
 
-    beforeEach(() => {
-        dare = new Dare();
+	beforeEach(() => {
+		dare = new Dare();
 
-        // Should not be called...
-        dare.execute = () => {
-            throw new Error('execute called');
-        };
-    });
+		// Should not be called...
+		dare.execute = () => {
+			throw new Error('execute called');
+		};
+	});
 
+	it(`should use the correct syntax for postgres`, async () => {
+		const dareInst = dare.use({engine: 'postgres:16.3'});
 
-    it(`should use the correct syntax for postgres`, async () => {
-        const dareInst = dare.use({engine: 'postgres:16.3'});
+		dareInst.execute = async ({sql, values}) => {
+			sqlEqual(sql, 'UPDATE tbl a SET "name" = ? WHERE a.id = ?');
+			assert.deepStrictEqual(values, [name, id]);
+			return {success: true};
+		};
 
-        dareInst.execute = async ({sql, values}) => {
-            sqlEqual(sql, 'UPDATE tbl a SET "name" = ? WHERE a.id = ?');
-            assert.deepStrictEqual(values, [name, id]);
-            return {success: true};
-        };
-
-        return dareInst.patch({
-            table: 'tbl',
-            filter: {id},
-            body: {name},
-        });
-    });
- });
+		return dareInst.patch({
+			table: 'tbl',
+			filter: {id},
+			body: {name},
+		});
+	});
+});

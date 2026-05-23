@@ -261,7 +261,6 @@ Dare.prototype.getFieldKey = function getFieldKey(field, schema) {
 	// Do nothing, default is to set it to same as field
 };
 
-
 /**
  * FulltextSearch
  * @this {import('./index.js').default}
@@ -270,7 +269,11 @@ Dare.prototype.getFieldKey = function getFieldKey(field, schema) {
  * @param {Sql} [NOT] - Whether to negate the fulltext search
  * @returns {Sql} SQL condition for the fulltext search
  */
-Dare.prototype.fulltextSearch = function fulltextSearch(sql_field_array, value, NOT) {
+Dare.prototype.fulltextSearch = function fulltextSearch(
+	sql_field_array,
+	value,
+	NOT
+) {
 	return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${this.fulltextParser(value)} IN BOOLEAN MODE)`;
 };
 
@@ -1073,15 +1076,15 @@ Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
 	 * MySQL 8.0.20+ deprecates VALUES() in ON DUPLICATE KEY UPDATE
 	 * Use row alias notation instead: AS _new ... _new.col
 	 */
-	const useAlias = this.engine.startsWith('mysql') &&
+	const useAlias =
+		this.engine.startsWith('mysql') &&
 		semverCompare(this.engine.split(':').at(1), '8.0.20') >= 0;
 
 	let s = keys
-		.map(
-			name =>
-				useAlias
-					? `${this.identifierWrapper(name)}=_new.${this.identifierWrapper(name)}`
-					: `${this.identifierWrapper(name)}=VALUES(${this.identifierWrapper(name)})`
+		.map(name =>
+			useAlias
+				? `${this.identifierWrapper(name)}=_new.${this.identifierWrapper(name)}`
+				: `${this.identifierWrapper(name)}=VALUES(${this.identifierWrapper(name)})`
 		)
 		.join(',');
 

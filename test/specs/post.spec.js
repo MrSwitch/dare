@@ -277,9 +277,12 @@ describe('post', () => {
 					body: {name: given},
 				});
 
-				await assert.rejects(call, (error) => {
+				await assert.rejects(call, error => {
 					assert.ok(error instanceof DareError);
-					assert.match(error.message, /Field 'name' does not accept objects as values/);
+					assert.match(
+						error.message,
+						/Field 'name' does not accept objects as values/
+					);
 					assert.strictEqual(error.code, DareError.INVALID_VALUE);
 					return true;
 				});
