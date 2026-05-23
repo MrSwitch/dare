@@ -190,6 +190,10 @@ Dare.prototype.execute = async requestQuery => {
  */
 Dare.prototype.engine = 'mysql:8.0.40';
 
+// SQL keyword for LIKE operations
+/** @type {string} */
+Dare.prototype.sql_keyword_like = 'LIKE';
+
 // Rowid, name of primary key field used in grouping operation: MySQL uses _rowid
 /** @type {string} */
 Dare.prototype.rowid = '_rowid';

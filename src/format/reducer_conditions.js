@@ -210,6 +210,7 @@ function prepCondition({
 					operators,
 					type,
 					engine,
+					dareInstance,
 				})
 			),
 			' AND '
@@ -224,6 +225,7 @@ function prepCondition({
 		// Treat json as text
 		type: type === 'json' ? 'text' : type,
 		engine,
+		dareInstance,
 	});
 }
 
@@ -236,6 +238,7 @@ function prepCondition({
  * @param {string|null} params.operators - Operators
  * @param {string|null} params.type - Type
  * @param {Engine} params.engine - DB Engine
+ * @param {Dare} params.dareInstance - Dare Instance
  * @returns {Sql} SQL condition
  */
 function sqlCondition({
@@ -245,6 +248,7 @@ function sqlCondition({
 	operators,
 	type,
 	engine,
+	dareInstance,
 }) {
 	const IS_POSTGRES = engine.startsWith('postgres');
 
@@ -276,7 +280,7 @@ function sqlCondition({
 	const quote =
 		type === 'json' ? a => (typeof a === 'string' ? `"${a}"` : a) : a => a;
 
-	const LIKE = raw(IS_POSTGRES ? 'ILIKE' : 'LIKE');
+	const LIKE = raw(dareInstance.sql_keyword_like);
 
 	/*
 	 * Range
@@ -397,6 +401,7 @@ function sqlCondition({
 					conditional_operators_in_value,
 					type,
 					engine,
+					dareInstance,
 				})
 			)
 		);

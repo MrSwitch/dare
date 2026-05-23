@@ -28,6 +28,12 @@ PostgresDare.prototype.constructor = PostgresDare;
 PostgresDare.prototype.engine = 'postgres:16';
 
 /**
+ * Postgres uses ILIKE for case-insensitive LIKE
+ * @type {string}
+ */
+PostgresDare.prototype.sql_keyword_like = 'ILIKE';
+
+/**
  * Postgres uses `id` as the rowid
  * @type {string}
  */
