@@ -2,21 +2,17 @@
 import assert from 'node:assert';
 
 // Test Generic DB functions
-import group_concat from '../../src/utils/group_concat.js';
-import Dare from '../../src/index.js';
+import group_concat from '../../../src/utils/group_concat.js';
+import PostgresDare from '../../../src/postgres.js';
 import {describe, it, beforeEach} from 'node:test';
 
 const rowid = '_rowid';
 
-describe(`utils/group_concat: (mysql 8.0)`, () => {
+describe(`utils/group_concat: (postgres)`, () => {
 	let dareInstance;
 
 	beforeEach(() => {
-		dareInstance = new Dare({engine: 'mysql:8.0.40'});
-	});
-
-	it('should return a function', async () => {
-		assert.strictEqual(typeof group_concat, 'function');
+		dareInstance = new PostgresDare({engine: 'postgres:16.3'});
 	});
 
 	it('should reduce an array of fields to a GROUP_CONCAT statement', async () => {
@@ -39,7 +35,7 @@ describe(`utils/group_concat: (mysql 8.0)`, () => {
 
 		assert.strictEqual(
 			gc.expression,
-			`JSON_ARRAYAGG(CASE WHEN (a._rowid IS NOT NULL) THEN (JSON_ARRAY(table.a,table.b)) ELSE NULL END)`
+			`JSON_ARRAYAGG(CASE WHEN (a._rowid IS NOT NULL) THEN (JSON_ARRAY(table.a,table.b NULL ON NULL)) ELSE NULL END)`
 		);
 		assert.deepStrictEqual(gc.label, 'collection[a,b]');
 	});
@@ -60,7 +56,10 @@ describe(`utils/group_concat: (mysql 8.0)`, () => {
 			dareInstance,
 		});
 
-		assert.strictEqual(gc.expression, `JSON_ARRAY(table.a,table.b)`);
+		assert.strictEqual(
+			gc.expression,
+			`JSON_ARRAY(table.a,table.b NULL ON NULL)`
+		);
 		assert.strictEqual(gc.label, 'a,b');
 	});
 
@@ -96,7 +95,7 @@ describe(`utils/group_concat: (mysql 8.0)`, () => {
 
 		assert.strictEqual(
 			gc.expression,
-			`JSON_ARRAYAGG(CASE WHEN (a._rowid IS NOT NULL) THEN (JSON_ARRAY(table.a)) ELSE NULL END)`
+			`JSON_ARRAYAGG(CASE WHEN (a._rowid IS NOT NULL) THEN (JSON_ARRAY(table.a NULL ON NULL)) ELSE NULL END)`
 		);
 		assert.deepStrictEqual(gc.label, 'collection[a]');
 	});
@@ -131,7 +130,10 @@ describe(`utils/group_concat: (mysql 8.0)`, () => {
 			dareInstance,
 		});
 
-		assert.strictEqual(gc_many.expression, `JSON_ARRAY(table.a,table.b)`);
+		assert.strictEqual(
+			gc_many.expression,
+			`JSON_ARRAY(table.a,table.b NULL ON NULL)`
+		);
 		assert.strictEqual(gc_many.label, 'a,b');
 	});
 });

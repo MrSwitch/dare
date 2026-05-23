@@ -5,7 +5,7 @@ import defaultAPI from './helpers/api.js';
 
 // Connect to db
 
-const {DB_ENGINE = 'mysql:5.7.40'} = process.env;
+const {DB_ENGINE = 'mysql:8.0'} = process.env;
 
 describe('Working with JSON DataType', () => {
 	let dare;

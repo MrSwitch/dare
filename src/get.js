@@ -99,7 +99,7 @@ export default function buildQuery(opts, dareInstance) {
 			address,
 			sql_alias: gc_sql_alias,
 			rowid: dareInstance.rowid,
-			engine: dareInstance.engine,
+			dareInstance,
 		});
 		sql_fields = [raw(gc.expression)];
 		alias = gc.label;
@@ -439,7 +439,7 @@ function traverse(item, is_subquery, dareInstance) {
 			address,
 			sql_alias: gc_sql_alias,
 			rowid: dareInstance.rowid,
-			engine: dareInstance.engine,
+			dareInstance,
 		});
 
 		// Reset the fields array

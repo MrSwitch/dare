@@ -34,6 +34,15 @@ PostgresDare.prototype.engine = 'postgres:16';
 PostgresDare.prototype.sql_keyword_like = 'ILIKE';
 
 /**
+ * Sql_json_array - Postgres JSON_ARRAY defaults to ABSENT ON NULL, so add NULL ON NULL
+ * @param {Array<string>} expressions - Array of field expressions
+ * @returns {string} SQL expression
+ */
+PostgresDare.prototype.sql_json_array = function sql_json_array(expressions) {
+	return `JSON_ARRAY(${expressions.join(',')} NULL ON NULL)`;
+};
+
+/**
  * Postgres uses `id` as the rowid
  * @type {string}
  */

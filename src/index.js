@@ -159,7 +159,6 @@ function Dare({engine, ...options} = {}) {
 
 	if (engine) {
 		this.engine = engine;
-		this.rowid = engine.startsWith('postgres') ? 'id' : '_rowid';
 	}
 
 	return this;
@@ -193,6 +192,32 @@ Dare.prototype.engine = 'mysql:8.0.40';
 // SQL keyword for LIKE operations
 /** @type {string} */
 Dare.prototype.sql_keyword_like = 'LIKE';
+
+/**
+ * Sql_json_array - Generates JSON_ARRAY expression for a list of field expressions
+ * @param {Array<string>} expressions - Array of field expressions
+ * @returns {string} SQL expression
+ */
+Dare.prototype.sql_json_array = function sql_json_array(expressions) {
+	return `JSON_ARRAY(${expressions.join(',')})`;
+};
+
+/**
+ * Sql_json_arrayagg - Generates JSON_ARRAYAGG expression for grouping
+ * @param {object} params - Params
+ * @param {string} params.sql_alias - SQL Alias
+ * @param {string} params.rowid - Row ID field
+ * @param {string} params.expression - Inner expression
+ * @returns {string} SQL expression
+ */
+Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
+	sql_alias,
+	rowid,
+	expression,
+}) {
+	const condition = `CASE WHEN (${sql_alias}.${rowid} IS NOT NULL) THEN (${expression}) ELSE NULL END`;
+	return `JSON_ARRAYAGG(${condition})`;
+};
 
 // Rowid, name of primary key field used in grouping operation: MySQL uses _rowid
 /** @type {string} */
@@ -387,11 +412,6 @@ Dare.prototype.after = function (resp) {
  * @returns {boolean} Whether to use CTE LIMIT Filtering
  */
 Dare.prototype.applyCTELimitFiltering = function (options) {
-	// Cancel for old mysql
-	if (this.engine.startsWith('mysql:5')) {
-		return false;
-	}
-
 	// Cancel if limit is beyond a certain threshold
 	if (options.limit > 10_000) {
 		return false;
@@ -424,7 +444,6 @@ Dare.prototype.use = function ({engine, ...options} = {}) {
 	}
 	if (engine) {
 		inst.engine = engine;
-		inst.rowid = engine.startsWith('postgres') ? 'id' : '_rowid';
 	}
 
 	// Set the generate_fields array
@@ -991,7 +1010,7 @@ Dare.prototype.del = async function del(table, filter, options = {}) {
 
 	if (IS_POSTGRES) {
 		/*
-		 * Postgres doesn't support table JONS's in DELETE operation
+		 * Postgres doesn't support table JOINS's in DELETE operation
 		 * So we need to tell the formatter that we want the conditions to be within a subquery
 		 */
 		opts.forceSubquery = true;
