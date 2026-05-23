@@ -22,6 +22,22 @@ import dbconn from './dbConn.js'; // <- your script for executing queries
 const dare = new Dare({
 	engine: 'mysql:8.0' // set the engine
 });
+```
+
+### Postgres
+
+For Postgres, use the dedicated entry point which sets up Postgres-specific defaults and query formatting:
+
+```js
+import Dare from 'dare/postgres';
+import dbconn from './dbConn.js';
+
+const dare = new Dare();
+```
+
+The Postgres module automatically sets the engine to `postgres:16` and provides `request.text` (with `$1, $2, ...` placeholders) instead of `request.sql`.
+
+```js
 
 // Define the handler dare.execute for handing database requests
 dare.execute = async (request) => {
