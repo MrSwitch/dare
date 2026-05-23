@@ -9,6 +9,7 @@ const debug = Debug('sql');
 
 export {options};
 
+/** @type {any} */
 const DareConstructor = process.env.DB_ENGINE?.startsWith('postgres')
 	? PostgresDare
 	: Dare;
