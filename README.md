@@ -20,7 +20,7 @@ import dbconn from './dbConn.js'; // <- your script for executing queries
 
 // Initiate it
 const dare = new Dare({
-	engine: 'mysql:8.0' // set the engine
+	engine: 'mysql:8.0', // set the engine
 });
 ```
 
