@@ -1,10 +1,9 @@
-import Dare from '../../src/index.js';
 import Debug from 'debug';
 import assert from 'node:assert/strict';
 
 import mysql from 'mysql2/promise';
 import db from './helpers/db.js';
-import {options} from './helpers/api.js';
+import defaultApi from './helpers/api.js';
 import SQL from 'sql-template-tag';
 const debug = Debug('sql');
 
@@ -15,10 +14,9 @@ describe(`Disparities`, () => {
 
 	beforeEach(() => {
 		// Initiate
-		dare = new Dare(options);
+		dare = defaultApi();
 
 		// Set a test instance
-
 		dare.execute = query => {
 			// DEBUG
 			debug(mysql.format(query.sql, query.values));
