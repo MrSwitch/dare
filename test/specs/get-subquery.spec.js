@@ -447,45 +447,5 @@ describe('get - subquery', () => {
 				limit: 3,
 			});
 		});
-		it('MySQL 5.* does not support CTE', async () => {
-			const dareInst = dare.use({engine: 'mysql:5.7.0'});
-
-			dareInst.sql = ({sql}) => {
-				const expected = `
-					SELECT a.id,
-					(
-						SELECT b.email
-						FROM userEmails b
-						WHERE
-							b.user_id = a.id
-						LIMIT 1
-					) AS "email"
-					FROM users a
-					GROUP BY a._rowid
-					LIMIT 1`;
-
-				expectSQLEqual(sql, expected);
-
-				return Promise.resolve([{}]);
-			};
-
-			dareInst.options = {
-				models: {
-					userEmails: {
-						schema: {user_id: ['users.id']},
-					},
-				},
-			};
-
-			return dareInst.get({
-				table: 'users',
-				fields: [
-					'id',
-					{
-						email: 'userEmails.email',
-					},
-				],
-			});
-		});
 	});
 });

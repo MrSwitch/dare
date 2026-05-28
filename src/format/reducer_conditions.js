@@ -144,18 +144,7 @@ function prepCondition({
 		// Join the fields
 		const sql_field_array = sql_fields.map(({sql}) => sql);
 
-		const IS_POSTGRES = dareInstance.engine.startsWith('postgres');
-
-		if (IS_POSTGRES) {
-			const field =
-				sql_field_array.length === 1
-					? sql_field_array.at(0)
-					: SQL`TO_TSVECTOR(${join(sql_field_array, " || ' ' || ")})`;
-			return SQL`${NOT}${field} @@ to_tsquery('english', ${dareInstance.fulltextParser(value)})`;
-		}
-
-		// Default: MySQL Full Text
-		return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${dareInstance.fulltextParser(value)} IN BOOLEAN MODE)`;
+		return dareInstance.fulltextSearch(sql_field_array, value, NOT);
 	} else if (sql_fields.length > 1) {
 		/*
 		 * Is the field an array of field names?
@@ -221,6 +210,7 @@ function prepCondition({
 					operators,
 					type,
 					engine,
+					dareInstance,
 				})
 			),
 			' AND '
@@ -235,6 +225,7 @@ function prepCondition({
 		// Treat json as text
 		type: type === 'json' ? 'text' : type,
 		engine,
+		dareInstance,
 	});
 }
 
@@ -247,6 +238,7 @@ function prepCondition({
  * @param {string|null} params.operators - Operators
  * @param {string|null} params.type - Type
  * @param {Engine} params.engine - DB Engine
+ * @param {Dare} params.dareInstance - Dare Instance
  * @returns {Sql} SQL condition
  */
 function sqlCondition({
@@ -256,6 +248,7 @@ function sqlCondition({
 	operators,
 	type,
 	engine,
+	dareInstance,
 }) {
 	const IS_POSTGRES = engine.startsWith('postgres');
 
@@ -283,11 +276,7 @@ function sqlCondition({
 	const allow_conditional_range_operator_in_value =
 		conditional_operators_in_value?.includes('~');
 
-	// Conditional JSON Quote
-	const quote =
-		type === 'json' ? a => (typeof a === 'string' ? `"${a}"` : a) : a => a;
-
-	const LIKE = raw(IS_POSTGRES ? 'ILIKE' : 'LIKE');
+	const LIKE = raw(dareInstance.sql_keyword_like);
 
 	/*
 	 * Range
@@ -335,7 +324,8 @@ function sqlCondition({
 		(isLikey ||
 			(allow_conditional_likey_operator_in_value && value.match('%')))
 	) {
-		const strValue = !IS_POSTGRES ? quote(value) : value;
+		const strValue =
+			type === 'json' ? dareInstance.jsonFormatValue(value) : value;
 
 		return SQL`${sql_field} ${NOT}${LIKE} ${strValue}`;
 	}
@@ -384,9 +374,10 @@ function sqlCondition({
 
 		// Use the `IN(...)` for items which can be grouped...
 		if (filteredValue.length) {
-			const items = engine.startsWith('mysql:5.7')
-				? filteredValue.map(quote)
-				: filteredValue;
+			const items =
+				type === 'json'
+					? dareInstance.jsonFormatValue(filteredValue)
+					: filteredValue;
 
 			let condition = SQL`${sql_field} ${NOT}IN (${join(items)})`;
 
@@ -408,6 +399,7 @@ function sqlCondition({
 					conditional_operators_in_value,
 					type,
 					engine,
+					dareInstance,
 				})
 			)
 		);

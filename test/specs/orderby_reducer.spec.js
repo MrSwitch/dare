@@ -61,7 +61,10 @@ describe('Orderby Reducer', () => {
 				assert.deepStrictEqual(f, expected);
 
 				if (expect_join_fields) {
-					assert.deepStrictEqual(joined.b_table.orderby, expect_join_fields);
+					assert.deepStrictEqual(
+						joined.b_table.orderby,
+						expect_join_fields
+					);
 				} else {
 					assert.ok(!('b_table' in joined));
 				}

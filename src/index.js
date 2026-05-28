@@ -159,7 +159,6 @@ function Dare({engine, ...options} = {}) {
 
 	if (engine) {
 		this.engine = engine;
-		this.rowid = engine.startsWith('postgres') ? 'id' : '_rowid';
 	}
 
 	return this;
@@ -190,6 +189,48 @@ Dare.prototype.execute = async requestQuery => {
  */
 Dare.prototype.engine = 'mysql:8.0.40';
 
+// SQL keyword for LIKE operations
+/** @type {string} */
+Dare.prototype.sql_keyword_like = 'LIKE';
+
+/**
+ * Sql_json_array - Generates JSON_ARRAY expression for a list of field expressions
+ * @param {Array<string>} expressions - Array of field expressions
+ * @returns {string} SQL expression
+ */
+Dare.prototype.sql_json_array = function sql_json_array(expressions) {
+	return `JSON_ARRAY(${expressions.join(',')})`;
+};
+
+/**
+ * Sql_json_arrayagg - Generates JSON_ARRAYAGG expression for grouping
+ * @param {object} params - Params
+ * @param {string} params.sql_alias - SQL Alias
+ * @param {string} params.rowid - Row ID field
+ * @param {string} params.expression - Inner expression
+ * @returns {string} SQL expression
+ */
+Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
+	sql_alias,
+	rowid,
+	expression,
+}) {
+	const condition = `CASE WHEN (${sql_alias}.${rowid} IS NOT NULL) THEN (${expression}) ELSE NULL END`;
+	return `JSON_ARRAYAGG(${condition})`;
+};
+
+/**
+ * JSON quote values
+ * @param {any} value - Value to quote
+ * @returns {any} Quoted value
+ */
+Dare.prototype.jsonFormatValue = function jsonFormatValue(value) {
+	if (typeof value === 'string') {
+		return `"${value}"`;
+	}
+	return value;
+};
+
 // Rowid, name of primary key field used in grouping operation: MySQL uses _rowid
 /** @type {string} */
 Dare.prototype.rowid = '_rowid';
@@ -219,8 +260,7 @@ Dare.prototype.table_alias_handler = function (name) {
 Dare.prototype.unique_alias_index = 0;
 
 Dare.prototype.identifierWrapper = function identifierWrapper(field) {
-	const identifier_delimiter = this.engine.startsWith('postgres') ? '"' : '`';
-	return [identifier_delimiter, field, identifier_delimiter].join('');
+	return [`\``, field, `\``].join('');
 };
 
 Dare.prototype.get_unique_alias = function () {
@@ -260,6 +300,22 @@ Dare.prototype.response_handler = response_handler;
 // eslint-disable-next-line no-unused-vars
 Dare.prototype.getFieldKey = function getFieldKey(field, schema) {
 	// Do nothing, default is to set it to same as field
+};
+
+/**
+ * FulltextSearch
+ * @this {import('./index.js').default}
+ * @param {Sql[]} sql_field_array - Array of SQL fields to apply the fulltext search to
+ * @param {string} value - Fulltext search string
+ * @param {Sql} [NOT] - Whether to negate the fulltext search
+ * @returns {Sql} SQL condition for the fulltext search
+ */
+Dare.prototype.fulltextSearch = function fulltextSearch(
+	sql_field_array,
+	value,
+	NOT
+) {
+	return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${this.fulltextParser(value)} IN BOOLEAN MODE)`;
 };
 
 /**
@@ -368,11 +424,6 @@ Dare.prototype.after = function (resp) {
  * @returns {boolean} Whether to use CTE LIMIT Filtering
  */
 Dare.prototype.applyCTELimitFiltering = function (options) {
-	// Cancel for old mysql
-	if (this.engine.startsWith('mysql:5')) {
-		return false;
-	}
-
 	// Cancel if limit is beyond a certain threshold
 	if (options.limit > 10_000) {
 		return false;
@@ -405,7 +456,6 @@ Dare.prototype.use = function ({engine, ...options} = {}) {
 	}
 	if (engine) {
 		inst.engine = engine;
-		inst.rowid = engine.startsWith('postgres') ? 'id' : '_rowid';
 	}
 
 	// Set the generate_fields array
@@ -972,7 +1022,7 @@ Dare.prototype.del = async function del(table, filter, options = {}) {
 
 	if (IS_POSTGRES) {
 		/*
-		 * Postgres doesn't support table JONS's in DELETE operation
+		 * Postgres doesn't support table JOINS's in DELETE operation
 		 * So we need to tell the formatter that we want the conditions to be within a subquery
 		 */
 		opts.forceSubquery = true;
@@ -1054,36 +1104,22 @@ function mustAffectRows(result, notfound) {
 
 Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
 	keys = [],
-	existing = [],
+	_existing = [], // eslint-disable-line no-unused-vars
 	sql_table = ''
 ) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
-
-	if (IS_POSTGRES) {
-		if (!keys.length) {
-			return `ON CONFLICT DO NOTHING`;
-		}
-
-		return `
-			ON CONFLICT (${existing.filter(item => !keys.includes(item)).join(',')})
-				DO UPDATE
-					SET ${keys.map(name => `${this.identifierWrapper(name)}=EXCLUDED.${this.identifierWrapper(name)}`).join(',')}
-		`;
-	}
-
 	/*
 	 * MySQL 8.0.20+ deprecates VALUES() in ON DUPLICATE KEY UPDATE
 	 * Use row alias notation instead: AS _new ... _new.col
 	 */
-	const useAlias = this.engine.startsWith('mysql') &&
+	const useAlias =
+		this.engine.startsWith('mysql') &&
 		semverCompare(this.engine.split(':').at(1), '8.0.20') >= 0;
 
 	let s = keys
-		.map(
-			name =>
-				useAlias
-					? `${this.identifierWrapper(name)}=_new.${this.identifierWrapper(name)}`
-					: `${this.identifierWrapper(name)}=VALUES(${this.identifierWrapper(name)})`
+		.map(name =>
+			useAlias
+				? `${this.identifierWrapper(name)}=_new.${this.identifierWrapper(name)}`
+				: `${this.identifierWrapper(name)}=VALUES(${this.identifierWrapper(name)})`
 		)
 		.join(',');
 

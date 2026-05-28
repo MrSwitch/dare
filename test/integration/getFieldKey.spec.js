@@ -1,10 +1,9 @@
-import Dare from '../../src/index.js';
 import Debug from 'debug';
 import assert from 'node:assert/strict';
 
 import mysql from 'mysql2/promise';
 import db from './helpers/db.js';
-import {options} from './helpers/api.js';
+import defaultAPI from './helpers/api.js';
 const debug = Debug('sql');
 
 // Connect to db
@@ -14,7 +13,7 @@ describe(`getFieldKey`, () => {
 
 	beforeEach(() => {
 		// Initiate
-		dare = new Dare(options);
+		dare = defaultAPI();
 
 		// Set a test instance
 

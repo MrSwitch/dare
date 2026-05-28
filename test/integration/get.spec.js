@@ -66,7 +66,8 @@ describe(`Dare init tests: options ${Object.keys(options)}`, () => {
 
 		await assert.rejects(
 			dare.get('users', ['username'], {id: insertId}),
-			error => error instanceof DareError && error.code === DareError.NOT_FOUND
+			error =>
+				error instanceof DareError && error.code === DareError.NOT_FOUND
 		);
 	});
 
