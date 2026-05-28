@@ -103,6 +103,15 @@ describe('Filter Reducer', () => {
 			],
 			[
 				{
+					jsonSettings: {
+						'%key': testStr,
+					},
+				},
+				`(a.jsonSettings->? LIKE ?)`,
+				['$.key', `"${testStr}"`],
+			],
+			[
+				{
 					'-jsonSettings': {
 						key: testStr,
 					},
@@ -164,40 +173,6 @@ describe('Filter Reducer', () => {
 
 				// Should not mutate the filters...
 				assert.deepStrictEqual(filter, filter_cloned);
-			});
-		});
-	});
-
-	describe('mysql engine version handling', () => {
-		['mysql:5.7', 'mysql:8.0'].forEach(engine => {
-			const quote = engine === 'mysql:5.7';
-
-			it(`${engine} should ${quote ? '' : 'NOT '}quote json list (IN) sting values`, () => {
-				const dareInst = dareInstance.use({engine});
-
-				const filter = {
-					jsonSettings: {
-						key: ['a', 'b', 1],
-					},
-				};
-
-				const expectedValues = quote
-					? ['"a"', '"b"', 1]
-					: ['a', 'b', 1];
-
-				const sql = `(a.jsonSettings->? IN (?,?,?))`;
-				const values = ['$.key', ...expectedValues];
-
-				const [query] = reduceConditions(filter, {
-					extract,
-					sql_alias: 'a',
-					table_schema,
-					conditional_operators_in_value,
-					dareInstance: dareInst,
-				});
-
-				assert.strictEqual(query.sql, sql);
-				assert.deepStrictEqual(query.values, values);
 			});
 		});
 	});

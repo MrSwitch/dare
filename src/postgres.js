@@ -99,4 +99,13 @@ PostgresDare.prototype.fulltextSearch = function fulltextSearch(
 	return SQL`${NOT}${field} @@ to_tsquery('english', ${this.fulltextParser(value)})`;
 };
 
+/**
+ * Pass through value verbatim for JSON formatting, as Postgres handles this natively
+ * @param {any} value - Value to quote
+ * @returns {any} Quoted value
+ */
+PostgresDare.prototype.jsonFormatValue = function jsonFormatValue(value) {
+	return value;
+};
+
 export default PostgresDare;

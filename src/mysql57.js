@@ -78,4 +78,20 @@ Dare.prototype.applyCTELimitFiltering = function () {
 	return false;
 };
 
+/**
+ * JSON quote values
+ * @param {any} value - Value to quote
+ * @returns {any} Quoted value
+ */
+Dare.prototype.jsonFormatValue = function jsonFormatValue(value) {
+	if (Array.isArray(value)) {
+		// In MySQL 5.7, we need to quote array values for IN
+		return value.map(jsonFormatValue);
+	}
+	if (typeof value === 'string') {
+		return `"${value}"`;
+	}
+	return value;
+};
+
 export default MySQL57Dare;

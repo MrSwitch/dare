@@ -219,6 +219,18 @@ Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
 	return `JSON_ARRAYAGG(${condition})`;
 };
 
+/**
+ * JSON quote values
+ * @param {any} value - Value to quote
+ * @returns {any} Quoted value
+ */
+Dare.prototype.jsonFormatValue = function jsonFormatValue(value) {
+	if (typeof value === 'string') {
+		return `"${value}"`;
+	}
+	return value;
+};
+
 // Rowid, name of primary key field used in grouping operation: MySQL uses _rowid
 /** @type {string} */
 Dare.prototype.rowid = '_rowid';

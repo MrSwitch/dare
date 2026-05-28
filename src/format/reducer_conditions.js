@@ -276,10 +276,6 @@ function sqlCondition({
 	const allow_conditional_range_operator_in_value =
 		conditional_operators_in_value?.includes('~');
 
-	// Conditional JSON Quote
-	const quote =
-		type === 'json' ? a => (typeof a === 'string' ? `"${a}"` : a) : a => a;
-
 	const LIKE = raw(dareInstance.sql_keyword_like);
 
 	/*
@@ -328,7 +324,8 @@ function sqlCondition({
 		(isLikey ||
 			(allow_conditional_likey_operator_in_value && value.match('%')))
 	) {
-		const strValue = !IS_POSTGRES ? quote(value) : value;
+		const strValue =
+			type === 'json' ? dareInstance.jsonFormatValue(value) : value;
 
 		return SQL`${sql_field} ${NOT}${LIKE} ${strValue}`;
 	}
@@ -377,9 +374,10 @@ function sqlCondition({
 
 		// Use the `IN(...)` for items which can be grouped...
 		if (filteredValue.length) {
-			const items = engine.startsWith('mysql:5.7')
-				? filteredValue.map(quote)
-				: filteredValue;
+			const items =
+				type === 'json'
+					? dareInstance.jsonFormatValue(filteredValue)
+					: filteredValue;
 
 			let condition = SQL`${sql_field} ${NOT}IN (${join(items)})`;
 
