@@ -21,7 +21,7 @@ describe('Filter Reducer', () => {
 
 	// Mock instance of Dare
 	beforeEach(() => {
-		dareInstance = new MySQL57Dare({options, engine: 'mysql:5.7.0'});
+		dareInstance = new MySQL57Dare({...options, engine: 'mysql:5.7.0'});
 		table_schema = {
 			textsearch: 'givenname,lastname,email',
 			jsonSettings: {
