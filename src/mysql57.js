@@ -60,7 +60,7 @@ MySQL57Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
 		return `CONCAT('[', GROUP_CONCAT(IF(${sql_alias}.${rowid} IS NOT NULL, ${expression}, NULL)), ']')`;
 	}
 
-	let condition = `IF(${sql_alias}.${rowid} IS NOT NULL, ${expression}, NULL)`;
+	let condition = `CASE WHEN (${sql_alias}.${rowid} IS NOT NULL) THEN (${expression}) ELSE NULL END`;
 
 	if (this.engine.startsWith('mysql:5.7')) {
 		// Overwrite condition for MySQL 5.7
