@@ -74,7 +74,7 @@ MySQL57Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
  * MySQL 5.7 does not support CTE LIMIT filtering, so override to disable
  * @returns {boolean} Whether to use CTE LIMIT Filtering
  */
-Dare.prototype.applyCTELimitFiltering = function () {
+MySQL57Dare.prototype.applyCTELimitFiltering = function () {
 	return false;
 };
 
@@ -83,7 +83,7 @@ Dare.prototype.applyCTELimitFiltering = function () {
  * @param {any} value - Value to quote
  * @returns {any} Quoted value
  */
-Dare.prototype.jsonFormatValue = function jsonFormatValue(value) {
+MySQL57Dare.prototype.jsonFormatValue = function jsonFormatValue(value) {
 	if (Array.isArray(value)) {
 		// In MySQL 5.7, we need to quote array values for IN
 		return value.map(jsonFormatValue);
