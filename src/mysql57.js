@@ -29,8 +29,7 @@ MySQL57Dare.prototype.engine = 'mysql:5.7';
 
 /**
  * Sql_json_array - MySQL < 5.7 uses CONCAT_WS workaround
- * @param {Array<string>} expressions - Array of field expressions
- * @returns {string} SQL expression
+ * @type {Dare['sql_json_array']}
  */
 MySQL57Dare.prototype.sql_json_array = function sql_json_array(expressions) {
 	if (semverCompare(this.engine.split(':').at(1), '5.7') < 0) {
@@ -45,10 +44,7 @@ MySQL57Dare.prototype.sql_json_array = function sql_json_array(expressions) {
 
 /**
  * SQL Array Agg - MySQL 5.7 uses IF instead of CASE WHEN
- * @param {object} params - Params
- * @param {string} params.sql_alias - SQL Alias
- * @param {string} params.expression - Inner expression
- * @returns {string} SQL expression
+ * @type {Dare['sql_json_arrayagg']}
  */
 MySQL57Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
 	sql_alias,
@@ -72,7 +68,7 @@ MySQL57Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
 
 /**
  * MySQL 5.7 does not support CTE LIMIT filtering, so override to disable
- * @returns {boolean} Whether to use CTE LIMIT Filtering
+ * @type {Dare['applyCTELimitFiltering']}
  */
 MySQL57Dare.prototype.applyCTELimitFiltering = function () {
 	return false;
@@ -80,8 +76,7 @@ MySQL57Dare.prototype.applyCTELimitFiltering = function () {
 
 /**
  * JSON quote values
- * @param {any} value - Value to quote
- * @returns {any} Quoted value
+ * @type {Dare['jsonFormatValue']}
  */
 MySQL57Dare.prototype.jsonFormatValue = function jsonFormatValue(value) {
 	if (Array.isArray(value)) {

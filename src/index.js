@@ -956,16 +956,18 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 	let sql_on_duplicate_keys_update = empty;
 	if (req.duplicate_keys_update) {
 		sql_on_duplicate_keys_update = raw(
-			dareInstance.onDuplicateKeysUpdate(
-				req.duplicate_keys_update.map(field =>
+			dareInstance.onDuplicateKeysUpdate({
+				keys: req.duplicate_keys_update.map(field =>
 					unAliasFields(modelSchema, field, dareInstance)
 				),
-				fields
-			)
+				existing: fields,
+			})
 		);
 	} else if (req.duplicate_keys?.toString()?.toLowerCase() === 'ignore') {
 		sql_on_duplicate_keys_update = raw(
-			dareInstance.onDuplicateKeysUpdate([], [], req.sql_table)
+			dareInstance.onDuplicateKeysUpdate({
+				sql_table: req.sql_table,
+			})
 		);
 	}
 
@@ -1100,11 +1102,19 @@ function mustAffectRows(result, notfound) {
 	return result;
 }
 
-Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
+/**
+ * On Duplicate Keys Update
+ * @param {object} obj - Object
+ * @param {Array<string>} [obj.keys] - Array of field keys which are duplicated
+ * @param {Array<string>} [obj.existing] - Array of existing field keys in the database, used to validate the keys provided in `keys` parameter
+ * @param {string} [obj.sql_table] - SQL table name, used for MySQL aliasing in 8.0.20+
+ * @returns {string} SQL snippet for ON DUPLICATE KEY UPDATE
+ */
+Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate({
 	keys = [],
-	_existing = [], // eslint-disable-line no-unused-vars
-	sql_table = ''
-) {
+	existing = [], // eslint-disable-line no-unused-vars
+	sql_table = '',
+}) {
 	/*
 	 * MySQL 8.0.20+ deprecates VALUES() in ON DUPLICATE KEY UPDATE
 	 * Use row alias notation instead: AS _new ... _new.col

@@ -35,8 +35,7 @@ PostgresDare.prototype.sql_keyword_like = 'ILIKE';
 
 /**
  * Sql_json_array - Postgres JSON_ARRAY defaults to ABSENT ON NULL, so add NULL ON NULL
- * @param {Array<string>} expressions - Array of field expressions
- * @returns {string} SQL expression
+ * @type {Dare['sql_json_array']}
  */
 PostgresDare.prototype.sql_json_array = function sql_json_array(expressions) {
 	return `JSON_ARRAY(${expressions.join(',')} NULL ON NULL)`;
@@ -50,24 +49,20 @@ PostgresDare.prototype.rowid = 'id';
 
 /**
  * IdentifierWrapper - Postgres uses double quotes for identifiers
- * @param {string} field - Field name
- * @returns {string} Wrapped field
+ * @type {Dare['identifierWrapper']}
  */
 PostgresDare.prototype.identifierWrapper = function identifierWrapper(field) {
 	return ['"', field, '"'].join('');
 };
 
 /**
- * OnDuplicateKeysUpdate - Postgres implementation using ON CONFLICT
- * @this {import('./index.js').default}
- * @param {Array} keys - Keys to update on conflict
- * @param {Array} existing - Existing field list
- * @returns {string} SQL clause
+ * On Duplicate Keys Update - Postgres uses ON CONFLICT with DO UPDATE/DO NOTHING
+ * @type {Dare['onDuplicateKeysUpdate']}
  */
-PostgresDare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
+PostgresDare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate({
 	keys = [],
-	existing = []
-) {
+	existing = [],
+}) {
 	if (!keys.length) {
 		return `ON CONFLICT DO NOTHING`;
 	}
@@ -81,11 +76,7 @@ PostgresDare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
 
 /**
  * FulltextSearch - Postgres implementation using tsvector/tsquery
- * @this {import('./index.js').default}
- * @param {import('sql-template-tag').Sql[]} sql_field_array - Array of SQL fields to apply the fulltext search to
- * @param {string} value - Fulltext search string
- * @param {import('sql-template-tag').Sql} [NOT] - Whether to negate the fulltext search
- * @returns {import('sql-template-tag').Sql} SQL condition for the fulltext search
+ * @type {Dare['fulltextSearch']}
  */
 PostgresDare.prototype.fulltextSearch = function fulltextSearch(
 	sql_field_array,
@@ -101,8 +92,7 @@ PostgresDare.prototype.fulltextSearch = function fulltextSearch(
 
 /**
  * Pass through value verbatim for JSON formatting, as Postgres handles this natively
- * @param {any} value - Value to quote
- * @returns {any} Quoted value
+ * @type {Dare['jsonFormatValue']}
  */
 PostgresDare.prototype.jsonFormatValue = function jsonFormatValue(value) {
 	return value;
