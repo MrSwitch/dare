@@ -6,8 +6,6 @@ import group_concat from '../../../src/utils/group_concat.js';
 import {describe, it, beforeEach} from 'node:test';
 import MySQL57Dare from '../../../src/mysql57.js';
 
-const rowid = '_rowid';
-
 const MYSQL_56 = 'mysql:5.6';
 const MYSQL_57 = 'mysql:5.7.40';
 
@@ -37,7 +35,6 @@ const MYSQL_57 = 'mysql:5.7.40';
 				],
 				address: 'collection.',
 				sql_alias: 'a',
-				rowid,
 				dareInstance,
 			});
 
@@ -101,7 +98,6 @@ const MYSQL_57 = 'mysql:5.7.40';
 				],
 				address: 'collection.',
 				sql_alias: 'a',
-				rowid,
 				dareInstance,
 			});
 

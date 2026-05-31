@@ -6,8 +6,6 @@ import group_concat from '../../src/utils/group_concat.js';
 import Dare from '../../src/index.js';
 import {describe, it, beforeEach} from 'node:test';
 
-const rowid = '_rowid';
-
 describe(`utils/group_concat: (mysql 8.0)`, () => {
 	let dareInstance;
 
@@ -33,7 +31,6 @@ describe(`utils/group_concat: (mysql 8.0)`, () => {
 			],
 			address: 'collection.',
 			sql_alias: 'a',
-			rowid,
 			dareInstance,
 		});
 
@@ -90,7 +87,6 @@ describe(`utils/group_concat: (mysql 8.0)`, () => {
 			],
 			address: 'collection.',
 			sql_alias: 'a',
-			rowid,
 			dareInstance,
 		});
 

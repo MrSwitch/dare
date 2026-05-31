@@ -6,8 +6,6 @@ import group_concat from '../../../src/utils/group_concat.js';
 import PostgresDare from '../../../src/postgres.js';
 import {describe, it, beforeEach} from 'node:test';
 
-const rowid = '_rowid';
-
 describe(`utils/group_concat: (postgres)`, () => {
 	let dareInstance;
 
@@ -29,13 +27,12 @@ describe(`utils/group_concat: (postgres)`, () => {
 			],
 			address: 'collection.',
 			sql_alias: 'a',
-			rowid,
 			dareInstance,
 		});
 
 		assert.strictEqual(
 			gc.expression,
-			`JSON_ARRAYAGG(CASE WHEN (a._rowid IS NOT NULL) THEN (JSON_ARRAY(table.a,table.b NULL ON NULL)) ELSE NULL END)`
+			`JSON_ARRAYAGG(CASE WHEN (a.id IS NOT NULL) THEN (JSON_ARRAY(table.a,table.b NULL ON NULL)) ELSE NULL END)`
 		);
 		assert.deepStrictEqual(gc.label, 'collection[a,b]');
 	});
@@ -89,13 +86,12 @@ describe(`utils/group_concat: (postgres)`, () => {
 			],
 			address: 'collection.',
 			sql_alias: 'a',
-			rowid,
 			dareInstance,
 		});
 
 		assert.strictEqual(
 			gc.expression,
-			`JSON_ARRAYAGG(CASE WHEN (a._rowid IS NOT NULL) THEN (JSON_ARRAY(table.a NULL ON NULL)) ELSE NULL END)`
+			`JSON_ARRAYAGG(CASE WHEN (a.id IS NOT NULL) THEN (JSON_ARRAY(table.a NULL ON NULL)) ELSE NULL END)`
 		);
 		assert.deepStrictEqual(gc.label, 'collection[a]');
 	});

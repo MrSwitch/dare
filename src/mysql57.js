@@ -47,15 +47,15 @@ MySQL57Dare.prototype.sql_json_array = function sql_json_array(expressions) {
  * SQL Array Agg - MySQL 5.7 uses IF instead of CASE WHEN
  * @param {object} params - Params
  * @param {string} params.sql_alias - SQL Alias
- * @param {string} params.rowid - Row ID field
  * @param {string} params.expression - Inner expression
  * @returns {string} SQL expression
  */
 MySQL57Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
 	sql_alias,
-	rowid,
 	expression,
 }) {
+	const rowid = /** @type {any} */ (this).rowid;
+
 	if (semverCompare(this.engine.split(':').at(1), '5.7.21') <= 0) {
 		return `CONCAT('[', GROUP_CONCAT(IF(${sql_alias}.${rowid} IS NOT NULL, ${expression}, NULL)), ']')`;
 	}

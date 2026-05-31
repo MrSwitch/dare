@@ -1,14 +1,25 @@
-/*
+/**
+ * @import {FieldDefinition} from '../get.js'
+ * @import Dare from '../index.js'
+ */
+/**
  * Generate JSON_ARRAYAGG statement given an array of fields definitions
  * Label the JSON_ARRAYAGG(..) AS 'address[fields,...]'
  * Wrap all the fields in a JSON Array statement
+ *
+ *
+ * @param {object} obj - Options
+ * @param {FieldDefinition[]} obj.fields - Fields definitions
+ * @param {string} [obj.address] - Parent address to trim from field labels
+ * @param {string} [obj.sql_alias] - SQL alias for the JSON_ARRAYAGG statement
+ * @param {Dare} obj.dareInstance - DARE instance with SQL helper methods
+ * @returns {object} Object containing the SQL expression and label for the grouped fields
  */
 export default function group_concat({
 	fields,
 	address = '',
 	sql_alias = null,
-	rowid = null,
-	dareInstance = null,
+	dareInstance,
 }) {
 	// Is this an aggregate list?
 	const agg = fields.reduce(
@@ -40,7 +51,7 @@ export default function group_concat({
 	}
 
 	// Multiple
-	expression = dareInstance.sql_json_arrayagg({sql_alias, rowid, expression});
+	expression = dareInstance.sql_json_arrayagg({sql_alias, expression});
 
 	label = fields
 		.map(field => {

@@ -206,16 +206,14 @@ Dare.prototype.sql_json_array = function sql_json_array(expressions) {
  * Sql_json_arrayagg - Generates JSON_ARRAYAGG expression for grouping
  * @param {object} params - Params
  * @param {string} params.sql_alias - SQL Alias
- * @param {string} params.rowid - Row ID field
  * @param {string} params.expression - Inner expression
  * @returns {string} SQL expression
  */
 Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
 	sql_alias,
-	rowid,
 	expression,
 }) {
-	const condition = `CASE WHEN (${sql_alias}.${rowid} IS NOT NULL) THEN (${expression}) ELSE NULL END`;
+	const condition = `CASE WHEN (${sql_alias}.${this.rowid} IS NOT NULL) THEN (${expression}) ELSE NULL END`;
 	return `JSON_ARRAYAGG(${condition})`;
 };
 
