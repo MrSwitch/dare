@@ -129,6 +129,15 @@ describe('Working with JSON DataType', () => {
 					 * '-missing': 1, // this yields `settings->'$.missing' != 1` which returns false if `missing` is not present
 					 */
 				},
+				/*
+				 * @TODO: IN operator will match these values
+				 * settings$array: {
+				 * 	digit: [1, 2],
+				 * 	str: ['string', 1],
+				 * 	bool: [true, 'asd'],
+				 * 	missing: [null, 'sdsdw'], // Is ignored, because absent keys are null
+				 * }
+				 */
 			},
 			limit: 2,
 		});

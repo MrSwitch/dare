@@ -198,7 +198,7 @@ function prepCondition({
 		!Array.isArray(value)
 	) {
 		// Loop through the object and create the sql_field
-		const sql_fields = json_contains({sql_field, value, engine});
+		const sql_fields = json_contains({sql_field, value, dareInstance});
 
 		// Return a single or a wrapped group
 		return SQL`${NOT}(${join(
@@ -250,8 +250,6 @@ function sqlCondition({
 	engine,
 	dareInstance,
 }) {
-	const IS_POSTGRES = engine.startsWith('postgres');
-
 	// Does it have a negative comparison operator?
 	const negate = operators.includes('-');
 
@@ -325,7 +323,9 @@ function sqlCondition({
 			(allow_conditional_likey_operator_in_value && value.match('%')))
 	) {
 		const strValue =
-			type === 'json' ? dareInstance.jsonFormatValue(value) : value;
+			type === 'json'
+				? dareInstance.jsonFormatValue(value, 'LIKE')
+				: value;
 
 		return SQL`${sql_field} ${NOT}${LIKE} ${strValue}`;
 	}
@@ -376,7 +376,7 @@ function sqlCondition({
 		if (filteredValue.length) {
 			const items =
 				type === 'json'
-					? dareInstance.jsonFormatValue(filteredValue)
+					? dareInstance.jsonFormatValue(filteredValue, 'IN')
 					: filteredValue;
 
 			let condition = SQL`${sql_field} ${NOT}IN (${join(items)})`;
@@ -409,15 +409,10 @@ function sqlCondition({
 			? conds.at(0)
 			: SQL`(${join(conds, negate ? ' AND ' : ' OR ')})`;
 	} else {
-		if (
-			IS_POSTGRES &&
-			type === 'json' &&
-			(typeof value === 'boolean' || typeof value === 'number')
-		) {
-			value = String(value);
-		}
+		const strValue =
+			type === 'json' ? dareInstance.jsonFormatValue(value, '=') : value;
 
-		let condition = SQL`${sql_field} ${raw(negate ? '!' : '')}= ${value}`;
+		let condition = SQL`${sql_field} ${raw(negate ? '!' : '')}= ${strValue}`;
 
 		if (negate) {
 			/*
@@ -438,7 +433,7 @@ function sqlCondition({
  * @param {any} params.value - Value
  * @param {string} [params.path] - Path
  * @param {string} [params.operators] - Operators
- * @param {string} [params.engine] - Engine
+ * @param {Dare} [params.dareInstance] - Engine
  * @returns {Array<{sql: Sql, value: any, operators: string}>} SQL conditions
  */
 function json_contains({
@@ -446,18 +441,16 @@ function json_contains({
 	value,
 	path = null,
 	operators = '',
-	engine,
+	dareInstance,
 }) {
-	const IS_POSTGRES = engine.startsWith('postgres');
-
-	if (!path && !IS_POSTGRES) {
-		path = '$';
+	if (!path) {
+		path = dareInstance.sql_json_extract_prefix; // MySQL JSON_EXTRACT prefix, e.g. '$'
 	}
 
 	const conds = [];
 
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-		const separator = IS_POSTGRES ? '->>' : '->';
+		const separator = dareInstance.sql_json_extract_operator;
 
 		return [
 			{
@@ -476,7 +469,7 @@ function json_contains({
 				value: value[key],
 				path: [path, rootKey].filter(Boolean).join('.'),
 				operators: operators + newOperators,
-				engine,
+				dareInstance,
 			})
 		);
 	}

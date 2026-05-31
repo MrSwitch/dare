@@ -194,6 +194,18 @@ Dare.prototype.engine = 'mysql:8.0.40';
 Dare.prototype.sql_keyword_like = 'LIKE';
 
 /**
+ * JSON EXTRACT prefix
+ * @type {string}
+ */
+Dare.prototype.sql_json_extract_prefix = '$';
+
+/**
+ * Postgres JSON EXTRACT operator
+ * @type {string}
+ */
+Dare.prototype.sql_json_extract_operator = '->';
+
+/**
  * Sql_json_array - Generates JSON_ARRAY expression for a list of field expressions
  * @param {Array<string>} expressions - Array of field expressions
  * @returns {string} SQL expression
@@ -220,10 +232,14 @@ Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
 /**
  * JSON quote values
  * @param {any} value - Value to quote
+ * @param {"LIKE" | "=" | "IN"} [operator] - Operator
  * @returns {any} Quoted value
  */
-Dare.prototype.jsonFormatValue = function jsonFormatValue(value) {
-	if (typeof value === 'string') {
+Dare.prototype.jsonFormatValue = function jsonFormatValue(
+	value,
+	operator = '='
+) {
+	if (operator === 'LIKE' && typeof value === 'string') {
 		return `"${value}"`;
 	}
 	return value;

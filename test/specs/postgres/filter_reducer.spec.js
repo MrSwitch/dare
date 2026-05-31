@@ -84,6 +84,7 @@ describe('Filter Reducer', () => {
 			jsonSettings: {
 				key: 1,
 				'%str': 'string%',
+				digit: [2, 3],
 			},
 		};
 
@@ -95,8 +96,8 @@ describe('Filter Reducer', () => {
 			dareInstance: dareInst,
 		});
 
-		const sql = `(a.jsonSettings->>? = ? AND a.jsonSettings->>? ILIKE ?)`;
-		const values = ['key', '1', 'str', 'string%'];
+		const sql = `(a.jsonSettings->>? = ? AND a.jsonSettings->>? ILIKE ? AND a.jsonSettings->>? IN (?,?))`;
+		const values = ['key', '1', 'str', 'string%', 'digit', '2', '3'];
 
 		assert.strictEqual(query.sql, sql);
 		assert.deepStrictEqual(query.values, values);

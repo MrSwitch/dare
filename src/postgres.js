@@ -29,9 +29,21 @@ PostgresDare.prototype.engine = 'postgres:16';
 
 /**
  * Postgres uses ILIKE for case-insensitive LIKE
- * @type {string}
+ * @type {Dare['sql_keyword_like']}
  */
 PostgresDare.prototype.sql_keyword_like = 'ILIKE';
+
+/**
+ * Postgres JSON EXTRACT prefix
+ * @type {Dare['sql_json_extract_prefix']}
+ */
+PostgresDare.prototype.sql_json_extract_prefix = '';
+
+/**
+ * Postgres JSON EXTRACT operator
+ * @type {Dare['sql_json_extract_operator']}
+ */
+PostgresDare.prototype.sql_json_extract_operator = '->>';
 
 /**
  * Sql_json_array - Postgres JSON_ARRAY defaults to ABSENT ON NULL, so add NULL ON NULL
@@ -95,7 +107,10 @@ PostgresDare.prototype.fulltextSearch = function fulltextSearch(
  * @type {Dare['jsonFormatValue']}
  */
 PostgresDare.prototype.jsonFormatValue = function jsonFormatValue(value) {
-	return value;
+	if (Array.isArray(value)) {
+		return value.map(item => this.jsonFormatValue(item));
+	}
+	return String(value);
 };
 
 export default PostgresDare;

@@ -78,12 +78,18 @@ MySQL57Dare.prototype.applyCTELimitFiltering = function () {
  * JSON quote values
  * @type {Dare['jsonFormatValue']}
  */
-MySQL57Dare.prototype.jsonFormatValue = function jsonFormatValue(value) {
+MySQL57Dare.prototype.jsonFormatValue = function jsonFormatValue(
+	value,
+	operator
+) {
 	if (Array.isArray(value)) {
 		// In MySQL 5.7, we need to quote array values for IN
-		return value.map(jsonFormatValue);
+		return value.map(value => this.jsonFormatValue(value, operator));
 	}
-	if (typeof value === 'string') {
+	if (
+		typeof value === 'string' &&
+		(operator === 'LIKE' || operator === 'IN')
+	) {
 		return `"${value}"`;
 	}
 	return value;
