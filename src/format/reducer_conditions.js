@@ -122,7 +122,6 @@ function prepCondition({
 	conditional_operators_in_value,
 	dareInstance,
 }) {
-	const {engine} = dareInstance;
 
 	// Does it have a negative comparison operator?
 	const negate = operators.includes('-');
@@ -209,7 +208,6 @@ function prepCondition({
 					conditional_operators_in_value,
 					operators,
 					type,
-					engine,
 					dareInstance,
 				})
 			),
@@ -224,7 +222,6 @@ function prepCondition({
 		operators,
 		// Treat json as text
 		type: type === 'json' ? 'text' : type,
-		engine,
 		dareInstance,
 	});
 }
@@ -237,7 +234,6 @@ function prepCondition({
  * @param {string|null} params.conditional_operators_in_value - Allowable conditional operators in value
  * @param {string|null} params.operators - Operators
  * @param {string|null} params.type - Type
- * @param {Engine} params.engine - DB Engine
  * @param {Dare} params.dareInstance - Dare Instance
  * @returns {Sql} SQL condition
  */
@@ -247,7 +243,6 @@ function sqlCondition({
 	conditional_operators_in_value,
 	operators,
 	type,
-	engine,
 	dareInstance,
 }) {
 	// Does it have a negative comparison operator?
@@ -398,7 +393,6 @@ function sqlCondition({
 					operators,
 					conditional_operators_in_value,
 					type,
-					engine,
 					dareInstance,
 				})
 			)
