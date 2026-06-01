@@ -60,6 +60,26 @@ PostgresDare.prototype.sql_json_array = function sql_json_array(expressions) {
 PostgresDare.prototype.rowid = 'id';
 
 /**
+ * Apply limit on DML
+ * Postgres does not allow joining onto the table being modified in patch / delete requests
+ * To work around this, we need to use subquery joins for all joins in these requests
+ * @type {Dare['applySubqueryOnDML']}
+ */
+PostgresDare.prototype.applySubqueryOnDML = true;
+
+/**
+ * Apply limit on DML operations - Postgres doesn't support this
+ * @type {Dare['applyLimitOnDML']}
+ */
+PostgresDare.prototype.applyLimitOnDML = false;
+
+/**
+ * SQL insert suffix - for RETURNING clause for Postgres
+ * @type {Dare['sql_insert_suffix']}
+ */
+PostgresDare.prototype.sql_insert_suffix = ` RETURNING id`;
+
+/**
  * IdentifierWrapper - Postgres uses double quotes for identifiers
  * @type {Dare['identifierWrapper']}
  */

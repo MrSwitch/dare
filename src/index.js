@@ -266,6 +266,25 @@ Dare.prototype.options = {
 	conditional_operators_in_value: '%!~',
 };
 
+/**
+ * Apply limit on DML operations - MySQL supports this, Postgres doesn't
+ * @type {boolean}
+ */
+Dare.prototype.applyLimitOnDML = true;
+
+/**
+ * Whether the engine requires subquery joins to prevent joining onto
+ * The table being modified in patch / delete requests
+ * @type {boolean}
+ */
+Dare.prototype.applySubqueryOnDML = false;
+
+/**
+ * SQL insert suffix - Additional SQL to append to insert statements, e.g., RETURNING clause for Postgres
+ * @type {string | undefined}
+ */
+Dare.prototype.sql_insert_suffix = undefined;
+
 // Set default table_alias handler
 Dare.prototype.table_alias_handler = function (name) {
 	return name.replace(/^-/, '').split('$')[0];
@@ -705,14 +724,8 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 
 	const dareInstance = this.use(opts);
 
-	if (IS_POSTGRES) {
-		/*
-		 * Postgres doesn't support table JOINs to the table being updated
-		 * We can only have one table in the FROM clause, which is a problem if multiple table join to the table being updated.
-		 * To work around this, turn all of the join tables into subquery joins
-		 */
-		opts.forceSubquery = true;
-	}
+	// Prevent joining onto the table being modified
+	opts.forceSubquery = dareInstance.applySubqueryOnDML;
 
 	const req = await dareInstance.format_request(opts);
 
@@ -755,7 +768,7 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 		SET ${sql_set}
 		WHERE
 			${join(req.sql_where_conditions, ' AND ')}
-		${!IS_POSTGRES && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}
+		${dareInstance.applyLimitOnDML && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}
 	`;
 
 	let resp = await this.sql(sql);
@@ -786,9 +799,6 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 				{...table}
 			: // Clone and extend
 				{...options, table, body};
-
-	// Is postgres
-	const IS_POSTGRES = this.engine.startsWith('postgres');
 
 	// Post
 	opts.method = 'post';
@@ -987,8 +997,9 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 		);
 	}
 
-	const sql_postgres_returning = IS_POSTGRES
-		? SQL` RETURNING ${raw(dareInstance.rowid)}`
+	// Additional suffix for Postgres to return the inserted record, as Postgres does not support LAST_INSERT_ID() function
+	const sql_postgres_returning = dareInstance.sql_insert_suffix
+		? raw(dareInstance.sql_insert_suffix)
 		: empty;
 
 	// Construct a db update
@@ -1016,8 +1027,6 @@ Dare.prototype.post = async function post(table, body, options = {}) {
  * @returns {Promise<any>} Affected Rows statement
  */
 Dare.prototype.del = async function del(table, filter, options = {}) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
-
 	/**
 	 * @type {QueryOptions} opts
 	 */
@@ -1036,13 +1045,8 @@ Dare.prototype.del = async function del(table, filter, options = {}) {
 
 	const dareInstance = this.use(opts);
 
-	if (IS_POSTGRES) {
-		/*
-		 * Postgres doesn't support table JOINS's in DELETE operation
-		 * So we need to tell the formatter that we want the conditions to be within a subquery
-		 */
-		opts.forceSubquery = true;
-	}
+	// Prevent joining onto the table being modified
+	opts.forceSubquery = dareInstance.applySubqueryOnDML;
 
 	const req = await dareInstance.format_request(opts);
 
@@ -1058,7 +1062,7 @@ Dare.prototype.del = async function del(table, filter, options = {}) {
 					${req.sql_joins.length ? join(req.sql_joins, '\n') : empty}
 					WHERE
 					${join(req.sql_where_conditions, ' AND ')}
-					${!IS_POSTGRES && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}`;
+					${dareInstance.applyLimitOnDML && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}`;
 
 	let resp = await this.sql(sql);
 

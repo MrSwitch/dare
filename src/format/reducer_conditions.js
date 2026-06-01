@@ -122,7 +122,6 @@ function prepCondition({
 	conditional_operators_in_value,
 	dareInstance,
 }) {
-
 	// Does it have a negative comparison operator?
 	const negate = operators.includes('-');
 
