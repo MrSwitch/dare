@@ -280,6 +280,12 @@ Dare.prototype.applyLimitOnDML = true;
 Dare.prototype.applySubqueryOnDML = false;
 
 /**
+ * Apply aliases to UPDATE statements - Postgres doesn't support this
+ * @type {boolean}
+ */
+Dare.prototype.applyAliasesOnUpdate = true;
+
+/**
  * SQL insert suffix - Additional SQL to append to insert statements, e.g., RETURNING clause for Postgres
  * @type {string | undefined}
  */
@@ -704,8 +710,6 @@ Dare.prototype.getCount = async function getCount(table, filter, options = {}) {
  * @returns {Promise<any>} Affected Rows statement
  */
 Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
-
 	/**
 	 * @type {QueryOptions} opts
 	 */
@@ -746,7 +750,7 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 	// Prepare post
 	const sql_set = prepareSQLSet({
 		body: req.body,
-		sql_alias: IS_POSTGRES ? null : req.sql_alias,
+		sql_alias: dareInstance.applyAliasesOnUpdate ? req.sql_alias : null,
 		tableSchema,
 		validateInput,
 		dareInstance,

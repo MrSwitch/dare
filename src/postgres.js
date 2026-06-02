@@ -74,6 +74,12 @@ PostgresDare.prototype.applySubqueryOnDML = true;
 PostgresDare.prototype.applyLimitOnDML = false;
 
 /**
+ * Apply aliases to UPDATE statements - Postgres doesn't support this
+ * @type {Dare['applyAliasesOnUpdate']}
+ */
+PostgresDare.prototype.applyAliasesOnUpdate = false;
+
+/**
  * SQL insert suffix - for RETURNING clause for Postgres
  * @type {Dare['sql_insert_suffix']}
  */
