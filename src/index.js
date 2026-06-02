@@ -200,10 +200,16 @@ Dare.prototype.sql_keyword_like = 'LIKE';
 Dare.prototype.sql_json_extract_prefix = '$';
 
 /**
- * Postgres JSON EXTRACT operator
+ * JSON EXTRACT operator
  * @type {string}
  */
 Dare.prototype.sql_json_extract_operator = '->';
+
+/**
+ * Defaul SQL wildcard character for fulltext searches
+ * @type {string}
+ */
+Dare.prototype.sql_fulltext_wildcard = '*';
 
 /**
  * Sql_json_array - Generates JSON_ARRAY expression for a list of field expressions
@@ -368,6 +374,7 @@ Dare.prototype.fulltextSearch = function fulltextSearch(
  */
 Dare.prototype.fulltextParser = function fulltextParser(input) {
 	const IS_POSTGRES = this.engine.startsWith('postgres');
+	const sql_fulltext_wildcard = this.sql_fulltext_wildcard;
 
 	function safequote(text) {
 		let suffix = '';
@@ -381,8 +388,8 @@ Dare.prototype.fulltextParser = function fulltextParser(input) {
 			return `"${text}"`;
 		}
 
-		if (IS_POSTGRES && suffix === '*') {
-			return `${text}:*`;
+		if (suffix === '*') {
+			return `${text}${sql_fulltext_wildcard}`;
 		}
 
 		return text + suffix;

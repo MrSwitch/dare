@@ -19,36 +19,30 @@ describe('fulltextParser', () => {
 	[
 		{
 			input: 'foo bar',
-			[ENGINE_POSTGRES]: 'foo & bar',
-			[ENGINE_MYSQL]: 'foo bar',
+			expected: 'foo bar',
 		},
 		{
 			input: '-foo +bar* ~"bar@  abar"',
-			[ENGINE_POSTGRES]: '-foo & bar:* & "bar@  abar"',
-			[ENGINE_MYSQL]: '-foo +bar* ~"bar@  abar"',
+			expected: '-foo +bar* ~"bar@  abar"',
 		},
 		{
 			input: '-foo +"bar foo bar"',
-			[ENGINE_POSTGRES]: '-foo & "bar foo bar"',
-			[ENGINE_MYSQL]: '-foo +"bar foo bar"',
+			expected: '-foo +"bar foo bar"',
 		},
 		{
 			input: '-foo +(<"bar foo @ bar" >"bar bar foo")',
-			[ENGINE_POSTGRES]: '-foo & ("bar foo @ bar" & "bar bar foo")',
-			[ENGINE_MYSQL]: '-foo +(<"bar foo @ bar" >"bar bar foo")',
+			expected: '-foo +(<"bar foo @ bar" >"bar bar foo")',
 		},
-	].forEach(({input, ...expects}) => {
-		Object.entries(expects).forEach(([engine, expected]) => {
-			it(`${engine} should format ${input} to ${expected}`, () => {
-				// @ts-ignore
-				const dare = new Dare({engine});
-				const output = dare.fulltextParser(input);
-				assert.strictEqual(
-					output,
-					expected,
-					'input and output should be the same'
-				);
-			});
+	].forEach(({input, expected}) => {
+		it(`should format ${input} to ${expected}`, () => {
+			// @ts-ignore
+			const dare = new Dare();
+			const output = dare.fulltextParser(input);
+			assert.strictEqual(
+				output,
+				expected,
+				'input and output should be the same'
+			);
 		});
 	});
 

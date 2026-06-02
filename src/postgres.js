@@ -60,6 +60,12 @@ PostgresDare.prototype.sql_json_array = function sql_json_array(expressions) {
 PostgresDare.prototype.rowid = 'id';
 
 /**
+ * Postgres fulltext search wildcard character - uses :* for prefix matching
+ * @type {Dare['sql_fulltext_wildcard']}
+ */
+PostgresDare.prototype.sql_fulltext_wildcard = ':*';
+
+/**
  * Apply limit on DML
  * Postgres does not allow joining onto the table being modified in patch / delete requests
  * To work around this, we need to use subquery joins for all joins in these requests
