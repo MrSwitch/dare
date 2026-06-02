@@ -2,18 +2,6 @@ import assert from 'node:assert/strict';
 import Dare from '../../src/index.js';
 import {describe, it} from 'node:test';
 
-/**
- * @import {Engine} from '../../src/index.js'
- *
- * @type {Engine}
- */
-const ENGINE_POSTGRES = 'postgres:16.3';
-
-/**
- * @type {Engine}
- */
-const ENGINE_MYSQL = 'mysql:5.7.40';
-
 describe('fulltextParser', () => {
 	// No formatting should be applied to these inputs
 	[
