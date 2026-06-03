@@ -364,6 +364,18 @@ Dare.prototype.fulltextSearch = function fulltextSearch(
 };
 
 /**
+ * FulltextSignParser
+ * @this {import('./index.js').default}
+ * @param {string} sign - Sign character to parse
+ * @param {number} [index] - Index of the term in the fulltext search string, used to determine whether to apply default AND operator
+ * @returns {string} Parsed sign character
+ */
+// eslint-disable-next-line no-unused-vars
+Dare.prototype.fulltextSignParser = function fulltextSignParser(sign, index) {
+	return sign;
+};
+
+/**
  * Fulltext Parser
  * This will format a string to make it compliant with MySQL Fulltext search
  * Such as wrapping special characters in quotes where they appear in the middle of words
@@ -373,7 +385,6 @@ Dare.prototype.fulltextSearch = function fulltextSearch(
  * @returns {string} Formatted string
  */
 Dare.prototype.fulltextParser = function fulltextParser(input) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
 	const sql_fulltext_wildcard = this.sql_fulltext_wildcard;
 
 	function safequote(text) {
@@ -418,15 +429,7 @@ Dare.prototype.fulltextParser = function fulltextParser(input) {
 				{groups: {sign, subexpression, quoted, unquoted, suffix = ''}},
 				index
 			) => {
-				if (IS_POSTGRES) {
-					sign = sign
-						// .replace('+', '&')
-						.replace(/[+<>~]*/, '');
-
-					if (!sign.includes('&') && index > 0) {
-						sign = `& ${sign}`;
-					}
-				}
+				sign = this.fulltextSignParser(sign, index);
 
 				if (subexpression) {
 					return `${sign}(${this.fulltextParser(subexpression)})`;

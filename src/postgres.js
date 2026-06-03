@@ -135,6 +135,25 @@ PostgresDare.prototype.fulltextSearch = function fulltextSearch(
 };
 
 /**
+ * FulltextSignParser - Postgres implementation using tsquery syntax
+ * @type {Dare['fulltextSignParser']}
+ */
+PostgresDare.prototype.fulltextSignParser = function fulltextSignParser(
+	sign,
+	index
+) {
+	// Remove MySQL style prefix
+	sign = sign.replace(/[+<>~]*/, '');
+
+	// Include the AND operator for all terms except the first, as Postgres requires explicit operators
+	if (!sign.includes('&') && index > 0) {
+		sign = `& ${sign}`;
+	}
+
+	return sign;
+};
+
+/**
  * Pass through value verbatim for JSON formatting, as Postgres handles this natively
  * @type {Dare['jsonFormatValue']}
  */
