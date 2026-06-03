@@ -9,16 +9,24 @@
 
 Dare is a brave API for generating SQL out of structured Javascript objects.
 
-## Example usage...
+## Setup
 
-This is a simple setup to make a SELECT query
+Import the appropriate entry point for your database engine. The versions listed are minimum supported versions — any version above these will work.
+
+| Import Path       | Database Engine               |
+| ----------------- | ----------------------------- |
+| `dare`            | MySQL 8.0+, MariaDB           |
+| `dare/mariadb11`  | MariaDB 11+ (alias of `dare`) |
+| `dare/mysql80`    | MySQL 8.0+ (alias of `dare`)  |
+| `dare/mysql57`    | MySQL 5.7+, MySQL 5.6+        |
+| `dare/postgres16` | PostgreSQL 16+                |
+
+### MySQL
 
 ```js
-// Require the module
 import Dare from 'dare';
 import dbconn from './dbConn.js'; // <- your script for executing queries
 
-// Initiate it
 const dare = new Dare({
 	engine: 'mysql:8.0', // set the engine
 });
@@ -29,7 +37,7 @@ const dare = new Dare({
 For Postgres, use the dedicated entry point which sets up Postgres-specific defaults and query formatting:
 
 ```js
-import Dare from 'dare/postgres';
+import Dare from 'dare/postgres16';
 import dbconn from './dbConn.js';
 
 const dare = new Dare();
