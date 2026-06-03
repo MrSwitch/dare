@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import Dare from '../../../src/postgres.js';
+import Dare from '../../../src/postgres16.js';
 import {describe, it} from 'node:test';
 
 describe('Postgres fulltextParser', () => {

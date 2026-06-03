@@ -3,7 +3,7 @@ import assert from 'node:assert';
 
 // Test Generic DB functions
 import group_concat from '../../../src/utils/group_concat.js';
-import PostgresDare from '../../../src/postgres.js';
+import PostgresDare from '../../../src/postgres16.js';
 import {describe, it, beforeEach} from 'node:test';
 
 describe(`utils/group_concat: (postgres)`, () => {

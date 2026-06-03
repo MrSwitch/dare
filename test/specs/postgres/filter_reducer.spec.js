@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import Dare from '../../../src/postgres.js';
+import Dare from '../../../src/postgres16.js';
 
 /*
  * Filter Reducer

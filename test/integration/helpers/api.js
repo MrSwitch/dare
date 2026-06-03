@@ -1,5 +1,5 @@
 import Dare from '../../../src/index.js';
-import PostgresDare from '../../../src/postgres.js';
+import PostgresDare from '../../../src/postgres16.js';
 import MySQL57Dare from '../../../src/mysql57.js';
 import Debug from 'debug';
 import mysql from 'mysql2/promise';

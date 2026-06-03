@@ -10,7 +10,7 @@
 			"types": "./types/src/index.d.ts"
 		},
 		"./postgres": {
-			"import": "./src/postgres.js",
+			"import": "./src/postgres16.js",
 			"types": "./types/src/index.d.ts"
 		},
 		"./mysql57": {
