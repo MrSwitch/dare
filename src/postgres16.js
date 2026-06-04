@@ -106,13 +106,26 @@ PostgresDare.prototype.identifierWrapper = function identifierWrapper(field) {
 PostgresDare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate({
 	keys = [],
 	existing = [],
+	duplicate_keys,
 }) {
 	if (!keys.length) {
 		return `ON CONFLICT DO NOTHING`;
 	}
 
+	let conflictKeys;
+
+	if (Array.isArray(duplicate_keys) && duplicate_keys.length) {
+		conflictKeys = duplicate_keys;
+	} else {
+		conflictKeys = existing.filter(item => !keys.includes(item));
+
+		if (!conflictKeys.length) {
+			conflictKeys.push(this.rowid);
+		}
+	}
+
 	return `
-			ON CONFLICT (${existing.filter(item => !keys.includes(item)).join(',')})
+			ON CONFLICT (${conflictKeys.map(key => this.identifierWrapper(key)).join(',')})
 				DO UPDATE
 					SET ${keys.map(name => `${this.identifierWrapper(name)}=EXCLUDED.${this.identifierWrapper(name)}`).join(',')}
 		`;

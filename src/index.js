@@ -999,8 +999,13 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 			dareInstance.onDuplicateKeysUpdate({
 				keys: req.duplicate_keys_update.map(field =>
 					unAliasFields(modelSchema, field, dareInstance)
-				),
+				 ),
 				existing: fields,
+				duplicate_keys: Array.isArray(req.duplicate_keys)
+					? req.duplicate_keys.map(field =>
+							unAliasFields(modelSchema, field, dareInstance)
+						)
+					: undefined,
 			})
 		);
 	} else if (req.duplicate_keys?.toString()?.toLowerCase() === 'ignore') {
@@ -1142,12 +1147,14 @@ function mustAffectRows(result, notfound) {
  * @param {Array<string>} [obj.keys] - Array of field keys which are duplicated
  * @param {Array<string>} [obj.existing] - Array of existing field keys in the database, used to validate the keys provided in `keys` parameter
  * @param {string} [obj.sql_table] - SQL table name, used for MySQL aliasing in 8.0.20+
+ * @param {Array<string>} [obj.duplicate_keys] - Array of keys to check for duplicates
  * @returns {string} SQL snippet for ON DUPLICATE KEY UPDATE
  */
 Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate({
 	keys = [],
-	existing = [], // eslint-disable-line no-unused-vars
 	sql_table = '',
+	existing = [], // eslint-disable-line no-unused-vars
+	duplicate_keys = [], // eslint-disable-line no-unused-vars
 }) {
 	/*
 	 * MySQL 8.0.20+ deprecates VALUES() in ON DUPLICATE KEY UPDATE

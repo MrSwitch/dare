@@ -25,7 +25,7 @@ describe('postgres - post', () => {
 		dare.execute = async ({sql, values}) => {
 			sqlEqual(
 				sql,
-				'INSERT INTO test ("id", "name") VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET "name"=EXCLUDED."name" RETURNING id'
+				'INSERT INTO test ("id", "name") VALUES (?, ?) ON CONFLICT ("uni_colmn") DO UPDATE SET "name"=EXCLUDED."name" RETURNING id'
 			);
 			assert.deepStrictEqual(values, [1, 'name']);
 			return {success: true};
@@ -35,6 +35,23 @@ describe('postgres - post', () => {
 			table: 'test',
 			body: {id: 1, name: 'name'},
 			duplicate_keys_update: ['name'],
+			duplicate_keys: ['uni_colmn'],
+		});
+	});
+	it(`${DB_ENGINE} should use ON CONFLICT ("id") UPDATE ...`, async () => {
+		dare.execute = async ({sql, values}) => {
+			sqlEqual(
+				sql,
+				'INSERT INTO test ("id", "name") VALUES (?, ?) ON CONFLICT ("id") DO UPDATE SET "id"=EXCLUDED."id", "name"=EXCLUDED."name" RETURNING id'
+			);
+			assert.deepStrictEqual(values, [1, 'name']);
+			return {success: true};
+		};
+
+		return dare.post({
+			table: 'test',
+			body: {id: 1, name: 'name'},
+			duplicate_keys_update: ['id', 'name'],
 		});
 	});
 	it(`${DB_ENGINE} should use ON CONFLICT DO NOTHING`, async () => {

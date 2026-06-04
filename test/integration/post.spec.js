@@ -62,4 +62,33 @@ describe('post from query', () => {
 			);
 		}
 	});
+
+	it('should upsert with on duplicate key update', async () => {
+		const teamName = 'my team';
+
+		// Create team
+		await dare.post('teams', {name: teamName, description: 'first update'});
+
+		// Update team with same name but different description
+		await dare.post(
+			'teams',
+			{name: teamName, description: 'second update'},
+			{
+				// Only required by Postgres
+				duplicate_keys: ['name'],
+				duplicate_keys_update: ['description', 'name'],
+			}
+		);
+
+		// Check team description is updated
+		const {description} = await dare.get('teams', ['description'], {
+			name: teamName,
+		});
+
+		assert.strictEqual(
+			description,
+			'second update',
+			'Team description should have been updated to "second update"'
+		);
+	});
 });
