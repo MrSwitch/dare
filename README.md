@@ -11,7 +11,7 @@ Dare is a brave API for generating SQL out of structured Javascript objects.
 
 ## Setup
 
-Import the appropriate entry point for your database engine. The versions listed are minimum supported versions — any version above these will work.
+Import the appropriate entry point for your database engine. The versions listed are minimum supported versions Dare has been tested against - more recent versions are expected to be backwards compatible.
 
 | Import Path       | Database Engine               |
 | ----------------- | ----------------------------- |
