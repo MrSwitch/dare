@@ -999,7 +999,7 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 			dareInstance.onDuplicateKeysUpdate({
 				keys: req.duplicate_keys_update.map(field =>
 					unAliasFields(modelSchema, field, dareInstance)
-				 ),
+				),
 				existing: fields,
 				duplicate_keys: Array.isArray(req.duplicate_keys)
 					? req.duplicate_keys.map(field =>
