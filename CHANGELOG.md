@@ -1,3 +1,10 @@
+## [0.100.1](https://github.com/MrSwitch/dare/compare/v0.100.0...v0.100.1) (2026-06-06)
+
+
+### Bug Fixes
+
+* revert mysql on-dup-key alias, reverts [#448](https://github.com/MrSwitch/dare/issues/448) ([#456](https://github.com/MrSwitch/dare/issues/456)) ([9a6b1d4](https://github.com/MrSwitch/dare/commit/9a6b1d467da900c2ee0e410308950a1aae07e7de))
+
 # [0.100.0](https://github.com/MrSwitch/dare/compare/v0.99.4...v0.100.0) (2026-06-06)
 
 
