@@ -48,6 +48,7 @@ CREATE TABLE `teams` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `description` TEXT NULL,
+  `updated_time` TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uind` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;

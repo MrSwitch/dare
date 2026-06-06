@@ -14,8 +14,6 @@ import extend from './utils/extend.js';
 
 import clone from 'tricks/object/clone.js';
 
-import semverCompare from 'semver-compare';
-
 import format_request from './format_request.js';
 
 import response_handler, {responseRowHandler} from './response_handler.js';
@@ -1156,19 +1154,10 @@ Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate({
 	existing = [], // eslint-disable-line no-unused-vars
 	duplicate_keys = [], // eslint-disable-line no-unused-vars
 }) {
-	/*
-	 * MySQL 8.0.20+ deprecates VALUES() in ON DUPLICATE KEY UPDATE
-	 * Use row alias notation instead: AS _new ... _new.col
-	 */
-	const useAlias =
-		this.engine.startsWith('mysql') &&
-		semverCompare(this.engine.split(':').at(1), '8.0.20') >= 0;
-
 	let s = keys
-		.map(name =>
-			useAlias
-				? `${this.identifierWrapper(name)}=_new.${this.identifierWrapper(name)}`
-				: `${this.identifierWrapper(name)}=VALUES(${this.identifierWrapper(name)})`
+		.map(
+			name =>
+				`${this.identifierWrapper(name)}=VALUES(${this.identifierWrapper(name)})`
 		)
 		.join(',');
 
@@ -1177,7 +1166,7 @@ Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate({
 		s = `${s}=${s}`;
 	}
 
-	return `${useAlias && keys.length ? 'AS _new ' : ''}ON DUPLICATE KEY UPDATE ${s}`;
+	return `ON DUPLICATE KEY UPDATE ${s}`;
 };
 
 /**

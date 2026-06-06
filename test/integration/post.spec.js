@@ -61,6 +61,21 @@ describe('post from query', () => {
 				'Affected 2 rows... not sure why ignored duplicates count here?'
 			);
 		}
+
+		// Add on_duplicate_key_update
+		{
+			const {affectedRows} = await dare.post({
+				...request,
+				duplicate_keys_update: ['user_id', 'team_id'],
+			});
+
+			// Both should have been ignored - because they cause duplicates however both show 2 affected rows
+			assert.strictEqual(
+				affectedRows,
+				2,
+				'Affected 2 rows... not sure why ignored duplicates count here?'
+			);
+		}
 	});
 
 	it('should upsert with on duplicate key update', async () => {
@@ -76,7 +91,7 @@ describe('post from query', () => {
 			{
 				// Only required by Postgres
 				duplicate_keys: ['name'],
-				duplicate_keys_update: ['description', 'name'],
+				duplicate_keys_update: ['description', 'name', 'updated_time'],
 			}
 		);
 
