@@ -122,8 +122,6 @@ function prepCondition({
 	conditional_operators_in_value,
 	dareInstance,
 }) {
-	const {engine} = dareInstance;
-
 	// Does it have a negative comparison operator?
 	const negate = operators.includes('-');
 
@@ -144,18 +142,7 @@ function prepCondition({
 		// Join the fields
 		const sql_field_array = sql_fields.map(({sql}) => sql);
 
-		const IS_POSTGRES = dareInstance.engine.startsWith('postgres');
-
-		if (IS_POSTGRES) {
-			const field =
-				sql_field_array.length === 1
-					? sql_field_array.at(0)
-					: SQL`TO_TSVECTOR(${join(sql_field_array, " || ' ' || ")})`;
-			return SQL`${NOT}${field} @@ to_tsquery('english', ${dareInstance.fulltextParser(value)})`;
-		}
-
-		// Default: MySQL Full Text
-		return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${dareInstance.fulltextParser(value)} IN BOOLEAN MODE)`;
+		return dareInstance.fulltextSearch(sql_field_array, value, NOT);
 	} else if (sql_fields.length > 1) {
 		/*
 		 * Is the field an array of field names?
@@ -209,7 +196,7 @@ function prepCondition({
 		!Array.isArray(value)
 	) {
 		// Loop through the object and create the sql_field
-		const sql_fields = json_contains({sql_field, value, engine});
+		const sql_fields = json_contains({sql_field, value, dareInstance});
 
 		// Return a single or a wrapped group
 		return SQL`${NOT}(${join(
@@ -220,7 +207,7 @@ function prepCondition({
 					conditional_operators_in_value,
 					operators,
 					type,
-					engine,
+					dareInstance,
 				})
 			),
 			' AND '
@@ -234,7 +221,7 @@ function prepCondition({
 		operators,
 		// Treat json as text
 		type: type === 'json' ? 'text' : type,
-		engine,
+		dareInstance,
 	});
 }
 
@@ -246,7 +233,7 @@ function prepCondition({
  * @param {string|null} params.conditional_operators_in_value - Allowable conditional operators in value
  * @param {string|null} params.operators - Operators
  * @param {string|null} params.type - Type
- * @param {Engine} params.engine - DB Engine
+ * @param {Dare} params.dareInstance - Dare Instance
  * @returns {Sql} SQL condition
  */
 function sqlCondition({
@@ -255,10 +242,8 @@ function sqlCondition({
 	conditional_operators_in_value,
 	operators,
 	type,
-	engine,
+	dareInstance,
 }) {
-	const IS_POSTGRES = engine.startsWith('postgres');
-
 	// Does it have a negative comparison operator?
 	const negate = operators.includes('-');
 
@@ -283,11 +268,7 @@ function sqlCondition({
 	const allow_conditional_range_operator_in_value =
 		conditional_operators_in_value?.includes('~');
 
-	// Conditional JSON Quote
-	const quote =
-		type === 'json' ? a => (typeof a === 'string' ? `"${a}"` : a) : a => a;
-
-	const LIKE = raw(IS_POSTGRES ? 'ILIKE' : 'LIKE');
+	const LIKE = raw(dareInstance.sql_keyword_like);
 
 	/*
 	 * Range
@@ -335,7 +316,10 @@ function sqlCondition({
 		(isLikey ||
 			(allow_conditional_likey_operator_in_value && value.match('%')))
 	) {
-		const strValue = !IS_POSTGRES ? quote(value) : value;
+		const strValue =
+			type === 'json'
+				? dareInstance.jsonFormatValue(value, 'LIKE')
+				: value;
 
 		return SQL`${sql_field} ${NOT}${LIKE} ${strValue}`;
 	}
@@ -384,9 +368,10 @@ function sqlCondition({
 
 		// Use the `IN(...)` for items which can be grouped...
 		if (filteredValue.length) {
-			const items = engine.startsWith('mysql:5.7')
-				? filteredValue.map(quote)
-				: filteredValue;
+			const items =
+				type === 'json'
+					? dareInstance.jsonFormatValue(filteredValue, 'IN')
+					: filteredValue;
 
 			let condition = SQL`${sql_field} ${NOT}IN (${join(items)})`;
 
@@ -407,7 +392,7 @@ function sqlCondition({
 					operators,
 					conditional_operators_in_value,
 					type,
-					engine,
+					dareInstance,
 				})
 			)
 		);
@@ -417,15 +402,10 @@ function sqlCondition({
 			? conds.at(0)
 			: SQL`(${join(conds, negate ? ' AND ' : ' OR ')})`;
 	} else {
-		if (
-			IS_POSTGRES &&
-			type === 'json' &&
-			(typeof value === 'boolean' || typeof value === 'number')
-		) {
-			value = String(value);
-		}
+		const strValue =
+			type === 'json' ? dareInstance.jsonFormatValue(value, '=') : value;
 
-		let condition = SQL`${sql_field} ${raw(negate ? '!' : '')}= ${value}`;
+		let condition = SQL`${sql_field} ${raw(negate ? '!' : '')}= ${strValue}`;
 
 		if (negate) {
 			/*
@@ -446,7 +426,7 @@ function sqlCondition({
  * @param {any} params.value - Value
  * @param {string} [params.path] - Path
  * @param {string} [params.operators] - Operators
- * @param {string} [params.engine] - Engine
+ * @param {Dare} [params.dareInstance] - Engine
  * @returns {Array<{sql: Sql, value: any, operators: string}>} SQL conditions
  */
 function json_contains({
@@ -454,18 +434,16 @@ function json_contains({
 	value,
 	path = null,
 	operators = '',
-	engine,
+	dareInstance,
 }) {
-	const IS_POSTGRES = engine.startsWith('postgres');
-
-	if (!path && !IS_POSTGRES) {
-		path = '$';
+	if (!path) {
+		path = dareInstance.sql_json_extract_prefix; // MySQL JSON_EXTRACT prefix, e.g. '$'
 	}
 
 	const conds = [];
 
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-		const separator = IS_POSTGRES ? '->>' : '->';
+		const separator = dareInstance.sql_json_extract_operator;
 
 		return [
 			{
@@ -484,7 +462,7 @@ function json_contains({
 				value: value[key],
 				path: [path, rootKey].filter(Boolean).join('.'),
 				operators: operators + newOperators,
-				engine,
+				dareInstance,
 			})
 		);
 	}

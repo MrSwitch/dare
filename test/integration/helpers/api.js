@@ -1,20 +1,29 @@
 import Dare from '../../../src/index.js';
+import PostgresDare from '../../../src/postgres16.js';
+import MySQL57Dare from '../../../src/mysql57.js';
 import Debug from 'debug';
 import mysql from 'mysql2/promise';
 import db from './db.js';
 import options from '../../data/options.js';
 
-
 const debug = Debug('sql');
 
 export {options};
 
+const {DB_ENGINE} = process.env;
+
+/** @type {any} */
+const DareConstructor = DB_ENGINE?.startsWith('postgres')
+	? PostgresDare
+	: DB_ENGINE?.startsWith('mysql:5.7') || DB_ENGINE?.startsWith('mysql:5.6')
+		? MySQL57Dare
+		: Dare;
+
 export default function dareInstance() {
 	// Initiate
-	const dare = new Dare(options);
+	const dare = new DareConstructor(options);
 
 	// Set a test instance
-
 	dare.execute = async query => {
 		// DEBUG
 		debug(mysql.format(query.sql, query.values));

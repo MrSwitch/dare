@@ -1,10 +1,9 @@
-import Dare from '../../src/index.js';
 import Debug from 'debug';
 import assert from 'node:assert/strict';
 
 import mysql from 'mysql2/promise';
 import db from './helpers/db.js';
-import {options, castToStringIfNeeded} from './helpers/api.js';
+import {default as defaultAPI, castToStringIfNeeded} from './helpers/api.js';
 
 const debug = Debug('sql');
 
@@ -15,7 +14,7 @@ describe(`model.shortcut_map`, () => {
 
 	beforeEach(() => {
 		// Initiate
-		dare = new Dare(options);
+		dare = defaultAPI();
 
 		// Extend
 		dare = dare.use({

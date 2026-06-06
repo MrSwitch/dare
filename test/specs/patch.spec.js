@@ -399,22 +399,4 @@ describe('patch', () => {
 
 		assert.strictEqual(test.affectedRows, 1);
 	});
-
-	describe('DB Engine specific tests', () => {
-		it(`should use the correct syntax for postgres`, async () => {
-			const dareInst = dare.use({engine: 'postgres:16.3'});
-
-			dareInst.execute = async ({sql, values}) => {
-				sqlEqual(sql, 'UPDATE tbl a SET "name" = ? WHERE a.id = ?');
-				assert.deepStrictEqual(values, [name, id]);
-				return {success: true};
-			};
-
-			return dareInst.patch({
-				table: 'tbl',
-				filter: {id},
-				body: {name},
-			});
-		});
-	});
 });

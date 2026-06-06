@@ -9,39 +9,56 @@
 
 Dare is a brave API for generating SQL out of structured Javascript objects.
 
-## Example usage...
+## Install
 
-This is a simple setup to make a SELECT query
+```bash
+npm i dare --save
+```
+
+## Setup
+
+Import the appropriate entry point for your database engine. The versions listed are minimum supported versions Dare has been tested against - more recent versions are expected to be backwards compatible.
+
+| Import Path       | Database Engine               |
+| ----------------- | ----------------------------- |
+| `dare`            | MySQL 8.0+, MariaDB           |
+| `dare/mariadb11`  | MariaDB 11+ (alias of `dare`) |
+| `dare/mysql80`    | MySQL 8.0+ (alias of `dare`)  |
+| `dare/mysql57`    | MySQL 5.7+, MySQL 5.6+        |
+| `dare/postgres16` | PostgreSQL 16+                |
+
+## Example
+
+Create a dare connection file, e.g.
 
 ```js
-// Require the module
-import Dare from 'dare';
+// ./dareconn.js
+import Dare from 'dare'; // OR 'dare/postgres16', etc...
 import dbconn from './dbConn.js'; // <- your script for executing queries
 
-// Initiate it
 const dare = new Dare({
-	engine: 'mysql:8.0' // set the engine
+	// setting engine: makes for finer granular version handling used within the engine imports
+	engine: 'mysql:8.0.40',
 });
 
 // Define the handler dare.execute for handing database requests
-dare.execute = async (request) => {
-
+dare.execute = async request => {
 	// Execute query using prepared statements
 	// use request.sql, whilst in postgres use request.text
 	return dbconn.query(request.sql, request.values);
 };
+```
+
+Around the code base, e.g.
+
+```js
+import dare from './dareconn.js'
 
 // Make a request
 const resp = await dare.get('users', ['name'], {id: 1});
 // SELECT id, name FROM users WHERE id = 1 LIMIT 1;
 
 console.log(`Hi ${resp.name}');
-```
-
-## Install
-
-```bash
-npm i dare --save
 ```
 
 # Connect

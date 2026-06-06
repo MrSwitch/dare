@@ -32,7 +32,7 @@ describe('format_request', () => {
 
 		assert.ok('then' in fn);
 
-		await assert.rejects(fn, (error) => {
+		await assert.rejects(fn, error => {
 			assert(error instanceof DareError);
 			assert.strictEqual(error.code, DareError.INVALID_REQUEST);
 			return true;
@@ -119,9 +119,12 @@ describe('format_request', () => {
 				it(`invalid: ${JSON.stringify(fields)}`, async () => {
 					const test = dare.format_request({...options, fields});
 
-					await assert.rejects(test, (error) => {
+					await assert.rejects(test, error => {
 						assert(error instanceof DareError);
-						assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+						assert.strictEqual(
+							error.code,
+							DareError.INVALID_REFERENCE
+						);
 						return true;
 					});
 				});
@@ -170,9 +173,12 @@ describe('format_request', () => {
 					it(`invalid: ${limit} (${typeof limit})`, async () => {
 						const test = dare.format_request({...options, limit});
 
-						await assert.rejects(test, (error) => {
+						await assert.rejects(test, error => {
 							assert(error instanceof DareError);
-							assert.strictEqual(error.code, DareError.INVALID_LIMIT);
+							assert.strictEqual(
+								error.code,
+								DareError.INVALID_LIMIT
+							);
 							return true;
 						});
 					});
@@ -203,7 +209,7 @@ describe('format_request', () => {
 
 					const test = dare.format_request({...options, limit});
 
-					await assert.rejects(test, (error) => {
+					await assert.rejects(test, error => {
 						assert(error instanceof DareError);
 						assert.strictEqual(error.code, DareError.INVALID_LIMIT);
 						return true;
@@ -225,9 +231,12 @@ describe('format_request', () => {
 					it(`invalid: ${start} (${typeof start})`, async () => {
 						const test = dare.format_request({...options, start});
 
-						await assert.rejects(test, (error) => {
+						await assert.rejects(test, error => {
 							assert(error instanceof DareError);
-							assert.strictEqual(error.code, DareError.INVALID_START);
+							assert.strictEqual(
+								error.code,
+								DareError.INVALID_START
+							);
 							return true;
 						});
 					});
@@ -265,9 +274,12 @@ describe('format_request', () => {
 							groupby,
 						});
 
-						await assert.rejects(test, (error) => {
+						await assert.rejects(test, error => {
 							assert(error instanceof DareError);
-							assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+							assert.strictEqual(
+								error.code,
+								DareError.INVALID_REFERENCE
+							);
 							return true;
 						});
 					});
@@ -326,9 +338,12 @@ describe('format_request', () => {
 						orderby,
 					});
 
-					await assert.rejects(test, (error) => {
+					await assert.rejects(test, error => {
 						assert(error instanceof DareError);
-						assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+						assert.strictEqual(
+							error.code,
+							DareError.INVALID_REFERENCE
+						);
 						return true;
 					});
 				});
@@ -547,9 +562,12 @@ describe('format_request', () => {
 							[condition_type]: filter,
 						});
 
-						await assert.rejects(test, (error) => {
+						await assert.rejects(test, error => {
 							assert(error instanceof DareError);
-							assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
+							assert.strictEqual(
+								error.code,
+								DareError.INVALID_REFERENCE
+							);
 							return true;
 						});
 					});
@@ -656,9 +674,12 @@ describe('format_request', () => {
 				],
 			});
 
-			await assert.rejects(test, (error) => {
+			await assert.rejects(test, error => {
 				assert(error instanceof DareError);
-				assert.strictEqual(error.message, "Could not understand field 'comments'");
+				assert.strictEqual(
+					error.message,
+					"Could not understand field 'comments'"
+				);
 				assert.strictEqual(error.code, DareError.INVALID_REFERENCE);
 				return true;
 			});

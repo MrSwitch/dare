@@ -42,8 +42,8 @@ describe('get', () => {
 		assert.deepStrictEqual(request, original);
 
 		// Check deep clone
-		assert.deepStrictEqual(request.fields,  ['id', 'name']);
-		assert.deepStrictEqual(request.orderby,  ['name']);
+		assert.deepStrictEqual(request.fields, ['id', 'name']);
+		assert.deepStrictEqual(request.orderby, ['name']);
 	});
 
 	it('should throw an error if table is empty', async () => {
@@ -53,7 +53,7 @@ describe('get', () => {
 
 		const call = dare.get(request);
 
-		await assert.rejects(call, (error) => {
+		await assert.rejects(call, error => {
 			assert(error instanceof DareError);
 			assert.strictEqual(error.code, DareError.INVALID_REQUEST);
 			return true;
@@ -86,7 +86,7 @@ describe('get', () => {
 
 			const resp = await dare.get('test', basic_fields, {id});
 
-			assert.strictEqual(typeof resp, "object");
+			assert.strictEqual(typeof resp, 'object');
 			assert.deepStrictEqual(resp, basic_record);
 		});
 
@@ -215,17 +215,21 @@ describe('get', () => {
 		it('should throw an error if limit is invalid', async () => {
 			const test = dare.get('test', basic_fields, {id}, {limit: 0});
 
-			await assert.rejects(test, (error) => {
+			await assert.rejects(test, error => {
 				assert(error instanceof DareError);
-				assert.strictEqual(error.code, DareError.INVALID_LIMIT); return true; });
+				assert.strictEqual(error.code, DareError.INVALID_LIMIT);
+				return true;
+			});
 		});
 
 		it('should throw an error if limit is invalid', async () => {
 			const test = dare.get('test', basic_fields, {id}, {limit: null});
 
-			await assert.rejects(test, (error) => {
+			await assert.rejects(test, error => {
 				assert(error instanceof DareError);
-				assert.strictEqual(error.code, DareError.INVALID_LIMIT); return true; });
+				assert.strictEqual(error.code, DareError.INVALID_LIMIT);
+				return true;
+			});
 		});
 
 		it('should throw an error where no limit was defined and an empty resultset was returned.', async () => {
@@ -233,7 +237,7 @@ describe('get', () => {
 
 			const test = dare.get('test', basic_fields, {id});
 
-			await assert.rejects(test, (error) => {
+			await assert.rejects(test, error => {
 				assert(error instanceof DareError);
 				assert.strictEqual(error.code, DareError.NOT_FOUND);
 				return true;
@@ -349,7 +353,7 @@ describe('get', () => {
 		it('should throw an error if fields is an empty array', async () => {
 			const test = dare.get('test', [], {id}, {groupby: 'id'});
 
-			await assert.rejects(test, (error) => {
+			await assert.rejects(test, error => {
 				assert(error instanceof DareError);
 				assert.strictEqual(error.code, DareError.INVALID_REQUEST);
 				return true;
@@ -359,9 +363,11 @@ describe('get', () => {
 		it('should throw an error if fields are a scalar value', async () => {
 			const test = dare.get('test', true, {id}, {groupby: 'id'});
 
-			await assert.rejects(test, (error) => {
+			await assert.rejects(test, error => {
 				assert(error instanceof DareError);
-				assert.strictEqual(error.code, DareError.INVALID_REQUEST); return true; });
+				assert.strictEqual(error.code, DareError.INVALID_REQUEST);
+				return true;
+			});
 		});
 
 		it('should let us pass through SQL Functions', async () => {
@@ -485,7 +491,7 @@ describe('get', () => {
 
 			const resp = await dare.get('test', basic_fields, {id});
 
-			assert.strictEqual(typeof resp, "object");
+			assert.strictEqual(typeof resp, 'object');
 			assert.strictEqual(resp, basic_record);
 		});
 	});

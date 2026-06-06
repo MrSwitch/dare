@@ -2,53 +2,35 @@ import assert from 'node:assert/strict';
 import Dare from '../../src/index.js';
 import {describe, it} from 'node:test';
 
-/**
- * @import {Engine} from '../../src/index.js'
- *
- * @type {Engine}
- */
-const ENGINE_POSTGRES = 'postgres:16.3';
-
-/**
- * @type {Engine}
- */
-const ENGINE_MYSQL = 'mysql:5.7.40';
-
 describe('fulltextParser', () => {
 	// No formatting should be applied to these inputs
 	[
 		{
 			input: 'foo bar',
-			[ENGINE_POSTGRES]: 'foo & bar',
-			[ENGINE_MYSQL]: 'foo bar',
+			expected: 'foo bar',
 		},
 		{
 			input: '-foo +bar* ~"bar@  abar"',
-			[ENGINE_POSTGRES]: '-foo & bar:* & "bar@  abar"',
-			[ENGINE_MYSQL]: '-foo +bar* ~"bar@  abar"',
+			expected: '-foo +bar* ~"bar@  abar"',
 		},
 		{
 			input: '-foo +"bar foo bar"',
-			[ENGINE_POSTGRES]: '-foo & "bar foo bar"',
-			[ENGINE_MYSQL]: '-foo +"bar foo bar"',
+			expected: '-foo +"bar foo bar"',
 		},
 		{
 			input: '-foo +(<"bar foo @ bar" >"bar bar foo")',
-			[ENGINE_POSTGRES]: '-foo & ("bar foo @ bar" & "bar bar foo")',
-			[ENGINE_MYSQL]: '-foo +(<"bar foo @ bar" >"bar bar foo")',
+			expected: '-foo +(<"bar foo @ bar" >"bar bar foo")',
 		},
-	].forEach(({input, ...expects}) => {
-		Object.entries(expects).forEach(([engine, expected]) => {
-			it(`${engine} should format ${input} to ${expected}`, () => {
-				// @ts-ignore
-				const dare = new Dare({engine});
-				const output = dare.fulltextParser(input);
-				assert.strictEqual(
-					output,
-					expected,
-					'input and output should be the same'
-				);
-			});
+	].forEach(({input, expected}) => {
+		it(`should format ${input} to ${expected}`, () => {
+			// @ts-ignore
+			const dare = new Dare();
+			const output = dare.fulltextParser(input);
+			assert.strictEqual(
+				output,
+				expected,
+				'input and output should be the same'
+			);
 		});
 	});
 

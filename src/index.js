@@ -159,7 +159,6 @@ function Dare({engine, ...options} = {}) {
 
 	if (engine) {
 		this.engine = engine;
-		this.rowid = engine.startsWith('postgres') ? 'id' : '_rowid';
 	}
 
 	return this;
@@ -190,6 +189,68 @@ Dare.prototype.execute = async requestQuery => {
  */
 Dare.prototype.engine = 'mysql:8.0.40';
 
+// SQL keyword for LIKE operations
+/** @type {string} */
+Dare.prototype.sql_keyword_like = 'LIKE';
+
+/**
+ * JSON EXTRACT prefix
+ * @type {string}
+ */
+Dare.prototype.sql_json_extract_prefix = '$';
+
+/**
+ * JSON EXTRACT operator
+ * @type {string}
+ */
+Dare.prototype.sql_json_extract_operator = '->';
+
+/**
+ * Defaul SQL wildcard character for fulltext searches
+ * @type {string}
+ */
+Dare.prototype.sql_fulltext_wildcard = '*';
+
+/**
+ * Sql_json_array - Generates JSON_ARRAY expression for a list of field expressions
+ * @param {Array<string>} expressions - Array of field expressions
+ * @returns {string} SQL expression
+ */
+Dare.prototype.sql_json_array = function sql_json_array(expressions) {
+	return `JSON_ARRAY(${expressions.join(',')})`;
+};
+
+/**
+ * Sql_json_arrayagg - Generates JSON_ARRAYAGG expression for grouping
+ * @param {object} params - Params
+ * @param {string} params.sql_alias - SQL Alias
+ * @param {string} params.expression - Inner expression
+ * @returns {string} SQL expression
+ */
+Dare.prototype.sql_json_arrayagg = function sql_json_arrayagg({
+	sql_alias,
+	expression,
+}) {
+	const condition = `CASE WHEN (${sql_alias}.${this.rowid} IS NOT NULL) THEN (${expression}) ELSE NULL END`;
+	return `JSON_ARRAYAGG(${condition})`;
+};
+
+/**
+ * JSON quote values
+ * @param {any} value - Value to quote
+ * @param {"LIKE" | "=" | "IN"} [operator] - Operator
+ * @returns {any} Quoted value
+ */
+Dare.prototype.jsonFormatValue = function jsonFormatValue(
+	value,
+	operator = '='
+) {
+	if (operator === 'LIKE' && typeof value === 'string') {
+		return `"${value}"`;
+	}
+	return value;
+};
+
 // Rowid, name of primary key field used in grouping operation: MySQL uses _rowid
 /** @type {string} */
 Dare.prototype.rowid = '_rowid';
@@ -211,6 +272,31 @@ Dare.prototype.options = {
 	conditional_operators_in_value: '%!~',
 };
 
+/**
+ * Apply limit on DML operations - MySQL supports this, Postgres doesn't
+ * @type {boolean}
+ */
+Dare.prototype.applyLimitOnDML = true;
+
+/**
+ * Whether the engine requires subquery joins to prevent joining onto
+ * The table being modified in patch / delete requests
+ * @type {boolean}
+ */
+Dare.prototype.applySubqueryOnDML = false;
+
+/**
+ * Apply aliases to UPDATE statements - Postgres doesn't support this
+ * @type {boolean}
+ */
+Dare.prototype.applyAliasesOnUpdate = true;
+
+/**
+ * SQL insert suffix - Additional SQL to append to insert statements, e.g., RETURNING clause for Postgres
+ * @type {string | undefined}
+ */
+Dare.prototype.sql_insert_suffix = undefined;
+
 // Set default table_alias handler
 Dare.prototype.table_alias_handler = function (name) {
 	return name.replace(/^-/, '').split('$')[0];
@@ -219,8 +305,7 @@ Dare.prototype.table_alias_handler = function (name) {
 Dare.prototype.unique_alias_index = 0;
 
 Dare.prototype.identifierWrapper = function identifierWrapper(field) {
-	const identifier_delimiter = this.engine.startsWith('postgres') ? '"' : '`';
-	return [identifier_delimiter, field, identifier_delimiter].join('');
+	return [`\``, field, `\``].join('');
 };
 
 Dare.prototype.get_unique_alias = function () {
@@ -263,6 +348,34 @@ Dare.prototype.getFieldKey = function getFieldKey(field, schema) {
 };
 
 /**
+ * FulltextSearch
+ * @this {import('./index.js').default}
+ * @param {Sql[]} sql_field_array - Array of SQL fields to apply the fulltext search to
+ * @param {string} value - Fulltext search string
+ * @param {Sql} [NOT] - Whether to negate the fulltext search
+ * @returns {Sql} SQL condition for the fulltext search
+ */
+Dare.prototype.fulltextSearch = function fulltextSearch(
+	sql_field_array,
+	value,
+	NOT
+) {
+	return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${this.fulltextParser(value)} IN BOOLEAN MODE)`;
+};
+
+/**
+ * FulltextSignParser
+ * @this {import('./index.js').default}
+ * @param {string} sign - Sign character to parse
+ * @param {number} [index] - Index of the term in the fulltext search string, used to determine whether to apply default AND operator
+ * @returns {string} Parsed sign character
+ */
+// eslint-disable-next-line no-unused-vars
+Dare.prototype.fulltextSignParser = function fulltextSignParser(sign, index) {
+	return sign;
+};
+
+/**
  * Fulltext Parser
  * This will format a string to make it compliant with MySQL Fulltext search
  * Such as wrapping special characters in quotes where they appear in the middle of words
@@ -272,7 +385,7 @@ Dare.prototype.getFieldKey = function getFieldKey(field, schema) {
  * @returns {string} Formatted string
  */
 Dare.prototype.fulltextParser = function fulltextParser(input) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
+	const sql_fulltext_wildcard = this.sql_fulltext_wildcard;
 
 	function safequote(text) {
 		let suffix = '';
@@ -286,8 +399,8 @@ Dare.prototype.fulltextParser = function fulltextParser(input) {
 			return `"${text}"`;
 		}
 
-		if (IS_POSTGRES && suffix === '*') {
-			return `${text}:*`;
+		if (suffix === '*') {
+			return `${text}${sql_fulltext_wildcard}`;
 		}
 
 		return text + suffix;
@@ -316,15 +429,7 @@ Dare.prototype.fulltextParser = function fulltextParser(input) {
 				{groups: {sign, subexpression, quoted, unquoted, suffix = ''}},
 				index
 			) => {
-				if (IS_POSTGRES) {
-					sign = sign
-						// .replace('+', '&')
-						.replace(/[+<>~]*/, '');
-
-					if (!sign.includes('&') && index > 0) {
-						sign = `& ${sign}`;
-					}
-				}
+				sign = this.fulltextSignParser(sign, index);
 
 				if (subexpression) {
 					return `${sign}(${this.fulltextParser(subexpression)})`;
@@ -368,11 +473,6 @@ Dare.prototype.after = function (resp) {
  * @returns {boolean} Whether to use CTE LIMIT Filtering
  */
 Dare.prototype.applyCTELimitFiltering = function (options) {
-	// Cancel for old mysql
-	if (this.engine.startsWith('mysql:5')) {
-		return false;
-	}
-
 	// Cancel if limit is beyond a certain threshold
 	if (options.limit > 10_000) {
 		return false;
@@ -405,7 +505,6 @@ Dare.prototype.use = function ({engine, ...options} = {}) {
 	}
 	if (engine) {
 		inst.engine = engine;
-		inst.rowid = engine.startsWith('postgres') ? 'id' : '_rowid';
 	}
 
 	// Set the generate_fields array
@@ -621,8 +720,6 @@ Dare.prototype.getCount = async function getCount(table, filter, options = {}) {
  * @returns {Promise<any>} Affected Rows statement
  */
 Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
-
 	/**
 	 * @type {QueryOptions} opts
 	 */
@@ -641,14 +738,8 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 
 	const dareInstance = this.use(opts);
 
-	if (IS_POSTGRES) {
-		/*
-		 * Postgres doesn't support table JOINs to the table being updated
-		 * We can only have one table in the FROM clause, which is a problem if multiple table join to the table being updated.
-		 * To work around this, turn all of the join tables into subquery joins
-		 */
-		opts.forceSubquery = true;
-	}
+	// Prevent joining onto the table being modified
+	opts.forceSubquery = dareInstance.applySubqueryOnDML;
 
 	const req = await dareInstance.format_request(opts);
 
@@ -669,7 +760,7 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 	// Prepare post
 	const sql_set = prepareSQLSet({
 		body: req.body,
-		sql_alias: IS_POSTGRES ? null : req.sql_alias,
+		sql_alias: dareInstance.applyAliasesOnUpdate ? req.sql_alias : null,
 		tableSchema,
 		validateInput,
 		dareInstance,
@@ -691,7 +782,7 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 		SET ${sql_set}
 		WHERE
 			${join(req.sql_where_conditions, ' AND ')}
-		${!IS_POSTGRES && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}
+		${dareInstance.applyLimitOnDML && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}
 	`;
 
 	let resp = await this.sql(sql);
@@ -722,9 +813,6 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 				{...table}
 			: // Clone and extend
 				{...options, table, body};
-
-	// Is postgres
-	const IS_POSTGRES = this.engine.startsWith('postgres');
 
 	// Post
 	opts.method = 'post';
@@ -908,21 +996,29 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 	let sql_on_duplicate_keys_update = empty;
 	if (req.duplicate_keys_update) {
 		sql_on_duplicate_keys_update = raw(
-			dareInstance.onDuplicateKeysUpdate(
-				req.duplicate_keys_update.map(field =>
+			dareInstance.onDuplicateKeysUpdate({
+				keys: req.duplicate_keys_update.map(field =>
 					unAliasFields(modelSchema, field, dareInstance)
 				),
-				fields
-			)
+				existing: fields,
+				duplicate_keys: Array.isArray(req.duplicate_keys)
+					? req.duplicate_keys.map(field =>
+							unAliasFields(modelSchema, field, dareInstance)
+						)
+					: undefined,
+			})
 		);
 	} else if (req.duplicate_keys?.toString()?.toLowerCase() === 'ignore') {
 		sql_on_duplicate_keys_update = raw(
-			dareInstance.onDuplicateKeysUpdate([], [], req.sql_table)
+			dareInstance.onDuplicateKeysUpdate({
+				sql_table: req.sql_table,
+			})
 		);
 	}
 
-	const sql_postgres_returning = IS_POSTGRES
-		? SQL` RETURNING ${raw(dareInstance.rowid)}`
+	// Additional suffix for Postgres to return the inserted record, as Postgres does not support LAST_INSERT_ID() function
+	const sql_postgres_returning = dareInstance.sql_insert_suffix
+		? raw(dareInstance.sql_insert_suffix)
 		: empty;
 
 	// Construct a db update
@@ -950,8 +1046,6 @@ Dare.prototype.post = async function post(table, body, options = {}) {
  * @returns {Promise<any>} Affected Rows statement
  */
 Dare.prototype.del = async function del(table, filter, options = {}) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
-
 	/**
 	 * @type {QueryOptions} opts
 	 */
@@ -970,13 +1064,8 @@ Dare.prototype.del = async function del(table, filter, options = {}) {
 
 	const dareInstance = this.use(opts);
 
-	if (IS_POSTGRES) {
-		/*
-		 * Postgres doesn't support table JONS's in DELETE operation
-		 * So we need to tell the formatter that we want the conditions to be within a subquery
-		 */
-		opts.forceSubquery = true;
-	}
+	// Prevent joining onto the table being modified
+	opts.forceSubquery = dareInstance.applySubqueryOnDML;
 
 	const req = await dareInstance.format_request(opts);
 
@@ -992,7 +1081,7 @@ Dare.prototype.del = async function del(table, filter, options = {}) {
 					${req.sql_joins.length ? join(req.sql_joins, '\n') : empty}
 					WHERE
 					${join(req.sql_where_conditions, ' AND ')}
-					${!IS_POSTGRES && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}`;
+					${dareInstance.applyLimitOnDML && !req.sql_joins.length ? SQL`LIMIT ${req.limit}` : empty}`;
 
 	let resp = await this.sql(sql);
 
@@ -1052,38 +1141,34 @@ function mustAffectRows(result, notfound) {
 	return result;
 }
 
-Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate(
+/**
+ * On Duplicate Keys Update
+ * @param {object} obj - Object
+ * @param {Array<string>} [obj.keys] - Array of field keys which are duplicated
+ * @param {Array<string>} [obj.existing] - Array of existing field keys in the database, used to validate the keys provided in `keys` parameter
+ * @param {string} [obj.sql_table] - SQL table name, used for MySQL aliasing in 8.0.20+
+ * @param {Array<string>} [obj.duplicate_keys] - Array of keys to check for duplicates
+ * @returns {string} SQL snippet for ON DUPLICATE KEY UPDATE
+ */
+Dare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate({
 	keys = [],
-	existing = [],
-	sql_table = ''
-) {
-	const IS_POSTGRES = this.engine.startsWith('postgres');
-
-	if (IS_POSTGRES) {
-		if (!keys.length) {
-			return `ON CONFLICT DO NOTHING`;
-		}
-
-		return `
-			ON CONFLICT (${existing.filter(item => !keys.includes(item)).join(',')})
-				DO UPDATE
-					SET ${keys.map(name => `${this.identifierWrapper(name)}=EXCLUDED.${this.identifierWrapper(name)}`).join(',')}
-		`;
-	}
-
+	sql_table = '',
+	existing = [], // eslint-disable-line no-unused-vars
+	duplicate_keys = [], // eslint-disable-line no-unused-vars
+}) {
 	/*
 	 * MySQL 8.0.20+ deprecates VALUES() in ON DUPLICATE KEY UPDATE
 	 * Use row alias notation instead: AS _new ... _new.col
 	 */
-	const useAlias = this.engine.startsWith('mysql') &&
+	const useAlias =
+		this.engine.startsWith('mysql') &&
 		semverCompare(this.engine.split(':').at(1), '8.0.20') >= 0;
 
 	let s = keys
-		.map(
-			name =>
-				useAlias
-					? `${this.identifierWrapper(name)}=_new.${this.identifierWrapper(name)}`
-					: `${this.identifierWrapper(name)}=VALUES(${this.identifierWrapper(name)})`
+		.map(name =>
+			useAlias
+				? `${this.identifierWrapper(name)}=_new.${this.identifierWrapper(name)}`
+				: `${this.identifierWrapper(name)}=VALUES(${this.identifierWrapper(name)})`
 		)
 		.join(',');
 

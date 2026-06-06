@@ -5,7 +5,7 @@ import defaultAPI from './helpers/api.js';
 
 // Connect to db
 
-const {DB_ENGINE = 'mysql:5.7.40'} = process.env;
+const {DB_ENGINE = 'mysql:8.0'} = process.env;
 
 describe('Working with JSON DataType', () => {
 	let dare;
@@ -129,6 +129,15 @@ describe('Working with JSON DataType', () => {
 					 * '-missing': 1, // this yields `settings->'$.missing' != 1` which returns false if `missing` is not present
 					 */
 				},
+				/*
+				 * @TODO: IN operator will match these values
+				 * settings$array: {
+				 * 	digit: [1, 2],
+				 * 	str: ['string', 1],
+				 * 	bool: [true, 'asd'],
+				 * 	missing: [null, 'sdsdw'], // Is ignored, because absent keys are null
+				 * }
+				 */
 			},
 			limit: 2,
 		});

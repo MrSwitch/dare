@@ -12,6 +12,14 @@ function optionalJoin(arr, joiner, prefix) {
 	}
 }
 
+/**
+ * Field Definition
+ * @typedef {object} FieldDefinition
+ * @property {string} label
+ * @property {string} expression
+ * @property {boolean} [agg]
+ */
+
 export default function buildQuery(opts, dareInstance) {
 	opts.root = true;
 
@@ -35,7 +43,12 @@ export default function buildQuery(opts, dareInstance) {
 	{
 		// Count is a special field, find and replace ...
 		fields
-			.filter(item => item.expression === `${sql_alias}._count`)
+			.filter(
+				// eslint-disable-next-line jsdoc/require-param
+				/** @returns {item is FieldDefinition} cast */ item =>
+					'expression' in item &&
+					item.expression === `${sql_alias}._count`
+			)
 			.forEach(item => {
 				item.expression = 'COUNT(*)';
 				item.label = '_count';
@@ -44,7 +57,12 @@ export default function buildQuery(opts, dareInstance) {
 
 		// Find the special _group column...
 		fields
-			.filter(item => item.expression === `${sql_alias}._group`)
+			.filter(
+				// eslint-disable-next-line jsdoc/require-param
+				/** @returns {item is FieldDefinition} cast */ item =>
+					'expression' in item &&
+					item.expression === `${sql_alias}._group`
+			)
 			.forEach(item => {
 				// Pick the first_groupby statement
 				item.expression = groupby[0].expression;
@@ -67,7 +85,7 @@ export default function buildQuery(opts, dareInstance) {
 	 */
 	if (!is_subquery && !groupby.length && has_many_join) {
 		// Are all the fields aggregates?
-		const all_aggs = fields.every(item => item.agg);
+		const all_aggs = fields.every(item => 'agg' in item && item.agg);
 
 		if (!all_aggs) {
 			// Determine whether there are non?
@@ -95,11 +113,10 @@ export default function buildQuery(opts, dareInstance) {
 			? sql_alias
 			: opts._joins[0].sql_alias;
 		const gc = group_concat({
-			fields,
+			fields: /** @type {FieldDefinition[]} */ (fields),
 			address,
 			sql_alias: gc_sql_alias,
-			rowid: dareInstance.rowid,
-			engine: dareInstance.engine,
+			dareInstance,
 		});
 		sql_fields = [raw(gc.expression)];
 		alias = gc.label;
@@ -155,7 +172,7 @@ export default function buildQuery(opts, dareInstance) {
 	 * -> Then, remove the limit
 	 */
 	if (dareInstance.engine?.startsWith('mysql:8') && alias) {
-		if (fields.every(item => item.agg)) {
+		if (fields.every(item => 'agg' in item && item.agg)) {
 			opts.limit = null;
 		}
 	}
@@ -220,7 +237,10 @@ function traverse(item, is_subquery, dareInstance) {
 	// Filters populate the filter and values (prepared statements)
 	const sql_filter = [];
 
-	// Fields
+	/**
+	 * Fields
+	 * @type {(FieldDefinition | Sql)[]}
+	 */
 	const fields = [];
 
 	/*
@@ -435,11 +455,10 @@ function traverse(item, is_subquery, dareInstance) {
 			? sql_alias
 			: item._joins[0].sql_alias;
 		const gc = group_concat({
-			fields,
+			fields: /** @type {FieldDefinition[]} */ (fields),
 			address,
 			sql_alias: gc_sql_alias,
-			rowid: dareInstance.rowid,
-			engine: dareInstance.engine,
+			dareInstance,
 		});
 
 		// Reset the fields array

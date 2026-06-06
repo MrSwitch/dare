@@ -103,6 +103,15 @@ describe('Filter Reducer', () => {
 			],
 			[
 				{
+					jsonSettings: {
+						'%key': testStr,
+					},
+				},
+				`(a.jsonSettings->? LIKE ?)`,
+				['$.key', `"${testStr}"`],
+			],
+			[
+				{
 					'-jsonSettings': {
 						key: testStr,
 					},
@@ -165,113 +174,6 @@ describe('Filter Reducer', () => {
 				// Should not mutate the filters...
 				assert.deepStrictEqual(filter, filter_cloned);
 			});
-		});
-	});
-
-	describe('mysql engine version handling', () => {
-		['mysql:5.7', 'mysql:8.0'].forEach(engine => {
-			const quote = engine === 'mysql:5.7';
-
-			it(`${engine} should ${quote ? '' : 'NOT '}quote json list (IN) sting values`, () => {
-				const dareInst = dareInstance.use({engine});
-
-				const filter = {
-					jsonSettings: {
-						key: ['a', 'b', 1],
-					},
-				};
-
-				const expectedValues = quote
-					? ['"a"', '"b"', 1]
-					: ['a', 'b', 1];
-
-				const sql = `(a.jsonSettings->? IN (?,?,?))`;
-				const values = ['$.key', ...expectedValues];
-
-				const [query] = reduceConditions(filter, {
-					extract,
-					sql_alias: 'a',
-					table_schema,
-					conditional_operators_in_value,
-					dareInstance: dareInst,
-				});
-
-				assert.strictEqual(query.sql, sql);
-				assert.deepStrictEqual(query.values, values);
-			});
-		});
-	});
-
-	describe('postgres engine version handling', () => {
-		const engine = 'postgres:16.3';
-
-		it('should search fulltext - with an index', async () => {
-			const dareInst = dareInstance.use({engine});
-
-			const filter = {
-				'*vector_index': 'string',
-			};
-
-			const sql = `a.vector_index @@ to_tsquery('english', ?)`;
-			const values = ['string'];
-
-			const [query] = reduceConditions(filter, {
-				extract,
-				sql_alias: 'a',
-				table_schema,
-				conditional_operators_in_value,
-				dareInstance: dareInst,
-			});
-
-			assert.strictEqual(query.sql, sql);
-			assert.deepStrictEqual(query.values, values);
-		});
-
-		it('should search fulltext - and build an index', async () => {
-			const dareInst = dareInstance.use({engine});
-
-			const filter = {
-				'*givenname,lastname,email': 'string',
-			};
-
-			const sql = `TO_TSVECTOR(a.givenname || ' ' || a.lastname || ' ' || a.email) @@ to_tsquery('english', ?)`;
-			const values = ['string'];
-
-			const [query] = reduceConditions(filter, {
-				extract,
-				sql_alias: 'a',
-				table_schema,
-				conditional_operators_in_value,
-				dareInstance: dareInst,
-			});
-
-			assert.strictEqual(query.sql, sql);
-			assert.deepStrictEqual(query.values, values);
-		});
-
-		 it(`quote json number and boolean values`, () => {
-			const dareInst = dareInstance.use({engine});
-
-			const filter = {
-				jsonSettings: {
-					key: 1,
-					'%str': 'string%',
-				},
-			};
-
-			const [query] = reduceConditions(filter, {
-				extract,
-				sql_alias: 'a',
-				table_schema,
-				conditional_operators_in_value,
-				dareInstance: dareInst,
-			});
-
-			const sql = `(a.jsonSettings->>? = ? AND a.jsonSettings->>? ILIKE ?)`;
-			const values = ['key', '1', 'str', 'string%'];
-
-			assert.strictEqual(query.sql, sql);
-			assert.deepStrictEqual(query.values, values);
 		});
 	});
 });
