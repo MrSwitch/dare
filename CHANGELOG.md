@@ -1,3 +1,10 @@
+# [0.100.0](https://github.com/MrSwitch/dare/compare/v0.99.4...v0.100.0) (2026-06-06)
+
+
+### Features
+
+* **import-engine:** move engines out to their own import path, BREAKING CHANGE ([#454](https://github.com/MrSwitch/dare/issues/454)) ([dde2493](https://github.com/MrSwitch/dare/commit/dde24930c01d49cdd511b2bdf27162bfebd8459b)), closes [#455](https://github.com/MrSwitch/dare/issues/455)
+
 ## [0.99.4](https://github.com/MrSwitch/dare/compare/v0.99.3...v0.99.4) (2026-05-22)
 
 
