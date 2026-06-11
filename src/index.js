@@ -22,7 +22,7 @@ import response_handler, {responseRowHandler} from './response_handler.js';
 /**
  * @import {Sql} from 'sql-template-tag'
  *
- * @typedef {`${'mysql' | 'postgres' | 'mariadb'}:${number}.${number}${string?}`} Engine
+ * @typedef {`${'mysql' | 'postgres' | 'mariadb' | 'sqlite'}:${number}.${number}${string?}` | `sqlite:${number}`} Engine
  *
  * @typedef {Pick<InternalProps, 'alias' | 'parent' | 'name' | 'skip'>} ModalHandlerExtraProps
  *
@@ -253,6 +253,12 @@ Dare.prototype.jsonFormatValue = function jsonFormatValue(
 /** @type {string} */
 Dare.prototype.rowid = '_rowid';
 
+/**
+ * Default value to use in INSERT statements when a column value is missing
+ * MySQL/MariaDB support the DEFAULT keyword, SQLite does not
+ */
+Dare.prototype.sql_default_value = raw('DEFAULT');
+
 // Set the Max Limit for SELECT statements
 /** @type {number} */
 Dare.prototype.MAX_LIMIT = null;
@@ -288,6 +294,12 @@ Dare.prototype.applySubqueryOnDML = false;
  * @type {boolean}
  */
 Dare.prototype.applyAliasesOnUpdate = true;
+
+/**
+ * Apply table alias on UPDATE statement - SQLite doesn't support UPDATE tbl alias SET ...
+ * @type {boolean}
+ */
+Dare.prototype.applyTableAliasOnUpdate = true;
 
 /**
  * SQL insert suffix - Additional SQL to append to insert statements, e.g., RETURNING clause for Postgres
@@ -775,7 +787,7 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 
 	// Construct a db update
 	const sql = SQL`
-		UPDATE ${raw(exec)}${raw(req.sql_table)} ${raw(req.sql_alias)}
+		UPDATE ${raw(exec)}${raw(req.sql_table)} ${dareInstance.applyTableAliasOnUpdate ? raw(req.sql_alias) : empty}
 		${req.sql_joins.length ? join(req.sql_joins, '\n') : empty}
 		SET ${sql_set}
 		WHERE
@@ -980,7 +992,7 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 			const a = fields.map((_, index) => {
 				// If any of the values are missing, set them as DEFAULT
 				if (_data[index] === undefined) {
-					return raw('DEFAULT');
+					return dareInstance.sql_default_value;
 				}
 
 				// Return the prepared statement placeholder

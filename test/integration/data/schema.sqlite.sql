@@ -1,0 +1,42 @@
+CREATE TABLE country (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code CHAR(2) NOT NULL,
+  created_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255) DEFAULT NULL,
+  last_name VARCHAR(255) DEFAULT NULL,
+  uuid BLOB DEFAULT NULL,
+  secret VARCHAR(2048) DEFAULT NULL,
+  country_id INTEGER DEFAULT NULL,
+  settings TEXT DEFAULT NULL,
+  CONSTRAINT unique_username UNIQUE (username),
+  FOREIGN KEY (country_id) REFERENCES country (id)
+);
+
+CREATE TABLE users_email (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  CONSTRAINT unique_email UNIQUE (email),
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE TABLE teams (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(255) NOT NULL,
+  description TEXT DEFAULT NULL,
+  updated_time TIMESTAMP,
+  CONSTRAINT unique_name UNIQUE (name)
+);
+
+CREATE TABLE userTeams (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  team_id INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users (id),
+  FOREIGN KEY (team_id) REFERENCES teams (id)
+);

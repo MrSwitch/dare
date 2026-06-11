@@ -99,6 +99,12 @@ async function format_request(options, dareInstance) {
 	 */
 	if (options.method === 'del' && !options.parent) {
 		options.sql_alias = options.sql_table;
+	} else if (
+		options.method === 'patch' &&
+		!options.parent &&
+		!dareInstance.applyTableAliasOnUpdate
+	) {
+		options.sql_alias = options.sql_table;
 	} else {
 		/** EOF Hack */
 		options.sql_alias = dareInstance.get_unique_alias();
