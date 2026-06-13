@@ -232,6 +232,7 @@ async function format_request(options, dareInstance) {
 		const arr = reduceConditions(options.filter, {
 			extract,
 			sql_alias,
+			sql_table: options.sql_table,
 			table_schema,
 			conditional_operators_in_value,
 			dareInstance,
@@ -295,6 +296,7 @@ async function format_request(options, dareInstance) {
 		const arrJoins = reduceConditions(options.join, {
 			extract,
 			sql_alias,
+			sql_table: options.sql_table,
 			table_schema,
 			conditional_operators_in_value,
 			dareInstance,

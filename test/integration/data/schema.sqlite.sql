@@ -40,3 +40,18 @@ CREATE TABLE userTeams (
   FOREIGN KEY (user_id) REFERENCES users (id),
   FOREIGN KEY (team_id) REFERENCES teams (id)
 );
+
+CREATE VIRTUAL TABLE users_fts USING fts5(username, first_name, last_name, content='users', content_rowid='id');
+
+CREATE TRIGGER users_ai AFTER INSERT ON users BEGIN
+  INSERT INTO users_fts(rowid, username, first_name, last_name) VALUES (new.id, new.username, new.first_name, new.last_name);
+END;
+
+CREATE TRIGGER users_ad AFTER DELETE ON users BEGIN
+  INSERT INTO users_fts(users_fts, rowid, username, first_name, last_name) VALUES('delete', old.id, old.username, old.first_name, old.last_name);
+END;
+
+CREATE TRIGGER users_au AFTER UPDATE ON users BEGIN
+  INSERT INTO users_fts(users_fts, rowid, username, first_name, last_name) VALUES('delete', old.id, old.username, old.first_name, old.last_name);
+  INSERT INTO users_fts(rowid, username, first_name, last_name) VALUES (new.id, new.username, new.first_name, new.last_name);
+END;

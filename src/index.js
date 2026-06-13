@@ -363,12 +363,15 @@ Dare.prototype.getFieldKey = function getFieldKey(field, schema) {
  * @param {Sql[]} sql_field_array - Array of SQL fields to apply the fulltext search to
  * @param {string} value - Fulltext search string
  * @param {Sql} [NOT] - Whether to negate the fulltext search
+ * @param {object} [context] - Additional context (sql_alias, sql_table)
  * @returns {Sql} SQL condition for the fulltext search
  */
 Dare.prototype.fulltextSearch = function fulltextSearch(
 	sql_field_array,
 	value,
-	NOT
+	NOT,
+	// eslint-disable-next-line no-unused-vars
+	context
 ) {
 	return SQL`${NOT}MATCH(${join(sql_field_array, ', ')}) AGAINST(${this.fulltextParser(value)} IN BOOLEAN MODE)`;
 };

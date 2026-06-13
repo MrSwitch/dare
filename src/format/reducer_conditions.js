@@ -14,6 +14,7 @@ import unwrap_field from '../utils/unwrap_field.js';
  * @param {object} options - Options object
  * @param {Function} options.extract - Extract (key, value) related to nested model
  * @param {string} options.sql_alias - Table SQL Alias, e.g. 'a', 'b', etc..
+ * @param {string} options.sql_table - Table name, e.g. 'users'
  * @param {object} options.table_schema - Table schema
  * @param {string|null} options.conditional_operators_in_value - Allowable conditional operators in value
  * @param {Dare} options.dareInstance - Dare Instance
@@ -24,6 +25,7 @@ export default function reduceConditions(
 	{
 		extract,
 		sql_alias,
+		sql_table,
 		table_schema,
 		conditional_operators_in_value,
 		dareInstance,
@@ -67,6 +69,7 @@ export default function reduceConditions(
 					field: key,
 					value,
 					sql_alias,
+					sql_table,
 					table_schema,
 					operators,
 					conditional_operators_in_value,
@@ -107,6 +110,7 @@ function stripKey(key) {
  * @param {string} params.field - Field name
  * @param {string} params.value - Field value
  * @param {string} params.sql_alias - SQL Alias
+ * @param {string} params.sql_table - Table name
  * @param {object} params.table_schema - Table schema
  * @param {string|null} params.operators - Allowable operators
  * @param {string|null} params.conditional_operators_in_value - Allowable conditional operators in value
@@ -117,6 +121,7 @@ function prepCondition({
 	field,
 	value,
 	sql_alias,
+	sql_table,
 	table_schema,
 	operators = '',
 	conditional_operators_in_value,
@@ -142,7 +147,7 @@ function prepCondition({
 		// Join the fields
 		const sql_field_array = sql_fields.map(({sql}) => sql);
 
-		return dareInstance.fulltextSearch(sql_field_array, value, NOT);
+		return dareInstance.fulltextSearch(sql_field_array, value, NOT, {sql_alias, sql_table});
 	} else if (sql_fields.length > 1) {
 		/*
 		 * Is the field an array of field names?
@@ -157,6 +162,7 @@ function prepCondition({
 					field,
 					value,
 					sql_alias,
+					sql_table,
 					table_schema,
 					operators: operators.replace('-', ''),
 					conditional_operators_in_value,

@@ -27,7 +27,7 @@ describe('SQLite - Filter Reducer', () => {
 		};
 	});
 
-	it('should use LIKE for fulltext search as SQLite fallback', async () => {
+	it('should use FTS5 MATCH for fulltext search', async () => {
 		const dareInst = dareInstance.use({engine});
 
 		table_schema = {
@@ -41,13 +41,15 @@ describe('SQLite - Filter Reducer', () => {
 		const [query] = reduceConditions(filter, {
 			extract,
 			sql_alias: 'a',
+			sql_table: 'users',
 			table_schema,
 			conditional_operators_in_value,
 			dareInstance: dareInst,
 		});
 
-		// SQLite fulltext uses LIKE-based fallback
-		assert.ok(query.sql.includes('LIKE'));
+		// SQLite fulltext uses FTS5 MATCH
+		assert.ok(query.sql.includes('MATCH'));
+		assert.ok(query.sql.includes('users_fts'));
 	});
 
 	it('should handle JSON fields with -> operator', async () => {
@@ -60,6 +62,7 @@ describe('SQLite - Filter Reducer', () => {
 		const [query] = reduceConditions(filter, {
 			extract,
 			sql_alias: 'a',
+            sql_table: 'users',
 			table_schema,
 			conditional_operators_in_value,
 			dareInstance: dareInst,

@@ -1,4 +1,4 @@
-import SQL, {join} from 'sql-template-tag';
+import SQL, {raw} from 'sql-template-tag';
 import Dare from './index.js';
 
 /**
@@ -156,24 +156,32 @@ SQLiteDare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate({
 };
 
 /**
- * FulltextSearch - SQLite implementation using FTS5 (if available) or LIKE fallback
- * SQLite FTS5 requires a virtual table, so we fall back to LIKE-based search
+ * FulltextSearch - SQLite implementation using FTS5
+ * Requires a virtual FTS5 table named {table}_fts with matching columns
  * @type {Dare['fulltextSearch']}
  */
 SQLiteDare.prototype.fulltextSearch = function fulltextSearch(
 	sql_field_array,
 	value,
-	NOT
+	NOT,
+	{sql_alias, sql_table} = {}
 ) {
-	// Use LIKE-based fallback for fulltext search in SQLite
-	const terms = value.trim().split(/\s+/).filter(Boolean);
-	const conditions = terms.map(term => {
-		const likeConditions = sql_field_array.map(
-			field => SQL`${field} LIKE ${`%${term}%`}`
-		);
-		return SQL`(${join(likeConditions, ' OR ')})`;
-	});
-	return SQL`${NOT}(${join(conditions, ' AND ')})`;
+	const fts_table = `${sql_table}_fts`;
+	const parsed = this.fulltextParser(value);
+	return SQL`${NOT}${raw(sql_alias)}.id IN (SELECT rowid FROM ${raw(fts_table)} WHERE ${raw(fts_table)} MATCH ${parsed})`;
+};
+
+/**
+ * FulltextSignParser - SQLite FTS5 does not use +/< />/~ prefixes
+ * @type {Dare['fulltextSignParser']}
+ */
+SQLiteDare.prototype.fulltextSignParser = function fulltextSignParser(
+	sign,
+	// eslint-disable-next-line no-unused-vars
+	index
+) {
+	// Strip MySQL boolean mode operators; FTS5 uses implicit AND
+	return sign.replace(/[+<>~]/g, '');
 };
 
 /**

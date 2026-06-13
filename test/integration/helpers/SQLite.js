@@ -40,10 +40,10 @@ export default class SQLite {
 			this.db.exec(schemaSql);
 		}
 
-		// Extract the table names
+		// Extract the table names (exclude virtual/shadow tables like FTS5 which are managed by triggers)
 		const tables = this.db
 			.prepare(
-				"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+				"SELECT name FROM pragma_table_list WHERE schema='main' AND type='table' AND name NOT LIKE 'sqlite_%'"
 			)
 			.all();
 		this.tables = tables.map(({name}) => name);
