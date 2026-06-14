@@ -1,4 +1,5 @@
 import {DatabaseSync} from 'node:sqlite';
+import {Readable} from 'node:stream';
 import fs from 'node:fs';
 
 const {TEST_DB_SCHEMA_PATH, TEST_DB_DATA_PATH} = process.env;
@@ -127,8 +128,34 @@ export default class SQLite {
 		this.db.exec('PRAGMA foreign_keys=ON');
 	}
 
-	stream() {
-		throw new Error('Streaming is not supported for SQLite in tests');
+	stream(request, streamOptions = {objectMode: true, highWaterMark: 5}) {
+		const sql = request.sql || request.text || request;
+		const values = (request.values || []).map(v => {
+			if (v === undefined) return null;
+			if (typeof v === 'boolean') return v ? 1 : 0;
+			if (Buffer.isBuffer(v)) return new Uint8Array(v);
+			if (v !== null && typeof v === 'object') return JSON.stringify(v);
+			return v;
+		});
+
+		const stmt = this.db.prepare(sql);
+		const iterator = stmt.iterate(...values);
+
+		return new Readable({
+			...streamOptions,
+			read() {
+				try {
+					const {value, done} = iterator.next();
+					if (done) {
+						this.push(null);
+					} else {
+						this.push(toPlainObject(value));
+					}
+				} catch (err) {
+					this.destroy(err);
+				}
+			},
+		});
 	}
 
 	end() {

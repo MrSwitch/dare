@@ -49,7 +49,7 @@ SQLiteDare.prototype.sql_json_extract_prefix = '$';
  * SQLite JSON EXTRACT operator
  * @type {string}
  */
-SQLiteDare.prototype.sql_json_extract_operator = '->';
+SQLiteDare.prototype.sql_json_extract_operator = '->>';
 
 /**
  * Sql_json_array - SQLite JSON_ARRAY

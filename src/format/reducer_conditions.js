@@ -147,7 +147,10 @@ function prepCondition({
 		// Join the fields
 		const sql_field_array = sql_fields.map(({sql}) => sql);
 
-		return dareInstance.fulltextSearch(sql_field_array, value, NOT, {sql_alias, sql_table});
+		return dareInstance.fulltextSearch(sql_field_array, value, NOT, {
+			sql_alias,
+			sql_table,
+		});
 	} else if (sql_fields.length > 1) {
 		/*
 		 * Is the field an array of field names?

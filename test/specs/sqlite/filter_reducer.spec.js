@@ -62,7 +62,7 @@ describe('SQLite - Filter Reducer', () => {
 		const [query] = reduceConditions(filter, {
 			extract,
 			sql_alias: 'a',
-            sql_table: 'users',
+			sql_table: 'users',
 			table_schema,
 			conditional_operators_in_value,
 			dareInstance: dareInst,
