@@ -14,7 +14,7 @@ import unwrap_field from '../utils/unwrap_field.js';
  * @param {object} options - Options object
  * @param {Function} options.extract - Extract (key, value) related to nested model
  * @param {string} options.sql_alias - Table SQL Alias, e.g. 'a', 'b', etc..
- * @param {string} options.sql_table - Table name, e.g. 'users'
+ * @param {string} [options.sql_table] - Table name, e.g. 'users'
  * @param {object} options.table_schema - Table schema
  * @param {string|null} options.conditional_operators_in_value - Allowable conditional operators in value
  * @param {Dare} options.dareInstance - Dare Instance

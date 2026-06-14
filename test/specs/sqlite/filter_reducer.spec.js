@@ -52,7 +52,7 @@ describe('SQLite - Filter Reducer', () => {
 		assert.ok(query.sql.includes('users_fts'));
 	});
 
-	it('should handle JSON fields with -> operator', async () => {
+	it('should handle JSON fields with ->> operator', async () => {
 		const dareInst = dareInstance.use({engine});
 
 		const filter = {
@@ -68,6 +68,23 @@ describe('SQLite - Filter Reducer', () => {
 			dareInstance: dareInst,
 		});
 
-		assert.ok(query.sql.includes('->'));
+		assert.ok(query.sql.includes('->>'));
+	});
+	it('should format array values of a JSON field correctly', async () => {
+		const dareInst = dareInstance.use({engine});
+
+		const filter = {
+			'jsonSettings.key': ['value1', 'value2'],
+		};
+
+		const [query] = reduceConditions(filter, {
+			extract,
+			sql_alias: 'a',
+			sql_table: 'users',
+			table_schema,
+			conditional_operators_in_value,
+			dareInstance: dareInst,
+		});
+		assert.ok(query.sql.includes(' IN ('));
 	});
 });
