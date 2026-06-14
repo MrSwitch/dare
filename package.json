@@ -25,6 +25,10 @@
 			"import": "./src/postgres16.js",
 			"types": "./types/src/index.d.ts"
 		},
+		"./sqlite3": {
+			"import": "./src/sqlite.js",
+			"types": "./types/src/index.d.ts"
+		},
 		"./utils/*": {
 			"import": "./src/utils/*.js",
 			"types": "./types/src/utils/*.d.ts"
@@ -40,6 +44,7 @@
 		"test": "npm run lint && npm run spec && ((c8 report --reporter=text-lcov | coveralls) || exit 0)",
 		"test:ci": "npm run lint && c8 node --test test/specs/**/*.spec.js && (c8 report --reporter=text-lcov | coveralls)",
 		"test:integration": "bash ./test/integration/run.sh",
+		"test:integration:sqlite": "DB_ENGINE=sqlite:3 bash ./test/integration/run.sh",
 		"spec": "c8 node --test 'test/specs/**/*.spec.js'",
 		"lint": "eslint ./ && npx prettier --check . && npm run check-types",
 		"prettier": "prettier --write --ignore-unknown .",

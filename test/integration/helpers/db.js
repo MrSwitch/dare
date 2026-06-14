@@ -1,5 +1,6 @@
 import MySQL from './MySQL.js';
 import Postgres from './Postgres.js';
+import SQLite from './SQLite.js';
 
 const {
 	DB_ENGINE = 'mysql:5.6',
@@ -22,7 +23,9 @@ const dbSettings = {
 };
 
 let dbInstance;
-if (DB_ENGINE.startsWith('mysql') || DB_ENGINE.startsWith('mariadb')) {
+if (DB_ENGINE.startsWith('sqlite')) {
+	dbInstance = new SQLite(dbSettings);
+} else if (DB_ENGINE.startsWith('mysql') || DB_ENGINE.startsWith('mariadb')) {
 	dbInstance = new MySQL(dbSettings);
 } else if (DB_ENGINE.startsWith('postgres')) {
 	dbInstance = new Postgres(dbSettings);

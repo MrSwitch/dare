@@ -99,6 +99,12 @@ async function format_request(options, dareInstance) {
 	 */
 	if (options.method === 'del' && !options.parent) {
 		options.sql_alias = options.sql_table;
+	} else if (
+		options.method === 'patch' &&
+		!options.parent &&
+		!dareInstance.applyTableAliasOnUpdate
+	) {
+		options.sql_alias = options.sql_table;
 	} else {
 		/** EOF Hack */
 		options.sql_alias = dareInstance.get_unique_alias();
@@ -226,6 +232,7 @@ async function format_request(options, dareInstance) {
 		const arr = reduceConditions(options.filter, {
 			extract,
 			sql_alias,
+			sql_table: options.sql_table,
 			table_schema,
 			conditional_operators_in_value,
 			dareInstance,
@@ -289,6 +296,7 @@ async function format_request(options, dareInstance) {
 		const arrJoins = reduceConditions(options.join, {
 			extract,
 			sql_alias,
+			sql_table: options.sql_table,
 			table_schema,
 			conditional_operators_in_value,
 			dareInstance,

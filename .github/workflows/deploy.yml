@@ -50,6 +50,7 @@ jobs:
                         'mysql:8.0.23',
                         'mariadb:11.4',
                         'postgres:16.3',
+                        'sqlite:3',
                     ]
         steps:
             - uses: actions/checkout@master
