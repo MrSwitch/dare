@@ -19,13 +19,14 @@ npm i dare --save
 
 Import the appropriate entry point for your database engine. The versions listed are minimum supported versions Dare has been tested against - more recent versions are expected to be backwards compatible.
 
-| Import Path       | Database Engine               |
-| ----------------- | ----------------------------- |
-| `dare`            | MySQL 8.0+, MariaDB           |
-| `dare/mariadb11`  | MariaDB 11+ (alias of `dare`) |
-| `dare/mysql80`    | MySQL 8.0+ (alias of `dare`)  |
-| `dare/mysql57`    | MySQL 5.7+, MySQL 5.6+        |
-| `dare/postgres16` | PostgreSQL 16+                |
+| Database Engine               | Import Path       |
+| ----------------------------- | ----------------- |
+| MySQL 8.0+, MariaDB           | `dare`            |
+| MariaDB 11+ (alias of `dare`) | `dare/mariadb11`  |
+| MySQL 8.0+ (alias of `dare`)  | `dare/mysql80`    |
+| MySQL 5.7+, MySQL 5.6+        | `dare/mysql57`    |
+| PostgreSQL 16+                | `dare/postgres16` |
+| SQLite 3+                     | `dare/sqlite3`    |
 
 ## Example
 
