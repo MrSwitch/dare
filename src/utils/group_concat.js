@@ -1,16 +1,25 @@
-import semverCompare from 'semver-compare';
-
-/*
- * Generate GROUP_CONCAT statement given an array of fields definitions
- * Label the GROUP CONCAT(..) AS 'address[fields,...]'
- * Wrap all the fields in a GROUP_CONCAT statement
+/**
+ * @import {FieldDefinition} from '../get.js'
+ * @import Dare from '../index.js'
+ */
+/**
+ * Generate JSON_ARRAYAGG statement given an array of fields definitions
+ * Label the JSON_ARRAYAGG(..) AS 'address[fields,...]'
+ * Wrap all the fields in a JSON Array statement
+ *
+ *
+ * @param {object} obj - Options
+ * @param {FieldDefinition[]} obj.fields - Fields definitions
+ * @param {string} [obj.address] - Parent address to trim from field labels
+ * @param {string} [obj.sql_alias] - SQL alias for the JSON_ARRAYAGG statement
+ * @param {Dare} obj.dareInstance - DARE instance with SQL helper methods
+ * @returns {object} Object containing the SQL expression and label for the grouped fields
  */
 export default function group_concat({
 	fields,
 	address = '',
 	sql_alias = null,
-	rowid = null,
-	engine = '',
+	dareInstance,
 }) {
 	// Is this an aggregate list?
 	const agg = fields.reduce(
@@ -30,21 +39,9 @@ export default function group_concat({
 	}
 
 	// Convert to JSON Array
-	if (semverCompare(engine.split(':').at(1), '5.7') < 0) {
-		expression = fields.map(
-			field =>
-				`'"', REPLACE(REPLACE(${field.expression}, '\\\\', '\\\\\\\\'), '"', '\\\\"'), '"'`
-		);
-		expression = `CONCAT_WS('', '[', ${expression.join(", ',', ")}, ']')`;
-	} else {
-		// JSON_ARRAY in postgres default to ABSENT ON NULL, so we need to add NULL ON NULL
-		const json_array_settings = engine.startsWith('postgres')
-			? ' NULL ON NULL'
-			: '';
-
-		expression = fields.map(field => field.expression);
-		expression = `JSON_ARRAY(${expression.join(',')}${json_array_settings})`;
-	}
+	expression = dareInstance.sql_json_array(
+		fields.map(field => field.expression)
+	);
 
 	if (agg) {
 		return {
@@ -54,18 +51,7 @@ export default function group_concat({
 	}
 
 	// Multiple
-	if (semverCompare(engine.split(':').at(1), '5.7.21') <= 0) {
-		expression = `CONCAT('[', GROUP_CONCAT(IF(${sql_alias}.${rowid} IS NOT NULL, ${expression}, NULL)), ']')`;
-	} else {
-		let condition = `CASE WHEN (${sql_alias}.${rowid} IS NOT NULL) THEN (${expression}) ELSE NULL END`;
-
-		if (engine.startsWith('mysql:5.7')) {
-			// Overwrite condition for MySQL 5.7
-			condition = `IF(${sql_alias}.${rowid} IS NOT NULL, ${expression}, NULL)`;
-		}
-
-		expression = `JSON_ARRAYAGG(${condition})`;
-	}
+	expression = dareInstance.sql_json_arrayagg({sql_alias, expression});
 
 	label = fields
 		.map(field => {

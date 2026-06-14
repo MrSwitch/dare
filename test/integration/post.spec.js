@@ -61,5 +61,49 @@ describe('post from query', () => {
 				'Affected 2 rows... not sure why ignored duplicates count here?'
 			);
 		}
+
+		// Add on_duplicate_key_update
+		{
+			const {affectedRows} = await dare.post({
+				...request,
+				duplicate_keys_update: ['user_id', 'team_id'],
+			});
+
+			// Both should have been ignored - because they cause duplicates however both show 2 affected rows
+			assert.strictEqual(
+				affectedRows,
+				2,
+				'Affected 2 rows... not sure why ignored duplicates count here?'
+			);
+		}
+	});
+
+	it('should upsert with on duplicate key update', async () => {
+		const teamName = 'my team';
+
+		// Create team
+		await dare.post('teams', {name: teamName, description: 'first update'});
+
+		// Update team with same name but different description
+		await dare.post(
+			'teams',
+			{name: teamName, description: 'second update'},
+			{
+				// Only required by Postgres
+				duplicate_keys: ['name'],
+				duplicate_keys_update: ['description', 'name', 'updated_time'],
+			}
+		);
+
+		// Check team description is updated
+		const {description} = await dare.get('teams', ['description'], {
+			name: teamName,
+		});
+
+		assert.strictEqual(
+			description,
+			'second update',
+			'Team description should have been updated to "second update"'
+		);
 	});
 });

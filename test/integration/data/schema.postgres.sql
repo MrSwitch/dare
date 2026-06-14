@@ -39,6 +39,7 @@ CREATE TABLE teams (
   id SERIAL,
   name varchar(255) NOT NULL,
   description TEXT NULL DEFAULT NULL,
+  updated_time TIMESTAMP,
   PRIMARY KEY (id),
   CONSTRAINT unique_name UNIQUE (name)
 );

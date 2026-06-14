@@ -1,3 +1,24 @@
+## [0.100.1](https://github.com/MrSwitch/dare/compare/v0.100.0...v0.100.1) (2026-06-06)
+
+
+### Bug Fixes
+
+* revert mysql on-dup-key alias, reverts [#448](https://github.com/MrSwitch/dare/issues/448) ([#456](https://github.com/MrSwitch/dare/issues/456)) ([9a6b1d4](https://github.com/MrSwitch/dare/commit/9a6b1d467da900c2ee0e410308950a1aae07e7de))
+
+# [0.100.0](https://github.com/MrSwitch/dare/compare/v0.99.4...v0.100.0) (2026-06-06)
+
+
+### Features
+
+* **import-engine:** move engines out to their own import path, BREAKING CHANGE ([#454](https://github.com/MrSwitch/dare/issues/454)) ([dde2493](https://github.com/MrSwitch/dare/commit/dde24930c01d49cdd511b2bdf27162bfebd8459b)), closes [#455](https://github.com/MrSwitch/dare/issues/455)
+
+## [0.99.4](https://github.com/MrSwitch/dare/compare/v0.99.3...v0.99.4) (2026-05-22)
+
+
+### Bug Fixes
+
+* **ci:** workaround to [#433](https://github.com/MrSwitch/dare/issues/433) ([fae86ad](https://github.com/MrSwitch/dare/commit/fae86adad0180504a60a1aa56cc111e83fb30d41))
+
 ## [0.99.3](https://github.com/MrSwitch/dare/compare/v0.99.2...v0.99.3) (2026-05-17)
 
 

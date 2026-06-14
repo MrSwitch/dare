@@ -1,12 +1,28 @@
 {
 	"name": "dare",
-	"version": "0.99.3",
+	"version": "0.100.1",
 	"description": "Database to REST, REST to Database",
 	"type": "module",
 	"main": "./src/index.js",
 	"exports": {
 		".": {
 			"import": "./src/index.js",
+			"types": "./types/src/index.d.ts"
+		},
+		"./mariadb11": {
+			"import": "./src/index.js",
+			"types": "./types/src/index.d.ts"
+		},
+		"./mysql57": {
+			"import": "./src/mysql57.js",
+			"types": "./types/src/index.d.ts"
+		},
+		"./mysql80": {
+			"import": "./src/index.js",
+			"types": "./types/src/index.d.ts"
+		},
+		"./postgres16": {
+			"import": "./src/postgres16.js",
 			"types": "./types/src/index.d.ts"
 		},
 		"./utils/*": {
@@ -20,13 +36,11 @@
 	},
 	"scripts": {
 		"prepare": "is-ci || husky install",
-		"pretest": "npm run lint",
 		"check-types": "tsc -p ./tsconfig.json",
-		"prepublish": "npm run check-types",
-		"test": "npm run spec && ((c8 report --reporter=text-lcov | coveralls) || exit 0)",
-		"test:ci": "eslint ./ && c8 node --test test/specs/**/*.spec.js && (c8 report --reporter=text-lcov | coveralls)",
+		"test": "npm run lint && npm run spec && ((c8 report --reporter=text-lcov | coveralls) || exit 0)",
+		"test:ci": "npm run lint && c8 node --test test/specs/**/*.spec.js && (c8 report --reporter=text-lcov | coveralls)",
 		"test:integration": "bash ./test/integration/run.sh",
-		"spec": "c8 node --test test/specs/**/*.spec.js",
+		"spec": "c8 node --test 'test/specs/**/*.spec.js'",
 		"lint": "eslint ./ && npx prettier --check . && npm run check-types",
 		"prettier": "prettier --write --ignore-unknown .",
 		"lint-fix": "eslint --fix ./",

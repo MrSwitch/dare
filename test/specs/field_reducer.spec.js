@@ -206,7 +206,10 @@ describe('Field Reducer', () => {
 				assert.deepStrictEqual(f, expected);
 
 				if (expect_join_fields) {
-					assert.deepStrictEqual(joined.b_table.fields, expect_join_fields);
+					assert.deepStrictEqual(
+						joined.b_table.fields,
+						expect_join_fields
+					);
 				} else {
 					assert.ok(!('b_table' in joined));
 				}
@@ -295,7 +298,7 @@ describe('Field Reducer', () => {
 
 		const [postProcessing] = dareInstance.generated_fields;
 
-		assert.strictEqual(typeof postProcessing, "object");
+		assert.strictEqual(typeof postProcessing, 'object');
 
 		assert.strictEqual(postProcessing.label, 'meta');
 		assert('field_alias_path' in postProcessing);
