@@ -1,3 +1,11 @@
+## [0.100.2](https://github.com/MrSwitch/dare/compare/v0.100.1...v0.100.2) (2026-06-14)
+
+
+### Bug Fixes
+
+* **ci:** trigger release, see [#433](https://github.com/MrSwitch/dare/issues/433) ([7aec0ee](https://github.com/MrSwitch/dare/commit/7aec0ee513c75a7130514dfc50935da0deb0966b))
+* **release-bump:** blame npm/cli[#8547](https://github.com/MrSwitch/dare/issues/8547) ([01da791](https://github.com/MrSwitch/dare/commit/01da7919200f664f57409e122d66d659a674a4c7))
+
 ## [0.100.1](https://github.com/MrSwitch/dare/compare/v0.100.0...v0.100.1) (2026-06-06)
 
 
