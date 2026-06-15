@@ -16,7 +16,11 @@ describe('dare.patch', () => {
 
 		const {insertId} = await dare.post('users', {username});
 
-		const resp = await dare.patch('users', {id: insertId}, {username: newName});
+		const resp = await dare.patch(
+			'users',
+			{id: insertId},
+			{username: newName}
+		);
 
 		assert.strictEqual(resp.affectedRows, 1);
 
@@ -25,7 +29,9 @@ describe('dare.patch', () => {
 	});
 
 	it('should update multiple records with a limit', async () => {
-		const body = ['patchA', 'patchB', 'patchC'].map(username => ({username}));
+		const body = ['patchA', 'patchB', 'patchC'].map(username => ({
+			username,
+		}));
 		await dare.post('users', body);
 
 		const resp = await dare.patch({
@@ -41,7 +47,8 @@ describe('dare.patch', () => {
 	it('should throw NOT_FOUND when no records match', async () => {
 		await assert.rejects(
 			dare.patch('users', {id: -999}, {username: 'nope'}),
-			error => error instanceof DareError && error.code === DareError.NOT_FOUND
+			error =>
+				error instanceof DareError && error.code === DareError.NOT_FOUND
 		);
 	});
 
@@ -125,7 +132,9 @@ describe('dare.patch', () => {
 
 		await dare.patch('users', {id: insertId}, {username: 'handlerPatched'});
 
-		const result = await dare.get('users', ['username', 'first_name'], {id: insertId});
+		const result = await dare.get('users', ['username', 'first_name'], {
+			id: insertId,
+		});
 		assert.strictEqual(result.username, 'handlerPatched');
 		assert.strictEqual(result.first_name, 'injected');
 	});
