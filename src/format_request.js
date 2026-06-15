@@ -102,7 +102,7 @@ async function format_request(options, dareInstance) {
 	} else if (
 		options.method === 'patch' &&
 		!options.parent &&
-		!dareInstance.applyTableAliasOnUpdate
+		!dareInstance.applyAliasesOnUpdate
 	) {
 		options.sql_alias = options.sql_table;
 	} else {

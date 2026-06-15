@@ -790,7 +790,7 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 
 	// Construct a db update
 	const sql = SQL`
-		UPDATE ${raw(exec)}${raw(req.sql_table)} ${dareInstance.applyTableAliasOnUpdate ? raw(req.sql_alias) : empty}
+		UPDATE ${raw(exec)}${raw(req.sql_table)} ${dareInstance.applyAliasesOnUpdate ? raw(req.sql_alias) : empty}
 		${req.sql_joins.length ? join(req.sql_joins, '\n') : empty}
 		SET ${sql_set}
 		WHERE
