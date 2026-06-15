@@ -99,12 +99,6 @@ SQLiteDare.prototype.applySubqueryOnDML = true;
 SQLiteDare.prototype.applyAliasesOnUpdate = false;
 
 /**
- * SQLite does not support UPDATE tbl alias SET ...
- * @type {boolean}
- */
-SQLiteDare.prototype.applyTableAliasOnUpdate = false;
-
-/**
  * SQL insert suffix - SQLite uses RETURNING clause
  * @type {string}
  */

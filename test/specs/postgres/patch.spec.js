@@ -26,7 +26,7 @@ describe('patch', () => {
 		const dareInst = dare.use({engine: 'postgres:16.3'});
 
 		dareInst.execute = async ({sql, values}) => {
-			sqlEqual(sql, 'UPDATE tbl a SET "name" = ? WHERE a.id = ?');
+			sqlEqual(sql, 'UPDATE tbl SET "name" = ? WHERE tbl.id = ?');
 			assert.deepStrictEqual(values, [name, id]);
 			return {success: true};
 		};

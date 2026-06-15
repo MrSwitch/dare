@@ -296,12 +296,6 @@ Dare.prototype.applySubqueryOnDML = false;
 Dare.prototype.applyAliasesOnUpdate = true;
 
 /**
- * Apply table alias on UPDATE statement - SQLite doesn't support UPDATE tbl alias SET ...
- * @type {boolean}
- */
-Dare.prototype.applyTableAliasOnUpdate = true;
-
-/**
  * SQL insert suffix - Additional SQL to append to insert statements, e.g., RETURNING clause for Postgres
  * @type {string | undefined}
  */
@@ -790,7 +784,7 @@ Dare.prototype.patch = async function patch(table, filter, body, options = {}) {
 
 	// Construct a db update
 	const sql = SQL`
-		UPDATE ${raw(exec)}${raw(req.sql_table)} ${dareInstance.applyTableAliasOnUpdate ? raw(req.sql_alias) : empty}
+		UPDATE ${raw(exec)}${raw(req.sql_table)} ${dareInstance.applyAliasesOnUpdate ? raw(req.sql_alias) : empty}
 		${req.sql_joins.length ? join(req.sql_joins, '\n') : empty}
 		SET ${sql_set}
 		WHERE
