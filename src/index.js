@@ -296,6 +296,12 @@ Dare.prototype.applySubqueryOnDML = false;
 Dare.prototype.applyAliasesOnUpdate = true;
 
 /**
+ * Apply table alias on UPDATE statement - SQLite doesn't support UPDATE tbl alias SET ...
+ * @type {boolean}
+ */
+Dare.prototype.applyTableAliasOnUpdate = true;
+
+/**
  * SQL insert suffix - Additional SQL to append to insert statements, e.g., RETURNING clause for Postgres
  * @type {string | undefined}
  */
