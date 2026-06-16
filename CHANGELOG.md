@@ -1,3 +1,10 @@
+# [0.101.0](https://github.com/MrSwitch/dare/compare/v0.100.2...v0.101.0) (2026-06-14)
+
+
+### Features
+
+* **sqlite:** initial engine support ([#457](https://github.com/MrSwitch/dare/issues/457)) ([1344fb2](https://github.com/MrSwitch/dare/commit/1344fb2266d3b7cd6add8a3fbe8db7d434a36a84))
+
 ## [0.100.2](https://github.com/MrSwitch/dare/compare/v0.100.1...v0.100.2) (2026-06-14)
 
 

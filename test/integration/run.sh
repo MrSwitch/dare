@@ -40,6 +40,27 @@ export DB_PORT=3308
 
 export TZ="UTC"
 
+if [ "$DB_ENGINE_NAME" = "sqlite" ]
+then
+	echo "Starting SQLite (in-process, no Docker needed)"
+
+	echo 'building template db...'
+	export TEST_DB_PREFIX="test_"
+	echo 'template db built'
+
+	echo 'running tests...'
+	set +e
+	(
+	  set -x
+	  mocha './**/*.spec.js' "$@"
+	)
+	EXIT_CODE=$?
+	set -e
+	echo 'tests complete'
+	echo "finished (tests exit code: $EXIT_CODE)"
+	exit $EXIT_CODE
+fi
+
 docker rm -vf "dare_db"
 
 echo "Starting $DB_ENGINE"

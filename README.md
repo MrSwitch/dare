@@ -17,15 +17,16 @@ npm i dare --save
 
 ## Setup
 
-Import the appropriate entry point for your database engine. The versions listed are minimum supported versions Dare has been tested against - more recent versions are expected to be backwards compatible.
+Import the appropriate entry point for your database engine. The versions listed are minimum supported versions Dare has been tested against - more recent database versions are expected to be backwards compatible with the versions listed below.
 
-| Import Path       | Database Engine               |
-| ----------------- | ----------------------------- |
-| `dare`            | MySQL 8.0+, MariaDB           |
-| `dare/mariadb11`  | MariaDB 11+ (alias of `dare`) |
-| `dare/mysql80`    | MySQL 8.0+ (alias of `dare`)  |
-| `dare/mysql57`    | MySQL 5.7+, MySQL 5.6+        |
-| `dare/postgres16` | PostgreSQL 16+                |
+| Database Engine               | Import Path       |
+| ----------------------------- | ----------------- |
+| MySQL 8.0+, MariaDB           | `dare`            |
+| MariaDB 11+ (alias of `dare`) | `dare/mariadb11`  |
+| MySQL 8.0+ (alias of `dare`)  | `dare/mysql80`    |
+| MySQL 5.7+, MySQL 5.6+        | `dare/mysql57`    |
+| PostgreSQL 16+                | `dare/postgres16` |
+| SQLite 3+                     | `dare/sqlite3`    |
 
 ## Example
 
@@ -69,6 +70,7 @@ The integration tests illustrates how a [setup of a dare instance](`./test/integ
 
 - **MySQL** (5.6, 5.7, 8.0,...) and **MariaDB** (11) See [connection with `mysql2`](./test/integration/helpers/MySQL.js)
 - **Postgres** (16+) See [connection with `pg`](./test/integration/helpers/Postgres.js)
+- **SQLite** (3+) See [connection with `node:sqlite`](./test/integration/helpers/Sqlite.js)
 
 # Methods
 

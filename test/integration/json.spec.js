@@ -114,9 +114,13 @@ describe('Working with JSON DataType', () => {
 					'-bool': false,
 					'-notnull': null,
 
-					// Range
-					'~digit': '0..2',
-					'-~digit': '10..100',
+					/**
+					 * Range
+					 * SQLite does not cast string values to numbers
+					 */
+					...(!DB_ENGINE?.startsWith('sqlite')
+						? {'~digit': '1..2', '-~digit': '10..100'}
+						: null),
 
 					// Like operator
 					'%stringy': 'chee%', // In MySQL the LIKE operator looks at the "quoted" string, so need to add a quote if comparing against the start or end of a value respectively
@@ -182,6 +186,11 @@ describe('Working with JSON DataType', () => {
 		// Update the user settings with a setFunction
 		dare.options.models.users.schema.settings.patch = {
 			setFunction({sql_field, value}) {
+				if (DB_ENGINE?.startsWith('sqlite')) {
+					return SQL`JSON_PATCH(${raw(sql_field)}, ${value})`;
+				}
+
+				// MySQL/MariaDB/Postgres... possibly others, but not SQLite
 				return SQL`JSON_MERGE_PATCH(${raw(sql_field)}, ${value})`;
 			},
 		};

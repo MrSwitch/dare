@@ -1,17 +1,15 @@
 import assert from 'node:assert/strict';
 
-import Dare from '../../src/index.js';
 import Debug from 'debug';
 import mysql from 'mysql2/promise';
 import db from './helpers/db.js';
-import options from '../data/options.js';
 import defaultAPI from './helpers/api.js';
 
 const debug = Debug('sql');
 
 function DareStream() {
 	// Initiate
-	const dare = new Dare(options);
+	const dare = defaultAPI();
 
 	// Set a test instance
 	dare.execute = async function (query) {
