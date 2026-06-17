@@ -144,17 +144,15 @@ export default class MSSQL {
 		// Clear the data and reseed the identity columns
 		for (const table of this.tables) {
 			// eslint-disable-next-line no-await-in-loop
-			await this.conn
-				.request()
-				.batch(
-					`
+			await this.conn.request().batch(
+				`
 					DECLARE @count INT;
 					SELECT @count = COUNT(1) FROM [${table}];
 					DELETE FROM [${table}];
 					IF @count > 0
 						DBCC CHECKIDENT('${table}', RESEED, 0);
 					`
-				);
+			);
 		}
 
 		// Re-insert base data

@@ -178,7 +178,10 @@ describe('Working with JSON DataType', () => {
 	});
 
 	it('JSON fields should be patchable with a setFunction definition', async function () {
-		if (DB_ENGINE?.startsWith('postgres') || DB_ENGINE?.startsWith('mssql')) {
+		if (
+			DB_ENGINE?.startsWith('postgres') ||
+			DB_ENGINE?.startsWith('mssql')
+		) {
 			this.skip();
 			return;
 		}
@@ -186,7 +189,6 @@ describe('Working with JSON DataType', () => {
 		// Update the user settings with a setFunction
 		dare.options.models.users.schema.settings.patch = {
 			setFunction({sql_field, value}) {
-
 				// Default to MySQL/MariaDB
 				let json_merge_name = 'JSON_MERGE_PATCH';
 

@@ -210,10 +210,7 @@ Dare.prototype.sql_json_extract_operator = '->';
  * @param {string} params.path - JSON path
  * @returns {Sql} SQL expression
  */
-Dare.prototype.sql_json_extract = function sql_json_extract({
-	sql_field,
-	path,
-}) {
+Dare.prototype.sql_json_extract = function sql_json_extract({sql_field, path}) {
 	const separator = this.sql_json_extract_operator;
 	return SQL`${sql_field}${raw(separator)}${path}`;
 };
@@ -328,6 +325,13 @@ Dare.prototype.sql_insert_suffix = undefined;
  * @type {string | undefined}
  */
 Dare.prototype.sql_insert_output = undefined;
+
+/**
+ * Whether the engine supports inline upsert clauses on INSERT statements,
+ * such as ON DUPLICATE KEY UPDATE / ON CONFLICT
+ * @type {boolean}
+ */
+Dare.prototype.supportsInlineUpsert = true;
 
 /**
  * Sql_limit_clause - Generates the LIMIT/OFFSET portion of a SELECT statement
@@ -970,6 +974,9 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 		post = [post];
 	}
 
+	/** @type {Array<Record<string, any>>} */
+	const postRows = /** @type {Array<Record<string, any>>} */ (post);
+
 	// If ignore duplicate keys is stated as ignore
 	const sql_exec = req.ignore ? raw('IGNORE') : empty;
 
@@ -1073,6 +1080,23 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 			return a;
 		});
 
+	// Engines without inline upsert support (e.g. MSSQL) emulate duplicate key options in JS
+	const shouldEmulateUpsert =
+		!req.query &&
+		!dareInstance.supportsInlineUpsert &&
+		(req.duplicate_keys_update ||
+			req.duplicate_keys?.toString()?.toLowerCase() === 'ignore');
+
+	if (shouldEmulateUpsert) {
+		return emulatePostDuplicateKeyHandling({
+			dareInstance,
+			req,
+			rows: postRows,
+			modelSchema,
+			baseOptions: options,
+		});
+	}
+
 	// Options
 	let sql_on_duplicate_keys_update = empty;
 	if (req.duplicate_keys_update) {
@@ -1120,6 +1144,180 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 
 	return dareInstance.after(resp);
 };
+
+/**
+ * Emulate duplicate key options for engines that do not support inline upsert syntax
+ * @param {object} obj - Object
+ * @param {Dare} obj.dareInstance - Dare instance
+ * @param {QueryOptions} obj.req - Formatted request
+ * @param {Array<Record<string, any>>} obj.rows - Rows to process
+ * @param {Schema} obj.modelSchema - Current model schema
+ * @param {object} obj.baseOptions - Original post options
+ * @returns {Promise<object>} mysql-like response object
+ */
+async function emulatePostDuplicateKeyHandling({
+	dareInstance,
+	req,
+	rows,
+	modelSchema,
+	baseOptions,
+}) {
+	let affectedRows = 0;
+	let insertId;
+
+	async function processRow(row) {
+		const duplicateFilter = deriveDuplicateFilter({
+			req,
+			row,
+			modelSchema,
+			dareInstance,
+		});
+
+		const existing = duplicateFilter
+			? await dareInstance.get(
+					req.table,
+					[dareInstance.rowid],
+					duplicateFilter,
+					/** @type {any} */ ({
+						single: true,
+						notfound: undefined,
+					})
+				)
+			: undefined;
+
+		if (existing) {
+			if (insertId === undefined) {
+				insertId = existing[dareInstance.rowid];
+			}
+
+			if (req.duplicate_keys_update) {
+				const updateBody = {};
+				for (const field of req.duplicate_keys_update) {
+					const value = getFieldValueFromRow({
+						row,
+						field,
+						modelSchema,
+						dareInstance,
+					});
+
+					if (value !== undefined) {
+						updateBody[field] = value;
+					}
+				}
+
+				if (Object.keys(updateBody).length) {
+					const patchResp = await dareInstance.patch(
+						req.table,
+						duplicateFilter,
+						updateBody,
+						{
+							limit: 1,
+							notfound: {affectedRows: 0},
+						}
+					);
+
+					affectedRows += Number(patchResp?.affectedRows || 0);
+				}
+			}
+
+			return;
+		}
+
+		const insertResp = await dareInstance.post(req.table, row, {
+			...baseOptions,
+			duplicate_keys: undefined,
+			duplicate_keys_update: undefined,
+			query: undefined,
+		});
+
+		if (insertId === undefined && insertResp?.insertId !== undefined) {
+			insertId = insertResp.insertId;
+		}
+
+		affectedRows += Number(insertResp?.affectedRows || 0);
+	}
+
+	await rows.reduce(
+		(promise, row) => promise.then(() => processRow(row)),
+		Promise.resolve()
+	);
+
+	return {
+		insertId,
+		affectedRows,
+	};
+}
+
+/**
+ * Build a filter to locate an existing duplicate row
+ * @param {object} obj - Object
+ * @param {QueryOptions} obj.req - Request options
+ * @param {Record<string, any>} obj.row - Source row
+ * @param {Schema} obj.modelSchema - Table schema
+ * @param {Dare} obj.dareInstance - Dare instance
+ * @returns {Record<string, any> | undefined} filter object for get/patch
+ */
+function deriveDuplicateFilter({req, row, modelSchema, dareInstance}) {
+	const duplicate_keys = Array.isArray(req.duplicate_keys)
+		? req.duplicate_keys
+		: [dareInstance.rowid];
+
+	if (!duplicate_keys.length) {
+		return;
+	}
+
+	const filter = {};
+
+	for (const field of duplicate_keys) {
+		const value = getFieldValueFromRow({
+			row,
+			field,
+			modelSchema,
+			dareInstance,
+		});
+
+		if (value === undefined) {
+			return;
+		}
+
+		filter[field] = value;
+	}
+
+	return filter;
+}
+
+/**
+ * Resolve a value from a post row by field name, db alias, or schema alias
+ * @param {object} obj - Object
+ * @param {Record<string, any>} obj.row - Source row
+ * @param {string} obj.field - Field name
+ * @param {Schema} obj.modelSchema - Table schema
+ * @param {Dare} obj.dareInstance - Dare instance
+ * @returns {any} value
+ */
+function getFieldValueFromRow({row, field, modelSchema, dareInstance}) {
+	if (Object.hasOwn(row, field)) {
+		return row[field];
+	}
+
+	const unaliased = unAliasFields(modelSchema, field, dareInstance);
+	if (Object.hasOwn(row, unaliased)) {
+		return row[unaliased];
+	}
+
+	for (const schemaField in modelSchema) {
+		if (Object.hasOwn(modelSchema, schemaField)) {
+			const {alias} = getFieldAttributes(
+				schemaField,
+				modelSchema,
+				dareInstance
+			);
+			if (alias === field && Object.hasOwn(row, schemaField)) {
+				return row[schemaField];
+			}
+		}
+	}
+}
 
 /**
  * Dare.del

@@ -132,9 +132,7 @@ export default function buildQuery(opts, dareInstance) {
 					: dareInstance.sql_expression_literal(field.expression);
 
 			return raw(
-				`${expression}${
-					field.label ? ` AS "${field.label}"` : ''
-				}`
+				`${expression}${field.label ? ` AS "${field.label}"` : ''}`
 			);
 		});
 	}

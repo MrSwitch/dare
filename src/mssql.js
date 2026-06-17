@@ -211,6 +211,12 @@ MSSQLDare.prototype.onDuplicateKeysUpdate = function onDuplicateKeysUpdate() {
 };
 
 /**
+ * MS SQL Server does not support MySQL/Postgres inline upsert syntax in INSERT statements
+ * @type {Dare['supportsInlineUpsert']}
+ */
+MSSQLDare.prototype.supportsInlineUpsert = false;
+
+/**
  * FulltextSearch - MS SQL Server implementation
  * MS SQL Server full-text search requires a configured full-text catalog and index.
  * To remain portable, this falls back to a LIKE based search across the provided fields.
@@ -278,135 +284,6 @@ MSSQLDare.prototype.jsonFormatValue = function jsonFormatValue(value) {
 
 	// JSON_VALUE in MSSQL returns text, so compare against text forms
 	return String(value);
-};
-
-/**
- * Post - MSSQL compatibility for duplicate key options
- * SQL Server does not support MySQL/Postgres inline upsert syntax, so emulate behavior
- * for duplicate_keys / duplicate_keys_update at the application layer.
- * @type {Dare['post']}
- */
-MSSQLDare.prototype.post = async function post(table, body, options = {}) {
-	const dare = /** @type {any} */ (this);
-
-	const opts =
-		typeof table === 'object' ? {...table} : {...options, table, body};
-
-	const isIgnore = opts.duplicate_keys?.toString()?.toLowerCase() === 'ignore';
-	const hasUpsert = Array.isArray(opts.duplicate_keys_update);
-
-	if (!isIgnore && !hasUpsert) {
-		return Dare.prototype.post.call(this, opts);
-	}
-
-	// INSERT...SELECT upsert options are treated as a best-effort insert for MSSQL
-	if (opts.query) {
-		const fallback = {...opts};
-		delete fallback.duplicate_keys;
-		delete fallback.duplicate_keys_update;
-		return Dare.prototype.post.call(this, fallback);
-	}
-
-	const rows = Array.isArray(opts.body) ? opts.body : [opts.body];
-
-	let affectedRows = 0;
-	let insertId;
-
-	for (const row of rows) {
-		let conflictKeys =
-			Array.isArray(opts.duplicate_keys) && opts.duplicate_keys.length
-				? [...opts.duplicate_keys]
-				: [];
-
-		if (!conflictKeys.length && row?.[this.rowid] !== undefined) {
-			conflictKeys = [this.rowid];
-		}
-
-		if (!conflictKeys.length && hasUpsert) {
-			conflictKeys = Object.keys(row || {}).filter(
-				key => !opts.duplicate_keys_update.includes(key)
-			);
-		}
-
-		const filter = Object.fromEntries(
-			conflictKeys
-				.filter(key => row?.[key] !== undefined)
-				.map(key => [key, row[key]])
-		);
-
-		if (!Object.keys(filter).length) {
-			// eslint-disable-next-line no-await-in-loop
-			const inserted = await Dare.prototype.post.call(this, {
-				...opts,
-				body: row,
-				duplicate_keys: undefined,
-				duplicate_keys_update: undefined,
-			});
-
-			affectedRows += inserted.affectedRows ?? 1;
-			insertId = inserted.insertId;
-			continue;
-		}
-
-		// eslint-disable-next-line no-await-in-loop
-		const existing = await dare.get({
-			table: opts.table,
-			fields: [{id: dare.rowid}],
-			filter,
-			limit: 1,
-			notfound: null,
-		});
-
-		const existingRow = Array.isArray(existing) ? existing[0] : existing;
-
-		if (!existingRow) {
-			// eslint-disable-next-line no-await-in-loop
-			const inserted = await Dare.prototype.post.call(this, {
-				...opts,
-				body: row,
-				duplicate_keys: undefined,
-				duplicate_keys_update: undefined,
-			});
-
-			affectedRows += inserted.affectedRows ?? 1;
-			insertId = inserted.insertId;
-			continue;
-		}
-
-		if (hasUpsert) {
-			const updateBody = Object.fromEntries(
-				opts.duplicate_keys_update
-					.filter(key => row?.[key] !== undefined)
-					.map(key => [key, row[key]])
-			);
-
-			if (!Object.keys(updateBody).length && conflictKeys.length) {
-				const key = conflictKeys[0];
-				updateBody[key] = row[key];
-			}
-
-			if (Object.keys(updateBody).length) {
-				// eslint-disable-next-line no-await-in-loop
-				const patched = await dare.patch({
-					table: opts.table,
-					filter: {[dare.rowid]: existingRow.id},
-					body: updateBody,
-					notfound: {},
-				});
-
-				affectedRows += patched?.affectedRows ?? 1;
-			} else {
-				affectedRows += 1;
-			}
-		} else {
-			// IGNORE behavior: preserve mysql-like affectedRows semantics for duplicate rows
-			affectedRows += 1;
-		}
-
-		insertId = existingRow.id;
-	}
-
-	return {insertId, affectedRows};
 };
 
 export default MSSQLDare;
