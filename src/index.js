@@ -22,7 +22,7 @@ import response_handler, {responseRowHandler} from './response_handler.js';
 /**
  * @import {Sql} from 'sql-template-tag'
  *
- * @typedef {`${'mysql' | 'postgres' | 'mariadb' | 'sqlite'}:${number}.${number}${string?}` | `sqlite:${number}`} Engine
+ * @typedef {`${'mysql' | 'postgres' | 'mariadb' | 'sqlite' | 'mssql'}:${number}.${number}${string?}` | `sqlite:${number}` | `mssql:${number}`} Engine
  *
  * @typedef {Pick<InternalProps, 'alias' | 'parent' | 'name' | 'skip'>} ModalHandlerExtraProps
  *
@@ -204,6 +204,21 @@ Dare.prototype.sql_json_extract_prefix = '$';
 Dare.prototype.sql_json_extract_operator = '->';
 
 /**
+ * Sql_json_extract - Generates JSON extraction SQL for a JSON field and path
+ * @param {object} params - Params
+ * @param {Sql} params.sql_field - SQL field expression
+ * @param {string} params.path - JSON path
+ * @returns {Sql} SQL expression
+ */
+Dare.prototype.sql_json_extract = function sql_json_extract({
+	sql_field,
+	path,
+}) {
+	const separator = this.sql_json_extract_operator;
+	return SQL`${sql_field}${raw(separator)}${path}`;
+};
+
+/**
  * Defaul SQL wildcard character for fulltext searches
  * @type {string}
  */
@@ -306,6 +321,59 @@ Dare.prototype.applyTableAliasOnUpdate = true;
  * @type {string | undefined}
  */
 Dare.prototype.sql_insert_suffix = undefined;
+
+/**
+ * SQL insert output - Additional SQL to inject directly after the column list of an INSERT statement
+ * e.g. the OUTPUT clause for MS SQL Server, which is used to return the inserted id
+ * @type {string | undefined}
+ */
+Dare.prototype.sql_insert_output = undefined;
+
+/**
+ * Sql_limit_clause - Generates the LIMIT/OFFSET portion of a SELECT statement
+ * Engines such as MS SQL Server override this to use OFFSET ... FETCH syntax
+ * @param {object} opts - Options
+ * @param {number} [opts.limit] - Limit the number of results
+ * @param {number} [opts.start] - Offset for the results
+ * @param {Array} [opts.sql_orderby] - The ORDER BY expressions already applied to the statement
+ * @param {string} [opts.sql_alias] - SQL alias of the table being queried
+ * @param {Array} [opts.sql_fields] - The SELECT field expressions
+ * @param {Array} [opts.sql_groupby] - The GROUP BY expressions
+ * @returns {Sql} SQL fragment
+ */
+Dare.prototype.sql_limit_clause = function sql_limit_clause({
+	limit,
+	start,
+	// eslint-disable-next-line no-unused-vars
+	sql_orderby,
+	// eslint-disable-next-line no-unused-vars
+	sql_alias,
+	// eslint-disable-next-line no-unused-vars
+	sql_fields,
+	// eslint-disable-next-line no-unused-vars
+	sql_groupby,
+}) {
+	return SQL`
+		${limit ? SQL`LIMIT ${raw(String(limit))}` : empty}
+		${start ? SQL`OFFSET ${raw(String(start))}` : empty}
+	`;
+};
+
+/**
+ * Sql_expression_literal - Convert scalar expression values into SQL-safe literals for SELECT fields
+ * Engines may override this, e.g. MSSQL prefers 1/0 over true/false
+ * @param {any} value - Scalar expression value
+ * @returns {string} SQL literal expression
+ */
+Dare.prototype.sql_expression_literal = function sql_expression_literal(value) {
+	if (value === null) {
+		return 'null';
+	}
+	if (typeof value === 'boolean') {
+		return value ? 'true' : 'false';
+	}
+	return String(value);
+};
 
 // Set default table_alias handler
 Dare.prototype.table_alias_handler = function (name) {
@@ -1034,9 +1102,15 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 		? raw(dareInstance.sql_insert_suffix)
 		: empty;
 
+	// Additional OUTPUT clause for MS SQL Server, injected after the column list to return the inserted id
+	const sql_insert_output = dareInstance.sql_insert_output
+		? raw(dareInstance.sql_insert_output)
+		: empty;
+
 	// Construct a db update
 	const sql = SQL`INSERT ${sql_exec} INTO ${raw(req.sql_table)}
 			(${raw(fields.map(dareInstance.identifierWrapper.bind(dareInstance)).join(','))})
+			${sql_insert_output}
 			${data.length ? SQL`VALUES ${bulk(data)}` : empty}
 			${sql_query}
 			${sql_on_duplicate_keys_update}

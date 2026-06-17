@@ -21,6 +21,10 @@
 			"import": "./src/index.js",
 			"types": "./types/src/index.d.ts"
 		},
+		"./mssql": {
+			"import": "./src/mssql.js",
+			"types": "./types/src/index.d.ts"
+		},
 		"./postgres16": {
 			"import": "./src/postgres16.js",
 			"types": "./types/src/index.d.ts"
@@ -45,6 +49,7 @@
 		"test:ci": "npm run lint && c8 node --test test/specs/**/*.spec.js && (c8 report --reporter=text-lcov | coveralls)",
 		"test:integration": "bash ./test/integration/run.sh",
 		"test:integration:sqlite": "DB_ENGINE=sqlite:3 bash ./test/integration/run.sh",
+		"test:integration:mssql": "DB_ENGINE=mssql:2022 bash ./test/integration/run.sh",
 		"spec": "c8 node --test 'test/specs/**/*.spec.js'",
 		"lint": "eslint ./ && npx prettier --check . && npm run check-types",
 		"prettier": "prettier --write --ignore-unknown .",
@@ -90,6 +95,7 @@
 		"husky": "^9.1.7",
 		"is-ci": "^4.1.0",
 		"mocha": "^11.7.5",
+		"mssql": "^11.0.1",
 		"mysql2": "3.22",
 		"pg": "^8.20.0",
 		"pg-query-stream": "^4.14.0",
