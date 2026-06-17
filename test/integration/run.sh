@@ -85,6 +85,33 @@ then
 		exit 1
 	}
 
+elif [ "$DB_ENGINE_NAME" = "mssql" ]
+then
+
+	# SQL Server requires the 'sa' user and a strong password
+	export DB_USER="sa"
+	export DB_PASSWORD="Test_pass123"
+
+	# Map the engine version (e.g. mssql:2022) onto the official image tag
+	DB_ENGINE_VERSION=$(echo $DB_ENGINE | cut -d: -f2)
+	MSSQL_IMAGE="mcr.microsoft.com/mssql/server:${DB_ENGINE_VERSION:-2022}-latest"
+
+	docker run \
+		--name="dare_db" \
+		-d \
+		-p ${DB_PORT}:1433 \
+		--env ACCEPT_EULA="Y" \
+		--env MSSQL_SA_PASSWORD="${DB_PASSWORD}" \
+		--env MSSQL_PID="Developer" \
+		--health-cmd="bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'" \
+		--health-interval="4s" \
+		--health-timeout="3s" \
+		--health-retries=30 \
+		$MSSQL_IMAGE || {
+		echo 'docker run failed'
+		exit 1
+	}
+
 elif [ "$DB_ENGINE_NAME" = "mariadb" ]
 then
 

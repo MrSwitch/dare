@@ -452,11 +452,9 @@ function json_contains({
 	const conds = [];
 
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-		const separator = dareInstance.sql_json_extract_operator;
-
 		return [
 			{
-				sql: SQL`${sql_field}${raw(separator)}${path}`,
+				sql: dareInstance.sql_json_extract({sql_field, path}),
 				value,
 				operators,
 			},

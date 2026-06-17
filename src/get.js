@@ -126,10 +126,13 @@ export default function buildQuery(opts, dareInstance) {
 				return field;
 			}
 
+			const expression =
+				typeof field.expression === 'string'
+					? field.expression
+					: dareInstance.sql_expression_literal(field.expression);
+
 			return raw(
-				`${field.expression}${
-					field.label ? ` AS "${field.label}"` : ''
-				}`
+				`${expression}${field.label ? ` AS "${field.label}"` : ''}`
 			);
 		});
 	}
@@ -190,6 +193,7 @@ export default function buildQuery(opts, dareInstance) {
 		start: opts.start,
 		alias,
 		has_sub_queries,
+		dareInstance,
 	};
 }
 
@@ -206,6 +210,7 @@ export default function buildQuery(opts, dareInstance) {
  * @param {Array} opts.sql_orderby - Order by fields
  * @param {number} [opts.limit] - Limit the number of results
  * @param {number} [opts.start] - Offset for the results
+ * @param {import('./index.js').default} opts.dareInstance - Dare instance, used to resolve engine specific SQL
  * @returns {Sql} - The SQL statement
  */
 export function generateSQLSelect({
@@ -219,6 +224,7 @@ export function generateSQLSelect({
 	sql_orderby,
 	limit,
 	start,
+	dareInstance,
 }) {
 	return SQL`
 		${sql_cte ? SQL`WITH ${sql_cte}` : empty}
@@ -228,8 +234,7 @@ export function generateSQLSelect({
 		${optionalJoin(sql_filter, ' AND ', 'WHERE ')}
 		${optionalJoin(sql_groupby, ',', 'GROUP BY ')}
 		${optionalJoin(sql_orderby, ',', 'ORDER BY ')}
-		${limit ? SQL`LIMIT ${raw(String(limit))}` : empty}
-		${start ? SQL`OFFSET ${raw(String(start))}` : empty}
+		${dareInstance.sql_limit_clause({limit, start, sql_orderby, sql_alias, sql_fields, sql_groupby})}
 	`;
 }
 

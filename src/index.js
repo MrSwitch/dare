@@ -22,7 +22,7 @@ import response_handler, {responseRowHandler} from './response_handler.js';
 /**
  * @import {Sql} from 'sql-template-tag'
  *
- * @typedef {`${'mysql' | 'postgres' | 'mariadb' | 'sqlite'}:${number}.${number}${string?}` | `sqlite:${number}`} Engine
+ * @typedef {`${'mysql' | 'postgres' | 'mariadb' | 'sqlite' | 'mssql'}:${number}.${number}${string?}` | `sqlite:${number}` | `mssql:${number}`} Engine
  *
  * @typedef {Pick<InternalProps, 'alias' | 'parent' | 'name' | 'skip'>} ModalHandlerExtraProps
  *
@@ -204,6 +204,18 @@ Dare.prototype.sql_json_extract_prefix = '$';
 Dare.prototype.sql_json_extract_operator = '->';
 
 /**
+ * Sql_json_extract - Generates JSON extraction SQL for a JSON field and path
+ * @param {object} params - Params
+ * @param {Sql} params.sql_field - SQL field expression
+ * @param {string} params.path - JSON path
+ * @returns {Sql} SQL expression
+ */
+Dare.prototype.sql_json_extract = function sql_json_extract({sql_field, path}) {
+	const separator = this.sql_json_extract_operator;
+	return SQL`${sql_field}${raw(separator)}${path}`;
+};
+
+/**
  * Defaul SQL wildcard character for fulltext searches
  * @type {string}
  */
@@ -306,6 +318,66 @@ Dare.prototype.applyTableAliasOnUpdate = true;
  * @type {string | undefined}
  */
 Dare.prototype.sql_insert_suffix = undefined;
+
+/**
+ * SQL insert output - Additional SQL to inject directly after the column list of an INSERT statement
+ * e.g. the OUTPUT clause for MS SQL Server, which is used to return the inserted id
+ * @type {string | undefined}
+ */
+Dare.prototype.sql_insert_output = undefined;
+
+/**
+ * Whether the engine supports inline upsert clauses on INSERT statements,
+ * such as ON DUPLICATE KEY UPDATE / ON CONFLICT
+ * @type {boolean}
+ */
+Dare.prototype.supportsInlineUpsert = true;
+
+/**
+ * Sql_limit_clause - Generates the LIMIT/OFFSET portion of a SELECT statement
+ * Engines such as MS SQL Server override this to use OFFSET ... FETCH syntax
+ * @param {object} opts - Options
+ * @param {number} [opts.limit] - Limit the number of results
+ * @param {number} [opts.start] - Offset for the results
+ * @param {Array} [opts.sql_orderby] - The ORDER BY expressions already applied to the statement
+ * @param {string} [opts.sql_alias] - SQL alias of the table being queried
+ * @param {Array} [opts.sql_fields] - The SELECT field expressions
+ * @param {Array} [opts.sql_groupby] - The GROUP BY expressions
+ * @returns {Sql} SQL fragment
+ */
+Dare.prototype.sql_limit_clause = function sql_limit_clause({
+	limit,
+	start,
+	// eslint-disable-next-line no-unused-vars
+	sql_orderby,
+	// eslint-disable-next-line no-unused-vars
+	sql_alias,
+	// eslint-disable-next-line no-unused-vars
+	sql_fields,
+	// eslint-disable-next-line no-unused-vars
+	sql_groupby,
+}) {
+	return SQL`
+		${limit ? SQL`LIMIT ${raw(String(limit))}` : empty}
+		${start ? SQL`OFFSET ${raw(String(start))}` : empty}
+	`;
+};
+
+/**
+ * Sql_expression_literal - Convert scalar expression values into SQL-safe literals for SELECT fields
+ * Engines may override this, e.g. MSSQL prefers 1/0 over true/false
+ * @param {any} value - Scalar expression value
+ * @returns {string} SQL literal expression
+ */
+Dare.prototype.sql_expression_literal = function sql_expression_literal(value) {
+	if (value === null) {
+		return 'null';
+	}
+	if (typeof value === 'boolean') {
+		return value ? 'true' : 'false';
+	}
+	return String(value);
+};
 
 // Set default table_alias handler
 Dare.prototype.table_alias_handler = function (name) {
@@ -902,6 +974,9 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 		post = [post];
 	}
 
+	/** @type {Array<Record<string, any>>} */
+	const postRows = /** @type {Array<Record<string, any>>} */ (post);
+
 	// If ignore duplicate keys is stated as ignore
 	const sql_exec = req.ignore ? raw('IGNORE') : empty;
 
@@ -1005,6 +1080,23 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 			return a;
 		});
 
+	// Engines without inline upsert support (e.g. MSSQL) emulate duplicate key options in JS
+	const shouldEmulateUpsert =
+		!req.query &&
+		!dareInstance.supportsInlineUpsert &&
+		(req.duplicate_keys_update ||
+			req.duplicate_keys?.toString()?.toLowerCase() === 'ignore');
+
+	if (shouldEmulateUpsert) {
+		return emulatePostDuplicateKeyHandling({
+			dareInstance,
+			req,
+			rows: postRows,
+			modelSchema,
+			baseOptions: options,
+		});
+	}
+
 	// Options
 	let sql_on_duplicate_keys_update = empty;
 	if (req.duplicate_keys_update) {
@@ -1034,9 +1126,15 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 		? raw(dareInstance.sql_insert_suffix)
 		: empty;
 
+	// Additional OUTPUT clause for MS SQL Server, injected after the column list to return the inserted id
+	const sql_insert_output = dareInstance.sql_insert_output
+		? raw(dareInstance.sql_insert_output)
+		: empty;
+
 	// Construct a db update
 	const sql = SQL`INSERT ${sql_exec} INTO ${raw(req.sql_table)}
 			(${raw(fields.map(dareInstance.identifierWrapper.bind(dareInstance)).join(','))})
+			${sql_insert_output}
 			${data.length ? SQL`VALUES ${bulk(data)}` : empty}
 			${sql_query}
 			${sql_on_duplicate_keys_update}
@@ -1046,6 +1144,180 @@ Dare.prototype.post = async function post(table, body, options = {}) {
 
 	return dareInstance.after(resp);
 };
+
+/**
+ * Emulate duplicate key options for engines that do not support inline upsert syntax
+ * @param {object} obj - Object
+ * @param {Dare} obj.dareInstance - Dare instance
+ * @param {QueryOptions} obj.req - Formatted request
+ * @param {Array<Record<string, any>>} obj.rows - Rows to process
+ * @param {Schema} obj.modelSchema - Current model schema
+ * @param {object} obj.baseOptions - Original post options
+ * @returns {Promise<object>} mysql-like response object
+ */
+async function emulatePostDuplicateKeyHandling({
+	dareInstance,
+	req,
+	rows,
+	modelSchema,
+	baseOptions,
+}) {
+	let affectedRows = 0;
+	let insertId;
+
+	async function processRow(row) {
+		const duplicateFilter = deriveDuplicateFilter({
+			req,
+			row,
+			modelSchema,
+			dareInstance,
+		});
+
+		const existing = duplicateFilter
+			? await dareInstance.get(
+					req.table,
+					[dareInstance.rowid],
+					duplicateFilter,
+					/** @type {any} */ ({
+						single: true,
+						notfound: undefined,
+					})
+				)
+			: undefined;
+
+		if (existing) {
+			if (insertId === undefined) {
+				insertId = existing[dareInstance.rowid];
+			}
+
+			if (req.duplicate_keys_update) {
+				const updateBody = {};
+				for (const field of req.duplicate_keys_update) {
+					const value = getFieldValueFromRow({
+						row,
+						field,
+						modelSchema,
+						dareInstance,
+					});
+
+					if (value !== undefined) {
+						updateBody[field] = value;
+					}
+				}
+
+				if (Object.keys(updateBody).length) {
+					const patchResp = await dareInstance.patch(
+						req.table,
+						duplicateFilter,
+						updateBody,
+						{
+							limit: 1,
+							notfound: {affectedRows: 0},
+						}
+					);
+
+					affectedRows += Number(patchResp?.affectedRows || 0);
+				}
+			}
+
+			return;
+		}
+
+		const insertResp = await dareInstance.post(req.table, row, {
+			...baseOptions,
+			duplicate_keys: undefined,
+			duplicate_keys_update: undefined,
+			query: undefined,
+		});
+
+		if (insertId === undefined && insertResp?.insertId !== undefined) {
+			insertId = insertResp.insertId;
+		}
+
+		affectedRows += Number(insertResp?.affectedRows || 0);
+	}
+
+	await rows.reduce(
+		(promise, row) => promise.then(() => processRow(row)),
+		Promise.resolve()
+	);
+
+	return {
+		insertId,
+		affectedRows,
+	};
+}
+
+/**
+ * Build a filter to locate an existing duplicate row
+ * @param {object} obj - Object
+ * @param {QueryOptions} obj.req - Request options
+ * @param {Record<string, any>} obj.row - Source row
+ * @param {Schema} obj.modelSchema - Table schema
+ * @param {Dare} obj.dareInstance - Dare instance
+ * @returns {Record<string, any> | undefined} filter object for get/patch
+ */
+function deriveDuplicateFilter({req, row, modelSchema, dareInstance}) {
+	const duplicate_keys = Array.isArray(req.duplicate_keys)
+		? req.duplicate_keys
+		: [dareInstance.rowid];
+
+	if (!duplicate_keys.length) {
+		return;
+	}
+
+	const filter = {};
+
+	for (const field of duplicate_keys) {
+		const value = getFieldValueFromRow({
+			row,
+			field,
+			modelSchema,
+			dareInstance,
+		});
+
+		if (value === undefined) {
+			return;
+		}
+
+		filter[field] = value;
+	}
+
+	return filter;
+}
+
+/**
+ * Resolve a value from a post row by field name, db alias, or schema alias
+ * @param {object} obj - Object
+ * @param {Record<string, any>} obj.row - Source row
+ * @param {string} obj.field - Field name
+ * @param {Schema} obj.modelSchema - Table schema
+ * @param {Dare} obj.dareInstance - Dare instance
+ * @returns {any} value
+ */
+function getFieldValueFromRow({row, field, modelSchema, dareInstance}) {
+	if (Object.hasOwn(row, field)) {
+		return row[field];
+	}
+
+	const unaliased = unAliasFields(modelSchema, field, dareInstance);
+	if (Object.hasOwn(row, unaliased)) {
+		return row[unaliased];
+	}
+
+	for (const schemaField in modelSchema) {
+		if (Object.hasOwn(modelSchema, schemaField)) {
+			const {alias} = getFieldAttributes(
+				schemaField,
+				modelSchema,
+				dareInstance
+			);
+			if (alias === field && Object.hasOwn(row, schemaField)) {
+				return row[schemaField];
+			}
+		}
+	}
+}
 
 /**
  * Dare.del

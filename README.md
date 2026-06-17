@@ -27,6 +27,7 @@ Import the appropriate entry point for your database engine. The versions listed
 | MySQL 5.7+, MySQL 5.6+        | `dare/mysql57`    |
 | PostgreSQL 16+                | `dare/postgres16` |
 | SQLite 3+                     | `dare/sqlite3`    |
+| Microsoft SQL Server 2022+    | `dare/mssql`      |
 
 ## Example
 

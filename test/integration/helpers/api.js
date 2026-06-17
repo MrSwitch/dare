@@ -2,6 +2,7 @@ import Dare from '../../../src/index.js';
 import PostgresDare from '../../../src/postgres16.js';
 import MySQL57Dare from '../../../src/mysql57.js';
 import SQLiteDare from '../../../src/sqlite.js';
+import MSSQLDare from '../../../src/mssql.js';
 import Debug from 'debug';
 import mysql from 'mysql2/promise';
 import db from './db.js';
@@ -18,10 +19,12 @@ const DareConstructor = DB_ENGINE?.startsWith('postgres')
 	? PostgresDare
 	: DB_ENGINE?.startsWith('sqlite')
 		? SQLiteDare
-		: DB_ENGINE?.startsWith('mysql:5.7') ||
-			  DB_ENGINE?.startsWith('mysql:5.6')
-			? MySQL57Dare
-			: Dare;
+		: DB_ENGINE?.startsWith('mssql')
+			? MSSQLDare
+			: DB_ENGINE?.startsWith('mysql:5.7') ||
+				  DB_ENGINE?.startsWith('mysql:5.6')
+				? MySQL57Dare
+				: Dare;
 
 export default function dareInstance() {
 	// Initiate
