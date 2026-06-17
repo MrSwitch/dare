@@ -29,7 +29,7 @@ describe('get', () => {
 		assert.strictEqual(dare.sql_expression_literal(false), 'false');
 	});
 
-	it('should generate LIMIT/OFFSET without dareInstance override', () => {
+	it('should generate LIMIT/OFFSET using base sql_limit_clause', () => {
 		const query = generateSQLSelect({
 			sql_fields: [raw('a.id')],
 			sql_table: 'test',
@@ -40,13 +40,14 @@ describe('get', () => {
 			sql_orderby: [],
 			limit: 3,
 			start: 2,
+			dareInstance: dare,
 		});
 
 		sqlEqual(query.sql, 'SELECT a.id FROM test a LIMIT 3 OFFSET 2');
 		assert.deepStrictEqual(query.values, []);
 	});
 
-	it('should generate OFFSET-only clause without dareInstance override', () => {
+	it('should generate OFFSET-only clause using base sql_limit_clause', () => {
 		const query = generateSQLSelect({
 			sql_fields: [raw('a.id')],
 			sql_table: 'test',
@@ -56,13 +57,14 @@ describe('get', () => {
 			sql_groupby: [],
 			sql_orderby: [],
 			start: 2,
+			dareInstance: dare,
 		});
 
 		sqlEqual(query.sql, 'SELECT a.id FROM test a OFFSET 2');
 		assert.deepStrictEqual(query.values, []);
 	});
 
-	it('should generate no limit clause when limit/start are not provided and no dareInstance exists', () => {
+	it('should generate no limit clause when limit/start are not provided', () => {
 		const query = generateSQLSelect({
 			sql_fields: [raw('a.id')],
 			sql_table: 'test',
@@ -71,6 +73,7 @@ describe('get', () => {
 			sql_filter: [],
 			sql_groupby: [],
 			sql_orderby: [],
+			dareInstance: dare,
 		});
 
 		sqlEqual(query.sql, 'SELECT a.id FROM test a');
