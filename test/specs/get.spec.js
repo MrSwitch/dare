@@ -1,5 +1,7 @@
 import assert from 'node:assert';
 import Dare from '../../src/index.js';
+import {generateSQLSelect} from '../../src/get.js';
+import {raw} from 'sql-template-tag';
 
 // Test Generic DB functions
 import sqlEqual from '../lib/sql-equal.js';
@@ -21,6 +23,58 @@ describe('get', () => {
 
 	it('should contain the function dare.get', async () => {
 		assert.strictEqual(typeof dare.get, 'function');
+	});
+
+	it('should format default boolean expression literals', () => {
+		assert.strictEqual(dare.sql_expression_literal(false), 'false');
+	});
+
+	it('should generate LIMIT/OFFSET without dareInstance override', () => {
+		const query = generateSQLSelect({
+			sql_fields: [raw('a.id')],
+			sql_table: 'test',
+			sql_alias: 'a',
+			sql_joins: [],
+			sql_filter: [],
+			sql_groupby: [],
+			sql_orderby: [],
+			limit: 3,
+			start: 2,
+		});
+
+		sqlEqual(query.sql, 'SELECT a.id FROM test a LIMIT 3 OFFSET 2');
+		assert.deepStrictEqual(query.values, []);
+	});
+
+	it('should generate OFFSET-only clause without dareInstance override', () => {
+		const query = generateSQLSelect({
+			sql_fields: [raw('a.id')],
+			sql_table: 'test',
+			sql_alias: 'a',
+			sql_joins: [],
+			sql_filter: [],
+			sql_groupby: [],
+			sql_orderby: [],
+			start: 2,
+		});
+
+		sqlEqual(query.sql, 'SELECT a.id FROM test a OFFSET 2');
+		assert.deepStrictEqual(query.values, []);
+	});
+
+	it('should generate no limit clause when limit/start are not provided and no dareInstance exists', () => {
+		const query = generateSQLSelect({
+			sql_fields: [raw('a.id')],
+			sql_table: 'test',
+			sql_alias: 'a',
+			sql_joins: [],
+			sql_filter: [],
+			sql_groupby: [],
+			sql_orderby: [],
+		});
+
+		sqlEqual(query.sql, 'SELECT a.id FROM test a');
+		assert.deepStrictEqual(query.values, []);
 	});
 
 	it('should not mutate the request object', async () => {

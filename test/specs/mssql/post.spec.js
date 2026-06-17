@@ -51,6 +51,20 @@ describe('mssql - post', () => {
 		assert.deepStrictEqual(resp, {insertId: 1, affectedRows: 1});
 	});
 
+	it(`${DB_ENGINE} should treat missing patch affectedRows as 0 during duplicate update emulation`, async () => {
+		dare.get = async () => ({id: 1});
+		dare.patch = async () => ({});
+
+		const resp = await dare.post({
+			table: 'test',
+			body: {id: 1, name: 'new-name'},
+			duplicate_keys: ['id'],
+			duplicate_keys_update: ['name'],
+		});
+
+		assert.deepStrictEqual(resp, {insertId: 1, affectedRows: 0});
+	});
+
 	it(`${DB_ENGINE} should disable inline upsert syntax`, async () => {
 		assert.strictEqual(dare.supportsInlineUpsert, false);
 	});
@@ -105,6 +119,28 @@ describe('mssql - post', () => {
 
 		assert.strictEqual(getCalled, 1);
 		assert.deepStrictEqual(resp, {insertId: 2, affectedRows: 1});
+	});
+
+	it(`${DB_ENGINE} should treat missing insert affectedRows as 0 during duplicate emulation`, async () => {
+		dare.get = async () => undefined;
+
+		dare.execute = async ({sql, values}) => {
+			sqlEqual(
+				sql,
+				'INSERT INTO test ([id],[name]) OUTPUT INSERTED.id VALUES (?, ?)'
+			);
+			assert.deepStrictEqual(values, [22, 'insert-without-affectedRows']);
+			return {insertId: 22};
+		};
+
+		const resp = await dare.post({
+			table: 'test',
+			body: {id: 22, name: 'insert-without-affectedRows'},
+			duplicate_keys: ['id'],
+			duplicate_keys_update: ['name'],
+		});
+
+		assert.deepStrictEqual(resp, {insertId: 22, affectedRows: 0});
 	});
 
 	it(`${DB_ENGINE} should treat duplicate_keys=[] as no duplicate filter and insert`, async () => {

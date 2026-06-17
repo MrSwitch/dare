@@ -42,6 +42,84 @@ describe('mssql - engine overrides', () => {
 		assert.deepStrictEqual(clause.values, []);
 	});
 
+	it('should use ORDER BY (SELECT NULL) for aggregate-only fields without GROUP BY', () => {
+		const clause = dare.sql_limit_clause({
+			limit: 2,
+			start: 0,
+			sql_orderby: [],
+			sql_alias: 'a',
+			sql_fields: ['COUNT(*)'],
+			sql_groupby: [],
+		});
+
+		assert.strictEqual(
+			clause.sql,
+			'ORDER BY (SELECT NULL) OFFSET 0 ROWS FETCH NEXT 2 ROWS ONLY'
+		);
+		assert.deepStrictEqual(clause.values, []);
+	});
+
+	it('should use ORDER BY (SELECT NULL) when sql_alias is missing', () => {
+		const clause = dare.sql_limit_clause({
+			limit: 2,
+			start: 1,
+			sql_orderby: [],
+			sql_alias: '',
+			sql_fields: [],
+			sql_groupby: [],
+		});
+
+		assert.strictEqual(
+			clause.sql,
+			'ORDER BY (SELECT NULL) OFFSET 1 ROWS FETCH NEXT 2 ROWS ONLY'
+		);
+		assert.deepStrictEqual(clause.values, []);
+	});
+
+	it('should detect aggregate fields from expression and sql properties', () => {
+		const fromExpression = dare.sql_limit_clause({
+			limit: 1,
+			start: 0,
+			sql_orderby: [null],
+			sql_alias: 'a',
+			sql_fields: [{expression: 'SUM(a.score)'}],
+			sql_groupby: [],
+		});
+
+		assert.strictEqual(
+			fromExpression.sql,
+			'ORDER BY (SELECT NULL) OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY'
+		);
+
+		const fromSql = dare.sql_limit_clause({
+			limit: 1,
+			start: 0,
+			sql_orderby: [undefined],
+			sql_alias: 'a',
+			sql_fields: [{sql: 'MAX(a.score)'}],
+			sql_groupby: [],
+		});
+
+		assert.strictEqual(
+			fromSql.sql,
+			'ORDER BY (SELECT NULL) OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY'
+		);
+	});
+
+	it('should fall back to rowid ordering when non-aggregate field metadata is empty', () => {
+		const clause = dare.sql_limit_clause({
+			limit: undefined,
+			start: 5,
+			sql_orderby: [0],
+			sql_alias: 'a',
+			sql_fields: [{}],
+			sql_groupby: [],
+		});
+
+		assert.strictEqual(clause.sql, 'ORDER BY a.id OFFSET 5 ROWS ');
+		assert.deepStrictEqual(clause.values, []);
+	});
+
 	it('should format sql_expression_literal values for mssql', () => {
 		assert.strictEqual(dare.sql_expression_literal(null), 'NULL');
 		assert.strictEqual(dare.sql_expression_literal(true), '1');
