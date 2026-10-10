@@ -10,7 +10,7 @@ Dare is a brave API for generating SQL out of structured Javascript (and Typescr
 ## Install
 
 ```bash
-npm i dare --save
+npm i dare
 ```
 
 ## Setup
