@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/MrSwitch/dare/compare/v2.0.1...v2.0.2) (2026-10-10)
+
+
+### Bug Fixes
+
+* **release-bump:** blame npm/cli[#8547](https://github.com/MrSwitch/dare/issues/8547) ([91c3811](https://github.com/MrSwitch/dare/commit/91c3811e96aad6ccdcdd0ef0ff59d609052567f2))
+
 ## [2.0.1](https://github.com/MrSwitch/dare/compare/v2.0.0...v2.0.1) (2026-09-21)
 
 
