@@ -26,7 +26,7 @@ describe('post from query', () => {
 				sql,
 				`
 				INSERT INTO comments (\`user_id\`, \`name\`, \`message\`, \`email\`)
-				SELECT a.id AS "user_id", a.name, "Hello" AS "message", (SELECT b.email FROM users_email b WHERE b.user_id = a.id LIMIT 1) AS "email"
+				SELECT a.id AS "user_id", a.name, 'Hello' AS "message", (SELECT b.email FROM users_email b WHERE b.user_id = a.id LIMIT 1) AS "email"
 				FROM users a
 				WHERE a.name = ?
 				GROUP BY a._rowid

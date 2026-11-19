@@ -14,6 +14,68 @@ export interface UnwrappedField {
 	direction?: string;
 }
 
+/**
+ * Control characters, other than tab, newline and carriage return
+ */
+const CONTROL_CHARS = /(?![\t\n\r])\p{Cc}/u;
+
+/**
+ * Is this a path segment, e.g. `a` or `a$1`
+ * The `$` is only permitted once, as an alias separator between word characters
+ * @param segment - String to test
+ * @returns True if the segment is valid
+ */
+function isSegment(segment: string): boolean {
+	const parts = segment.split('$');
+	return parts.length <= 2 && parts.every(part => /^\w+$/.test(part));
+}
+
+/**
+ * Is this a field path, e.g. `a.b`, `a$1.b$2` or `a.*`
+ * @param str - String to test
+ * @returns True if the string is an (optionally empty) field path
+ */
+function isFieldPath(str: string): boolean {
+	if (str === '') {
+		return true;
+	}
+
+	const segments = str.split('.');
+	const last = segments.pop();
+
+	return segments.every(isSegment) && (last === '*' || isSegment(last));
+}
+
+/**
+ * Assert there are no SQL comment markers outside of quoted strings
+ * @param prefix - Accumulated prefix
+ * @param suffix - Accumulated suffix
+ * @param expression - Original expression, for the error message
+ */
+function assertNoComments(prefix: string, suffix: string, expression: string) {
+	// Remove the (already validated) quoted strings
+	const unquoted = `${prefix}${suffix}`.replaceAll(/(["'])[^"']*\1/g, '');
+
+	if (/--|\/\*|\*\//.test(unquoted)) {
+		throw new DareError(
+			DareError.INVALID_REFERENCE,
+			`The field definition '${expression}' is invalid.`
+		);
+	}
+}
+
+/**
+ * Double quotes are identifiers in Postgres, SQLite and MySQL (ANSI_QUOTES)
+ * so they could be used to reference arbitrary columns.
+ * Quoted strings are validated to never contain a quote, so this is a safe swap
+ * to single quotes, which are always string literals.
+ * @param str - SQL fragment whose quoted strings have been validated
+ * @returns The fragment using single quotes
+ */
+function toSingleQuotes(str: string): string {
+	return str.replaceAll('"', "'");
+}
+
 export default function unwrap_field(
 	expression: any,
 	allowValue = true
@@ -28,6 +90,13 @@ export default function unwrap_field(
 			throw new DareError(
 				DareError.INVALID_REFERENCE,
 				`The field definition '${expression}' is too long.`
+			);
+		}
+
+		if (CONTROL_CHARS.test(str)) {
+			throw new DareError(
+				DareError.INVALID_REFERENCE,
+				`The field definition '${expression}' is invalid.`
 			);
 		}
 
@@ -51,7 +120,7 @@ export default function unwrap_field(
 			// Split out comma variables from front
 			while (
 				(int_m = str.match(
-					/^(?<prefix>((?<quote>["'])[^"';\\]*\k<quote>),\s*)(?<body>.+)$/i
+					/^(?<prefix>((?<quote>["'])[^"';?\\]*\k<quote>),\s*)(?<body>.+)$/i
 				))
 			) {
 				str = int_m?.groups?.body;
@@ -109,7 +178,9 @@ export default function unwrap_field(
 		}
 
 		// Finally check that the str is a match
-		if (str.match(/^[\w$*.]*$/)) {
+		if (isFieldPath(str)) {
+			assertNoComments(prefix, suffix, expression);
+
 			const field = str;
 			const a = str.split('.');
 			const field_name = a.pop();
@@ -119,8 +190,8 @@ export default function unwrap_field(
 				field,
 				field_name,
 				field_path,
-				prefix,
-				suffix,
+				prefix: toSingleQuotes(prefix),
+				suffix: toSingleQuotes(suffix),
 			};
 
 			// This passes the test
@@ -130,8 +201,10 @@ export default function unwrap_field(
 		// Return value...
 		if (allowValue) {
 			if (str.length === 0 || /^(["'])[\s\w]+\1$/.test(str)) {
+				assertNoComments(prefix, suffix, expression);
+
 				return {
-					value: expression,
+					value: toSingleQuotes(expression),
 				};
 			}
 		}

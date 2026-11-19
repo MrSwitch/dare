@@ -63,6 +63,74 @@ describe('utils/unwrap_field', () => {
 	});
 
 	/*
+	 * Double quotes are identifiers in Postgres, SQLite and MySQL (ANSI_QUOTES)
+	 * and could be used to read columns the request has no access to.
+	 * They are rewritten to single quotes, which are always string literals.
+	 */
+	[
+		['IF(field, "yes", "no")', 'IF(', ", 'yes', 'no')"],
+		['CONCAT("password", field)', "CONCAT('password', ", ')'],
+		['COALESCE(field, "password")', 'COALESCE(', ", 'password')"],
+		['IF(field = "string", 1, 2)', 'IF(', " = 'string', 1, 2)"],
+		["IF(field, 'yes', 'no')", 'IF(', ", 'yes', 'no')"],
+	].forEach(([test, prefix, suffix]) => {
+		it(`rewrites double quotes: ${JSON.stringify(test)}`, () => {
+			const unwrapped = unwrap_field(test);
+
+			assert.strictEqual(unwrapped.field, 'field');
+			assert.strictEqual(unwrapped.prefix, prefix);
+			assert.strictEqual(unwrapped.suffix, suffix);
+			assert.ok(!`${unwrapped.prefix}${unwrapped.suffix}`.includes('"'));
+		});
+	});
+
+	[
+		['CONCAT("a", "b")', "CONCAT('a', 'b')"],
+		['"password"', "'password'"],
+	].forEach(([test, value]) => {
+		it(`rewrites double quotes in values: ${JSON.stringify(test)}`, () => {
+			assert.deepStrictEqual(unwrap_field(test), {value});
+		});
+	});
+
+	/*
+	 * Field paths
+	 * `$` separates an alias, `*` is a wildcard
+	 */
+	[
+		['a.b', 'a.b'],
+		['a$1.b$2', 'a$1.b$2'],
+		['a.*', 'a.*'],
+		['COUNT(*)', '*'],
+		["CONCAT('--', field)", 'field'],
+		["CONCAT('/*', field)", 'field'],
+	].forEach(([test, field]) => {
+		it(`accepts ${JSON.stringify(test)}`, () => {
+			assert.strictEqual(unwrap_field(test).field, field);
+		});
+	});
+
+	/*
+	 * Empty field paths
+	 * Functions without a field argument, e.g. NOW(), have no field
+	 */
+	[
+		['', '', ''],
+		['NOW()', 'NOW(', ')'],
+		['!NOW()', '!NOW(', ')'],
+	].forEach(([test, prefix, suffix]) => {
+		it(`accepts an empty field path: ${JSON.stringify(test)}`, () => {
+			assert.deepStrictEqual(unwrap_field(test), {
+				field: '',
+				field_name: '',
+				field_path: '',
+				prefix,
+				suffix,
+			});
+		});
+	});
+
+	/*
 	 * Unsupported field expressions
 	 * Shall throw an error when unwrapping SQL these field expressions.
 	 * Either the syntax errors or unsupported SQL in Dare.
@@ -80,25 +148,91 @@ describe('utils/unwrap_field', () => {
 		// Escaping quotes
 		'IF(field = "string\\", "yes", "no")',
 
-		/*
-		 * DOS Attack
-		 * Over 100 characters
-		 */
+		// Denial of service: expression exceeds the 200-character limit
 		`CONCAT('$',${Array(200).fill(' ').join('')} field)`,
 
-		// SQL Injection
+		// SQL injection / unsupported SQL
 		'FORMAT(SELECT 1 FROM abc)',
 
-		/*
-		 * VALID SYNTAX, BUT UNSUPPORTED
-		 */
-
-		// Bad spacing
+		// Valid syntax, but unsupported
 		'IF(field<123, "yes", "no")',
-
-		// More than 1 field requested
 		'CONCAT(field, secret)',
 		'IF(field < field2, "yes", "no")',
+
+		// SQL syntax breakout and stacked statements
+		'field; DROP TABLE users',
+		'field) AS field; SELECT 1',
+		'IF(field = 1; DROP TABLE users, "yes", "no")',
+		'IF(field = 1, 1, 1); --',
+		'IF(field, "yes", "no"); EXEC xp_cmdshell("dir")',
+
+		// SQL comments
+		'field -- comment',
+		'field /* comment */',
+		'IF(field = 1, "yes", "no") # comment',
+		'IF(field = 1, "yes", "no") -- OR 1=1',
+
+		// UNION / subquery / set operations
+		'IF(field, "yes", "no") UNION SELECT password FROM users',
+		'UNION(field, secret)',
+		'EXTRACT(YEAR_MONTH FROM field UNION SELECT password)',
+		'IF(field IN (SELECT password FROM users), "yes", "no")',
+		'IF(EXISTS(SELECT 1 FROM users), field, "no")',
+
+		// Boolean / tautology and alternate-operator payloads
+		'IF(field = 1 OR 1=1, "yes", "no")',
+		'IF(field = 1 AND 1=2, "yes", "no")',
+		'IF(field = $1, "yes", "no")',
+		'IF(1=1,field,secret)',
+		'field\nOR 1=1',
+
+		// Blind / time-based and database-specific function vectors
+		'IF(field = 1, SLEEP(5), 0)',
+		'IF(field = 1, pg_sleep(10), 0)',
+		'IF(field = 1, WAITFOR DELAY "0:0:5", 0)',
+		'IF(field = 1, BENCHMARK(10000000,MD5("x")), 0)',
+		'IF(field = 1, LOAD_FILE("/etc/passwd"), 0)',
+
+		// Comment, quote, escape, and encoding bypass attempts
+		'IF(field = "\\" OR 1=1 --", "yes", "no")',
+		'IF(field = "string%27 OR 1=1--", "yes", "no")',
+		'IF(field = "%22 OR 1=1 --", "yes", "no")',
+		'field%00UNION SELECT',
+		'field\u0000 UNION SELECT password FROM users',
+		'field\r\nSELECT * FROM users',
+
+		// Dangerous database commands / function-style payloads
+		'COUNT(DISTINCT field) DROP TABLE users',
+		'CAST(field AS SIGNED) JOIN users',
+		'GROUP_CONCAT(field); DELETE FROM users',
+		'DATE(field) WHERE 1=1',
+		'DATE_FORMAT(field, "x");ATTACH DATABASE "evil.db" AS evil',
+
+		// Large / abuse payloads
+		`IF(field = "${'A'.repeat(201)}", "yes", "no")`,
+
+		// Comment markers hidden in the unquoted portion of a function
+		'IF(field, 1 --)',
+		'IF(field, 1 -- )',
+		'IF(field, 1 -- OR 1)',
+
+		// Placeholders inside quoted strings shift the bound values
+		'CONCAT("?", field)',
+		"CONCAT('?', field)",
+		'IF(field, "?", "no")',
+
+		// Control characters, including inside quoted strings
+		'CONCAT("a\u0000b", field)',
+		'CONCAT("a\u0001b", field)',
+		'field\u0000',
+
+		// `$` is only an alias separator, so cannot start a dollar quoted string
+		'$$',
+		'$1',
+		'a.$$',
+		'a$$b',
+		'DATE($$)',
+		'$tag$',
 	].forEach(test => {
 		it(`errors: ${JSON.stringify(test)}`, () => {
 			// Expect the field expression unwrapping to throw a Dare Error
