@@ -111,6 +111,26 @@ describe('utils/unwrap_field', () => {
 	});
 
 	/*
+	 * Empty field paths
+	 * Functions without a field argument, e.g. NOW(), have no field
+	 */
+	[
+		['', '', ''],
+		['NOW()', 'NOW(', ')'],
+		['!NOW()', '!NOW(', ')'],
+	].forEach(([test, prefix, suffix]) => {
+		it(`accepts an empty field path: ${JSON.stringify(test)}`, () => {
+			assert.deepStrictEqual(unwrap_field(test), {
+				field: '',
+				field_name: '',
+				field_path: '',
+				prefix,
+				suffix,
+			});
+		});
+	});
+
+	/*
 	 * Unsupported field expressions
 	 * Shall throw an error when unwrapping SQL these field expressions.
 	 * Either the syntax errors or unsupported SQL in Dare.
