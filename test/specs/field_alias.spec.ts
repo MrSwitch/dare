@@ -109,7 +109,7 @@ describe('field alias', () => {
 			assert.ok(_sql.includes('!ISNULL(a.email) AS "alternateHasEmail"'));
 			assert(
 				_sql.includes(
-					'IF(!ISNULL(a.email), "YES", "NO") AS "yesNoEmail"'
+					"IF(!ISNULL(a.email), 'YES', 'NO') AS \"yesNoEmail\""
 				)
 			);
 
@@ -191,7 +191,7 @@ describe('field alias', () => {
 
 			assert(
 				_sql.includes(
-					'IF(!ISNULL(b.email), "Yes", "No") AS "Has Email alias"'
+					"IF(!ISNULL(b.email), 'Yes', 'No') AS \"Has Email alias\""
 				)
 			);
 

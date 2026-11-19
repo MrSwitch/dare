@@ -481,7 +481,7 @@ describe('get', () => {
 				sqlEqual(
 					sql,
 					`
-					SELECT 100 AS "show_100", null AS "show_null", "Text string 123" AS "show_text", CONCAT("Hello", "World") AS "show_function_text", a.name AS "name" FROM test a WHERE a.id = ? LIMIT 1
+					SELECT 100 AS "show_100", null AS "show_null", 'Text string 123' AS "show_text", CONCAT('Hello', 'World') AS "show_function_text", a.name AS "name" FROM test a WHERE a.id = ? LIMIT 1
 				`
 				);
 				assert.deepStrictEqual(values, [id]);
